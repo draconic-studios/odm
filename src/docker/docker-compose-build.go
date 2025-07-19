@@ -11,7 +11,7 @@ import (
 )
 
 type DockerComposeCompiler struct {
-	Config *types.ExecuterOptions
+	Config *types.BuildOptions
 	Store  *types.DockerCompose
 }
 

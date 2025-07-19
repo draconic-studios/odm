@@ -6,8 +6,8 @@ import (
 )
 
 // Get Build config from command
-func ParseCommand(cmd *types.Command) (*types.ExecuterOptions, error) {
-	buildConfig := &types.ExecuterOptions{
+func ParseCommand(cmd *types.Command) (*types.BuildOptions, error) {
+	buildConfig := &types.BuildOptions{
 		BuildType:      "",
 		ProjectPath:    "",
 		Output:         "",

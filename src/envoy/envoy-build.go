@@ -13,10 +13,8 @@ import (
 )
 
 type EnvoyCompiler struct {
-	Config   *types.ExecuterOptions
-	Services []string
-
-	store *types.EnvoyConfig
+	Config *types.BuildOptions
+	store  *types.EnvoyConfig
 }
 
 func (ec *EnvoyCompiler) Build() error {
@@ -27,6 +25,9 @@ func (ec *EnvoyCompiler) Build() error {
 		return fmt.Errorf("output path not set")
 	}
 
+	fmt.Printf("\nBuilding API gateway configuration\n -- Services\n\t%s\n\n", strings.Join(ec.Config.Services, "\n\t"))
+
+	fmt.Println(" - 1. Retreiving and adding envoy template")
 	err := ec.getTemplates()
 	if err != nil {
 		return fmt.Errorf(
@@ -35,6 +36,7 @@ func (ec *EnvoyCompiler) Build() error {
 		)
 	}
 
+	fmt.Println(" - 2. Retreiving and adding service level envoy files")
 	err = ec.GetServices()
 	if err != nil {
 		return fmt.Errorf(
@@ -42,6 +44,14 @@ func (ec *EnvoyCompiler) Build() error {
 			err,
 		)
 	}
+
+	// Ensure the http router is the last in the filter chain
+	err = SortEnvoyHTTPFilters(ec.store)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(" - 3. Writing envoy config to file")
 	err = ec.WriteConfigYaml()
 	if err != nil {
 		return fmt.Errorf(
@@ -52,6 +62,8 @@ func (ec *EnvoyCompiler) Build() error {
 
 	return nil
 }
+
+// Get the template file and start the store with it
 func (ec *EnvoyCompiler) getTemplates() error {
 	templatesPath := fmt.Sprintf(
 		"%s/%s/%s/envoy.base.yaml",
@@ -68,8 +80,9 @@ func (ec *EnvoyCompiler) getTemplates() error {
 
 }
 
+// Get all services envoy files
 func (ec *EnvoyCompiler) GetServices() error {
-	for _, s := range ec.Services {
+	for _, s := range ec.Config.Services {
 		fmt.Println("Service", s)
 		serviceConfig, err := ec.ReadEnvoyServiceConfig(s)
 		if err != nil {

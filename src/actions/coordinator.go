@@ -3,6 +3,7 @@ package actions
 import (
 	"fmt"
 	"odm/actions/build"
+	"odm/actions/run"
 	"odm/messages"
 	"odm/types"
 )
@@ -39,6 +40,21 @@ func Coordinator(command *types.Command) (string, error) {
 		}
 		return fmt.Sprintf("Successfully built for %s", buildConfig.BuildType), nil
 
+	case "run":
+		if command.Help {
+			return messages.RunUsage, nil
+		}
+		runOpts, err := run.ParseCommand(command)
+		if err != nil {
+			return "", err
+		}
+
+		err = run.Run(runOpts)
+		if err != nil {
+			return "", err
+		}
+
+		return "Successfully Started System", nil
 	}
 
 	return "", fmt.Errorf("command not found")

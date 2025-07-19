@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 )
 
-// folderExists checks if a folder exists and is a directory.
+// check if a folder exists and is a directory by the path.
 func FolderExists(path string) error {
 	info, err := os.Stat(path) // Get file info for the given path
 	if err != nil {
@@ -19,6 +19,14 @@ func FolderExists(path string) error {
 	}
 	return nil
 
+}
+
+// Check if a file exists by the path
+func FileExists(path string) error {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return err
+	}
+	return nil
 }
 
 func CreateFolders(basePath string, folders []string) error {

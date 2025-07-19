@@ -16,7 +16,7 @@ import (
 // 4. Build docker-compose.yml file
 
 // Execute System Build
-func Build(buildConfig *types.ExecuterOptions) error {
+func Build(buildConfig *types.BuildOptions) error {
 	// STEP 1:
 	fmt.Println("Executing System Build")
 	// Check if config is valid
@@ -86,7 +86,6 @@ func Build(buildConfig *types.ExecuterOptions) error {
 	// STEP 3:
 
 	// Build API gateway config (Envoy Proxy)
-	fmt.Println("Building API gateway configuration")
 	envoyBuilder := &envoy.EnvoyCompiler{
 		Config: buildConfig,
 	}
