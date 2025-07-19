@@ -1,21 +1,15 @@
-package cli
+package utils
 
-import "strings"
-
-// Define structures to hold parsed command-line data
-type Command struct {
-	Name  string
-	Args  []string          // Positional arguments
-	Flags map[string]string // Key-value pairs for flags
-	// Add other specific fields if needed, e.g., bool flags
-	BoolFlags map[string]bool
-}
+import (
+	"odm/types"
+	"strings"
+)
 
 // parseArgs takes a slice of arguments (excluding the program name)
 // and returns a Command struct.
-func (o *OdmCli) ParseArgs(args []string) *Command {
+func ParseArgs(args []string) *types.Command {
 	if len(args) == 0 {
-		return &Command{} // Should be caught by main's initial check
+		return &types.Command{} // Should be caught by main's initial check
 	}
 
 	commandName := args[0]
@@ -55,7 +49,7 @@ func (o *OdmCli) ParseArgs(args []string) *Command {
 		}
 	}
 
-	return &Command{
+	return &types.Command{
 		Name:      commandName,
 		Args:      positionalArgs,
 		Flags:     parsedFlags,

@@ -1,7 +1,7 @@
-package cli
+package messages
 
-func (o *OdmCli) GlobalUsage() string {
-	return `Usage: odm <command> [arguments]
+// string explaining the global level usage of the CLI
+var GlobalUsage string = `Usage: odm <command> [arguments]
 
 Commands:
   build    			Build system
@@ -13,4 +13,3 @@ Commands:
 
 Use "odm help <command>" for more information about a command.
 `
-}
