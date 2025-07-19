@@ -5,6 +5,7 @@ import (
 	"maps"
 	"odm/types"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -108,7 +109,7 @@ func (dc *DockerComposeCompiler) Build() error {
 func (dc *DockerComposeCompiler) GetServices() (*[]types.DockerCompose, error) {
 	var services []types.DockerCompose
 	for _, s := range dc.Config.Services {
-		serviceFilePath := fmt.Sprintf("%s/docker-compose.yml", s)
+		serviceFilePath := filepath.Join(dc.Config.ProjectPath, dc.Config.ServicesFolder, s, "docker-compose.yml")
 		fmt.Println("Reading docker-compose:", serviceFilePath)
 		serviceCompose, err := dc.ReadFile(serviceFilePath)
 		if err != nil {

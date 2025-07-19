@@ -83,7 +83,7 @@ func (ec *EnvoyCompiler) getTemplates() error {
 // Get all services envoy files
 func (ec *EnvoyCompiler) GetServices() error {
 	for _, s := range ec.Config.Services {
-		fmt.Println("Service", s)
+		fmt.Println("\t**  Service: ", s)
 		serviceConfig, err := ec.ReadEnvoyServiceConfig(s)
 		if err != nil {
 			return err
