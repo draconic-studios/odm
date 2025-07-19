@@ -3,6 +3,7 @@ package build
 import (
 	"fmt"
 	"odm/docker"
+	"odm/environment"
 	"odm/envoy"
 	"odm/types"
 	"odm/utils"
@@ -14,6 +15,7 @@ import (
 // 2. Build File system / directory
 // 3. Build API gateway config (Envoy Proxy)
 // 4. Build docker-compose.yml file
+// 5. Build env file
 
 // Execute System Build
 func Build(buildConfig *types.BuildOptions) error {
@@ -102,6 +104,14 @@ func Build(buildConfig *types.BuildOptions) error {
 	}
 
 	err = composeBuilder.Build()
+	if err != nil {
+		return err
+	}
+
+	// STEP 5:
+	fmt.Println("Building .env file")
+
+	err = environment.EnvBuilder(buildConfig)
 	if err != nil {
 		return err
 	}
