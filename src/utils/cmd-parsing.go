@@ -16,6 +16,7 @@ func ParseArgs(args []string) *types.Command {
 	parsedFlags := make(map[string]string)
 	parsedBoolFlags := make(map[string]bool)
 	var positionalArgs []string
+	help := false
 
 	// Iterate through arguments starting from the second one (index 1)
 	// to parse flags and positional arguments for the command.
@@ -45,6 +46,9 @@ func ParseArgs(args []string) *types.Command {
 			}
 		} else {
 			// Positional argument
+			if arg == "help" || arg == "Help" {
+				help = true
+			}
 			positionalArgs = append(positionalArgs, arg)
 		}
 	}
@@ -54,5 +58,6 @@ func ParseArgs(args []string) *types.Command {
 		Args:      positionalArgs,
 		Flags:     parsedFlags,
 		BoolFlags: parsedBoolFlags,
+		Help:      help,
 	}
 }

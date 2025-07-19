@@ -13,3 +13,18 @@ Commands:
 
 Use "odm help <command>" for more information about a command.
 `
+
+var BuildUsage string = `
+Usage: odm build [arguments]
+
+Arguments:
+
+--project     -p: Path to the root of the project
+--output      -o: Output folder to be created inside the project folder
+--services    -s: Name of the folder containing the services/application to be built
+--config      -c: Name of the folder containing the configuration files (nested inside build type folder)
+--build-type  -t: Type of dev being performed ("dev", "prod")
+--exclude     -e: list of services to be excluded (seperated by a ",")
+
+exclude functionality is currently in construction
+`

@@ -16,4 +16,5 @@ type Command struct {
 	Args      []string          // Positional arguments
 	Flags     map[string]string // Key-value pairs for flags
 	BoolFlags map[string]bool
+	Help      bool
 }

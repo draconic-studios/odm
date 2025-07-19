@@ -6,8 +6,6 @@ import (
 	"odm/messages"
 	"odm/utils"
 	"os"
-	// For converting string arguments to integers
-	// For string manipulation like TrimPrefix, HasPrefix
 )
 
 const (

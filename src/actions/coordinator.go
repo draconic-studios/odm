@@ -3,6 +3,7 @@ package actions
 import (
 	"fmt"
 	"odm/actions/build"
+	"odm/messages"
 	"odm/types"
 )
 
@@ -14,6 +15,10 @@ func Coordinator(command *types.Command) (string, error) {
 
 	// Build the system to a level that it is able to run (dev/prod)
 	case "build":
+		if command.Help {
+			return messages.BuildUsage, nil
+		}
+
 		buildConfig, err := build.ParseCommand(command)
 		if err != nil {
 			return "", err
