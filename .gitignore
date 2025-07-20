@@ -32,6 +32,9 @@ go.work.sum
 # .vscode/
 
 
+# Mac
+.DS_Store
+
 # Output for main program
 *odm
 *odm*
