@@ -78,6 +78,7 @@ type BuildConfig struct {
 	CacheFrom  []string          `yaml:"cache_from,omitempty"`
 	Network    string            `yaml:"network,omitempty"`
 	ShmSize    string            `yaml:"shm_size,omitempty"`
+	Secrets    []string          `yaml:"secrets,omitempty"`
 }
 
 // NetworkConfig represents network configuration for a service

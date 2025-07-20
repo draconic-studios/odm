@@ -7,6 +7,7 @@ import (
 	"odm/envoy"
 	"odm/types"
 	"odm/utils"
+	"path/filepath"
 	"strings"
 )
 
@@ -83,6 +84,13 @@ func Build(buildConfig *types.BuildOptions) error {
 		}
 	}
 
+	// Copy Creds over
+	configFolderPath := filepath.Join(buildConfig.ProjectPath, buildConfig.ConfigFolder, buildConfig.BuildType, "creds")
+	outputConfigFolderPath := filepath.Join(buildConfig.ProjectPath, buildConfig.Output, buildConfig.ConfigFolder)
+	err = utils.CopyFolderContents(configFolderPath, outputConfigFolderPath)
+	if err != nil {
+		return nil
+	}
 	// Get Services
 
 	// STEP 3:

@@ -125,7 +125,10 @@ func (dc *DockerComposeCompiler) GetServices() (*[]types.DockerCompose, error) {
 		fmt.Println("Service exists: ", exists, serviceName)
 		if exists {
 			fmt.Println("Service exists")
-			dc.CheckBuildContext(&service, serviceName)
+			err = dc.CheckBuildContext(&service, serviceName)
+			if err != nil {
+				fmt.Printf("-%s- Error in build section: %s\n", s, err)
+			}
 			serviceCompose.Services[serviceName] = service
 		}
 
@@ -177,6 +180,51 @@ func (dc *DockerComposeCompiler) writeFile(outputFilePath string) error {
 func (dc *DockerComposeCompiler) DefaultOnConflict(itemType, name string, first, second interface{}) bool {
 	fmt.Printf("Conflict detected for %s '%s'. Preferring the second item.\n", itemType, name)
 	return true // Always return true to use the second (conflicting) item by default
+}
+
+func (dc *DockerComposeCompiler) handleSecrets(a, b *map[string]types.Secret) (*map[string]types.Secret, error) {
+
+	result := make(map[string]types.Secret)
+
+	for name, s := range *a {
+		newSecret := &types.Secret{
+			File:     s.File,
+			External: s.External,
+			Labels:   s.Labels,
+			Name:     s.Name,
+		}
+		if newSecret.File != "" {
+			filename := filepath.Base(s.File)
+			// Put Build folders config folder as the new location for creds
+			newFilePath := filepath.Join(dc.Config.ProjectPath, dc.Config.Output, "config", filename)
+			fmt.Printf("A --\nFN: %s\nPath: %s\n", filename, newFilePath)
+			newSecret.File = newFilePath
+		}
+		result[name] = *newSecret
+	}
+
+	for name, s := range *b {
+		newSecret := &types.Secret{
+			File:     s.File,
+			External: s.External,
+			Labels:   s.Labels,
+			Name:     s.Name,
+		}
+		if newSecret.File != "" {
+			filename := filepath.Base(s.File)
+			// Put Build folders config folder as the new location for creds
+			newFilePath := filepath.Join(dc.Config.ProjectPath, dc.Config.Output, "config", filename)
+			fmt.Printf("B --\nFN: %s\nPath: %s\n", filename, newFilePath)
+			newSecret.File = newFilePath
+		}
+		result[name] = *newSecret
+	}
+	for name, s := range result {
+		fmt.Printf("Result =  %s:%s\n", name, s.File)
+
+	}
+
+	return &result, nil
 }
 
 func (dc *DockerComposeCompiler) combineDockerCompose(a, b *types.DockerCompose, opts *MergeOptions) (*types.DockerCompose, error) {
@@ -237,14 +285,14 @@ func (dc *DockerComposeCompiler) combineDockerCompose(a, b *types.DockerCompose,
 	}
 
 	// Merge other sections (Networks, Volumes, Secrets, Configs)
-	mergeMap := func(itemType string, aMap, bMap interface{}) {
+	mergeMap := func(itemType string, aMap, bMap any) {
 		switch itemType {
 		case "networks":
 			aNetworks := aMap.(map[string]types.Network)
 			bNetworks := bMap.(map[string]types.Network)
-			for name, network := range aNetworks {
-				result.Networks[name] = network
-			}
+
+			maps.Copy(result.Networks, aNetworks)
+
 			for name, network := range bNetworks {
 				if existing, exists := result.Networks[name]; exists && opts.OnConflict != nil {
 					if opts.OnConflict("network", name, existing, network) {
@@ -272,17 +320,12 @@ func (dc *DockerComposeCompiler) combineDockerCompose(a, b *types.DockerCompose,
 		case "secrets":
 			aSecrets := aMap.(map[string]types.Secret)
 			bSecrets := bMap.(map[string]types.Secret)
-			for name, secret := range aSecrets {
-				result.Secrets[name] = secret
-			}
-			for name, secret := range bSecrets {
-				if existing, exists := result.Secrets[name]; exists && opts.OnConflict != nil {
-					if opts.OnConflict("secret", name, existing, secret) {
-						result.Secrets[name] = secret
-					}
-				} else if !exists || !opts.PreferFirst {
-					result.Secrets[name] = secret
-				}
+			newSecrets, err := dc.handleSecrets(&aSecrets, &bSecrets)
+			if err != nil {
+				fmt.Println(err)
+
+			} else {
+				result.Secrets = *newSecrets
 			}
 		case "configs":
 			aConfigs := aMap.(map[string]types.Config)
