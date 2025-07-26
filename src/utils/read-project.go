@@ -1,22 +1,23 @@
 package utils
 
 import (
-	"encoding/json"
 	"fmt"
 	"odm/types"
 	"os"
+
+	"gopkg.in/yaml.v3"
 )
 
 func ReadProject(filePath string) (*types.Project, error) {
 	// Step 1: Read the entire file content into a byte slice
-	jsonData, err := os.ReadFile(filePath)
+	dataBytes, err := os.ReadFile(filePath)
 	if err != nil {
-		return nil, fmt.Errorf("error reading project.json: %s", err)
+		return nil, fmt.Errorf("error reading project file: %s", err)
 	}
 
 	// Step 2: Unmarshal the JSON data into your Go struct
 	var project types.Project
-	err = json.Unmarshal(jsonData, &project)
+	err = yaml.Unmarshal(dataBytes, &project)
 	if err != nil {
 		return nil, err
 	}

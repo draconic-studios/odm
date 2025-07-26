@@ -58,7 +58,7 @@ func Build(buildConfig *types.BuildOptions) error {
 
 	// Get list of system services (this excludes services like mobile apps)
 	var systemServices []string
-	for _, s := range project.Services {
+	for _, s := range project.Projects {
 		if s.Type == "system service" {
 			systemServices = append(systemServices, s.Name)
 

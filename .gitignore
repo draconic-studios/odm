@@ -38,3 +38,5 @@ go.work.sum
 # Output for main program
 *odm
 *odm*
+
+*-plugin

@@ -1,22 +1,31 @@
 package types
 
 type Project struct {
-	Name      string                    `json:"name"`
-	Services  map[string]ProjectService `json:"services"`
-	Libraries map[string]ProjectLibrary `json:"libraries"`
-	Tools     map[string]ProjectTool    `json:"tools"`
+	Name      string                 `yaml:"name"`
+	Projects  map[string]ProjectRepo `yaml:"services"`
+	Libraries map[string]ProjectRepo `yaml:"libraries"`
+	Tools     map[string]ProjectRepo `yaml:"tools"`
+	Actions   map[string]Action      `yaml:"actions"`
+	Plugins   map[string]Plugin      `yaml:"plugins"`
 }
 
-type ProjectService struct {
-	Name string `json:"name"`
-	Url  string `json:"url"`
-	Type string `json:"type"`
+type Plugin struct {
+	Name string `yaml:"name"`
 }
-type ProjectLibrary struct {
-	Name string `json:"name"`
-	Url  string `json:"url"`
+type ProjectRepo struct {
+	Name string `yaml:"name"`
+	Path string `yaml:"path"`
+	Repo string `yaml:"repo"`
+	Type string `yaml:"type"`
 }
-type ProjectTool struct {
-	Name string `json:"name"`
-	Url  string `json:"url"`
+type Action struct {
+	Args  map[string]string `yaml:"args"`
+	Tasks []Task            `yaml:"tasks"`
+}
+
+type Task struct {
+	Executer string         `yaml:"executer"`
+	Options  map[string]any `yaml:"options"`
+	Input    map[string]any `yaml:"input"`
+	Output   map[string]any
 }
