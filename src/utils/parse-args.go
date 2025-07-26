@@ -1,18 +1,25 @@
-package cmd
+package utils
 
 import (
 	"fmt"
-	"odm/types"
 	"strings"
 )
 
+// Define structures to hold parsed command-line data
+type Command struct {
+	Name      string
+	Args      []string          // Positional arguments
+	Flags     map[string]string // Key-value pairs for flags
+	BoolFlags map[string]bool
+	Help      bool
+}
+
 // parseArgs takes a slice of arguments (excluding the program name)
-// and returns a Command struct.
-func (cli *Cli) ParseArgs(args []string) *types.Command {
-	cli.LogVerbose("started passing command")
+// and returns a Command struct and an error.
+func ParseArgs(args []string) (*Command, error) {
 	if len(args) == 0 {
-		cli.LogVerbose(fmt.Sprintf("command line arguments: %s", "0"))
-		return &types.Command{} // Should be caught by main's initial check
+
+		return &Command{}, fmt.Errorf("command line arguments: %s", "0") // Should be caught by main's initial check
 	}
 
 	commandName := args[0]
@@ -24,27 +31,21 @@ func (cli *Cli) ParseArgs(args []string) *types.Command {
 
 	// Iterate through arguments starting from the second one (index 1)
 	// to parse flags and positional arguments for the command.
-	cli.LogVerbose(fmt.Sprintf("arguments to be parsed: %s", args))
 
 	skipIndex := -1
 
 	for i := 1; i < len(args); i++ {
 		if skipIndex == i {
-			cli.LogVerbose(fmt.Sprintf("skipping index: %d", skipIndex))
 			continue
 		}
 		arg := args[i]
-		cli.LogVerbose(fmt.Sprintf("current argument: %s", arg))
 		// Positional argument (before flags)
 		if !strings.HasPrefix(arg, "-") && !flagsStarted {
 			if arg == "help" {
-				cli.LogVerbose("'help' argument found")
 				help = true
 			}
-			cli.LogVerbose(fmt.Sprintf("positional argument: %s", arg))
 			positionalArgs = append(positionalArgs, arg)
 		} else {
-			cli.LogVerbose("argument is a flag")
 			// Flags
 			value := ""
 			flagsStarted = true
@@ -58,7 +59,6 @@ func (cli *Cli) ParseArgs(args []string) *types.Command {
 			// If no more args/flags (flag is a bool)
 			if len(args) == i+1 {
 				parsedBoolFlags[arg] = true
-				cli.LogVerbose("flag parsed as bool flag")
 				continue
 			}
 
@@ -66,7 +66,6 @@ func (cli *Cli) ParseArgs(args []string) *types.Command {
 			// and current items value not connect value with "="
 			if strings.HasPrefix(args[i+1], "-") && !strings.Contains(arg, "=") {
 				parsedBoolFlags[arg] = true
-				cli.LogVerbose("flag parsed as bool flag")
 				continue
 			}
 
@@ -75,26 +74,23 @@ func (cli *Cli) ParseArgs(args []string) *types.Command {
 			if !strings.Contains(arg, "=") {
 				value = args[i+1]
 				skipIndex = i + 1
-				cli.LogVerbose("flag value is next argument")
 			}
 
 			parts := strings.SplitN(arg[dashCount:], "=", 2) // Split at most once
 			flagName := parts[0]
 			if len(parts) == 2 {
-				cli.LogVerbose("flag value is seperated by '='")
 				value = parts[1]
 			}
 			parsedFlags[flagName] = value
-			cli.LogVerbose(fmt.Sprintf("flag parsed: %s=%s", flagName, value))
 			continue
 		}
 	}
 
-	return &types.Command{
+	return &Command{
 		Name:      commandName,
 		Args:      positionalArgs,
 		Flags:     parsedFlags,
 		BoolFlags: parsedBoolFlags,
 		Help:      help,
-	}
+	}, nil
 }

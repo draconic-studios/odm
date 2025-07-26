@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"odm/messages"
 	"odm/plugin"
+	"odm/utils"
 	"os"
 )
 
@@ -46,7 +47,10 @@ func (cli *Cli) Entry() (string, error) {
 	cli.CheckVerbose(args)
 
 	// Parse input into command
-	command := cli.ParseArgs(args[1:])
+	command, err := utils.ParseArgs(args[1:])
+	if err != nil {
+		return "", err
+	}
 	cli.LogVerbose(fmt.Sprintf("Command: %s\n Args: %s\n Flags: %s\n Bool Flags: %v\n Help: %t", command.Name, command.Args, command.Flags, command.BoolFlags, command.Help))
 
 	// No command passed

@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-plugin"
+	odmPlugin "github.com/hembrow-innovations/odm-plugin"
 )
 
 // TODO Log verbose
@@ -47,7 +48,7 @@ func (pm *PluginManager) printVerbose(text string) {
 	}
 }
 
-func (pm *PluginManager) loadPlugin(name string, pluginsPath string) (Executer, error) {
+func (pm *PluginManager) loadPlugin(name string, pluginsPath string) (odmPlugin.Executer, error) {
 	pluginPath := filepath.Join(pluginsPath, name)
 
 	// Check if plugin binary exists
@@ -57,8 +58,8 @@ func (pm *PluginManager) loadPlugin(name string, pluginsPath string) (Executer, 
 
 	// Create plugin client
 	client := plugin.NewClient(&plugin.ClientConfig{
-		HandshakeConfig:  HandshakeConfig,
-		Plugins:          PluginMap, // TODO Need this to map to all plugins a user may install
+		HandshakeConfig:  odmPlugin.HandshakeConfig,
+		Plugins:          odmPlugin.PluginMap, // TODO Need this to map to all plugins a user may install
 		Cmd:              exec.Command(pluginPath),
 		AllowedProtocols: []plugin.Protocol{plugin.ProtocolNetRPC},
 		SyncStdout:       os.Stdout,
@@ -85,7 +86,7 @@ func (pm *PluginManager) loadPlugin(name string, pluginsPath string) (Executer, 
 	}
 
 	// Type assert
-	executer, ok := raw.(Executer)
+	executer, ok := raw.(odmPlugin.Executer)
 	if !ok {
 		client.Kill()
 		delete(pm.clients, name)

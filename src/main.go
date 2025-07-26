@@ -2,9 +2,7 @@ package main
 
 import (
 	"fmt"
-	"odm/cmd"
 	"os"
-	// "odm/utils"
 )
 
 const (
@@ -17,36 +15,19 @@ const (
 
 func main() {
 
-	cli := cmd.Cli{}
-
-	msg, err := cli.Entry()
-
+	cmd, err := HandleInput()
 	if err != nil {
 		fmt.Println("Error:", err)
 		os.Exit(2)
 	}
-	fmt.Println(msg)
+	fmt.Println(cmd)
 
-	// if len(os.Args) < 2 {
-	// 	fmt.Print(messages.GlobalUsage + "\n")
-	// 	os.Exit(1)
-	// }
-	// command := cmd.ParseArgs(os.Args[1:])
-	// fmt.Println(command.Name)
-	// fmt.Println(command.Args)
-	// fmt.Println(command.BoolFlags)
-	// fmt.Println(command.Flags)
-	// fmt.Println(command.Help)
-	// command := utils.ParseArgs(os.Args[1:])
+	result, err := Coordinator(cmd)
+	if err != nil {
+		fmt.Println("Error:", err)
+		os.Exit(2)
+	}
 
-	// msg, err := actions.Coordinator(command)
-	// if err != nil {
-	// 	// Print error message and exit with invalid input code
-	// 	fmt.Printf("%s: error!\n\t%s", command.Name, err)
-	// 	os.Exit(ExitInvalidInput)
-	// }
+	fmt.Println(result)
 
-	// // Print message and exit with success code
-	// fmt.Println(msg)
-	// os.Exit(ExitSuccess)
 }

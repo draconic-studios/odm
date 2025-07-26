@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"log"
 
-	odmPlugin "odm/plugin" // Replace with your actual module path
+	odmPlugin "github.com/hembrow-innovations/odm-plugin" // Replace with your actual module path
 
 	"github.com/hashicorp/go-plugin"
 )

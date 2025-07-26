@@ -16,12 +16,3 @@ type RunOptions struct {
 	DockerComposeFileName string
 	Attach                bool
 }
-
-// Define structures to hold parsed command-line data
-type Command struct {
-	Name      string
-	Args      []string          // Positional arguments
-	Flags     map[string]string // Key-value pairs for flags
-	BoolFlags map[string]bool
-	Help      bool
-}
