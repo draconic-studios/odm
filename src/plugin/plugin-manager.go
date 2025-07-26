@@ -168,9 +168,7 @@ func (pm *PluginManager) Run(pluginName string, body string) (string, error) {
 
 	}
 
-	// Test the plugin
-	// ! not sure if this really tests it
-	// TODO clarify and create a proper test if required
+	// Execute plugin
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 
 	pm.printVerbose("Calling plugin...")

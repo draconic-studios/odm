@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"odm/actions"
+	coreplugins "odm/core-plugins"
 	"odm/plugin"
 	"odm/utils"
 	"path/filepath"
@@ -33,6 +35,18 @@ func Coordinator(command *utils.Command) (string, error) {
 	}
 	// fmt.Println("Project: ", project)
 
+	// If command is a core action
+	// - add (Command to add project to ochestrator) - in construction
+	// -
+	coreAction, ok := actions.ActionList[command.Name]
+	if ok {
+		result, err := coreAction(command)
+		if err != nil {
+			return "", err
+		}
+		return result, nil
+	}
+
 	// Setup plugin manager for use
 	pluginManagerOptions := &plugin.PluginManagerOptions{
 		PluginDir: filepath.Join(rawProjectPath, "tools", "odm", "src", "testplugins"),
@@ -40,10 +54,6 @@ func Coordinator(command *utils.Command) (string, error) {
 	}
 
 	pluginManager := plugin.NewPluginManager(pluginManagerOptions)
-
-	// If command is a main command
-	// - add (Command to add project to repo) - in construction
-	// -
 
 	// If project defined action
 
@@ -54,6 +64,26 @@ func Coordinator(command *utils.Command) (string, error) {
 
 	currentOutput := ""
 	for _, task := range action.Tasks {
+
+		// Create request body
+		taskBody := &odmplugin.ExecutionRequestBody{
+			Args:    action.Args,
+			Options: task.Options,
+			Input:   currentOutput,
+		}
+
+		// If task is core plugin execute
+		corePlugin, ok := coreplugins.CorePluginList[task.Executer]
+		if ok {
+			result, err := corePlugin(taskBody)
+			if err != nil {
+				return "", err
+			}
+			// Set output for next task
+			currentOutput = result
+			continue
+		}
+
 		// Check plugin exists
 		var pluginExists bool
 		for _, p := range pluginManager.Plugins {
@@ -63,13 +93,6 @@ func Coordinator(command *utils.Command) (string, error) {
 		}
 		if !pluginExists {
 			return "", fmt.Errorf("plugin: %s not found", task.Executer)
-		}
-
-		// Create request body
-		taskBody := &odmplugin.ExecutionRequestBody{
-			Args:    action.Args,
-			Options: task.Options,
-			Input:   currentOutput,
 		}
 
 		// Json request body
@@ -90,51 +113,5 @@ func Coordinator(command *utils.Command) (string, error) {
 	}
 
 	return "", nil
-	// // Execute Function according to command user entered
-	// switch command.Name {
 
-	// // Build the system to a level that it is able to run (dev/prod)
-	// case "build":
-	// 	if command.Help {
-	// 		return messages.BuildUsage, nil
-	// 	}
-
-	// 	buildConfig, err := build.ParseCommand(command)
-	// 	if err != nil {
-	// 		return "", err
-	// 	}
-	// 	fmt.Printf(
-	// 		"Building %s System:\n\tProject: %s\n\tOutout: %s\n\tServices Folder: %s\n\tConfig Folder: %s\n\n",
-
-	// 		buildConfig.BuildType,
-	// 		buildConfig.ProjectPath,
-	// 		buildConfig.Output,
-	// 		buildConfig.ServicesFolder,
-	// 		buildConfig.ConfigFolder,
-	// 	)
-
-	// 	err = build.Build(buildConfig)
-	// 	if err != nil {
-	// 		return "", err
-	// 	}
-	// 	return fmt.Sprintf("Successfully built for %s", buildConfig.BuildType), nil
-
-	// case "run":
-	// 	if command.Help {
-	// 		return messages.RunUsage, nil
-	// 	}
-	// 	runOpts, err := run.ParseCommand(command)
-	// 	if err != nil {
-	// 		return "", err
-	// 	}
-
-	// 	err = run.Run(runOpts)
-	// 	if err != nil {
-	// 		return "", err
-	// 	}
-
-	// 	return "Successfully Started System", nil
-	// }
-
-	// return "", fmt.Errorf("command not found")
 }
