@@ -27,12 +27,12 @@ func HandleInput() (*utils.Command, error) {
 	}
 
 	// Set root path
-	if command.Flags["project-path"] == "" {
+	if command.Flags["root-path"] == "" {
 		cwd, err := os.Getwd()
 		if err != nil {
 			return nil, err
 		}
-		command.Flags["project-path"] = cwd
+		command.Flags["root-path"] = cwd
 	}
 
 	// Run coordinator
