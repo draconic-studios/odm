@@ -30,24 +30,20 @@ type Task struct {
 	Output   map[string]any
 }
 
-type TaskOptions struct {
-}
-
 // ========================================
 // Core Plugin: Env
 
 type EnvOptions struct {
-	Items    []BuildItem // list of items to create final env file
-	RootPath string      // orchestrator folder path
-	Output   string      // output path for .env file
+	Items  []BuildItem // list of items to create final env file
+	Output string      // output path for .env file
 
 }
 
 type BuildItem struct {
-	File     string // e.g json, yaml, .env
+	File     string // e.g json, yaml, env
 	FilePath string // path to file reletive to root path
 	Keys     []BuildItemKey
-	EnvKey   []string // e.g "key=value" env to look for within a .env file (if empty copy entire file)
+	EnvKeys  []string // e.g "key=value" env to look for within a .env file (if empty copy entire file)
 }
 
 // for json/yaml file to find key values within a file
