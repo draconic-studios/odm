@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"odm/utils"
 	"os"
+	"path/filepath"
 
 	odmplugin "github.com/hembrow-innovations/odm-plugin"
 )
@@ -48,17 +49,22 @@ func Copy(body *odmplugin.ExecutionRequestBody) (string, error) {
 		return "", fmt.Errorf("destination path not found")
 	}
 
-	// Type defaults to folder
-	if options.Type == "" {
-
-	}
+	sourcePath := filepath.Join(rootPath, options.Source)
+	destinationPath := filepath.Join(rootPath, options.Destination)
 
 	// create command to be run
-	command := fmt.Sprintf("cp %s %s", options.Source, options.Destination)
 	if options.Type == "folder" {
-		command = fmt.Sprintf("cp -r %s %s", options.Source, options.Destination)
+		err = utils.CopyFolderContents(sourcePath, destinationPath)
+		if err != nil {
+			return "", err
+		}
+	} else {
+		err = utils.CopyFile(sourcePath, destinationPath)
+		if err != nil {
+			return "", err
+		}
 	}
 
 	// run command and run its output
-	return utils.RunCommand(rootPath, command)
+	return "Successfully Copied", nil
 }
