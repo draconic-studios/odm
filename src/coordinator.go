@@ -6,13 +6,50 @@ import (
 	"odm/actions"
 	coreplugins "odm/core-plugins"
 	"odm/plugin"
+	"odm/types"
 	"odm/utils"
 	"path/filepath"
 
 	odmplugin "github.com/hembrow-innovations/odm-plugin"
 )
 
-// Take in Users command and executes the assosicated functions. returns (msg, err)
+func getOdmConfigFile(rootPath string) (*types.Orchestrator, error) {
+
+	// Get contents of root folder
+	rootContents, err := utils.ReadFolderContents(rootPath)
+	if err != nil {
+		return nil, err
+	}
+
+	// determine type of config file yaml or json
+	var configType string
+	for _, item := range *rootContents {
+		if item.Name() == "odm.config.yaml" {
+			configType = "yaml"
+			break
+		}
+		if item.Name() == "odm.config.json" {
+			configType = "json"
+			break
+		}
+	}
+
+	// error if config does not exist
+	if configType == "" {
+		return nil, fmt.Errorf("odm config file not found")
+	}
+
+	// Read and parse config file
+	configPath := filepath.Join(rootPath, fmt.Sprintf("odm.config.%s", configType))
+	config, err := utils.ReadOdmConfig(configPath, configType)
+	if err != nil {
+		return nil, err
+	}
+
+	return config, nil
+}
+
+// Take in Users command and executes the assosicated functionality. returns (msg, err)
 func Coordinator(command *utils.Command) (string, error) {
 	fmt.Println("Coorindation entry")
 	// if "help" present in command
@@ -20,23 +57,20 @@ func Coordinator(command *utils.Command) (string, error) {
 		return "help Command found", nil
 	}
 
-	rawProjectPath, ok := command.Flags["project-path"]
+	rootPath, ok := command.Flags["root-path"]
 	if !ok {
-		return "", fmt.Errorf("project path not found")
+		return "", fmt.Errorf("root path not found")
 	}
 
-	// Read project definition
-	projectYamlPath := filepath.Join(rawProjectPath, "project.yaml")
-
-	fmt.Println("Project: ", projectYamlPath)
-	project, err := utils.ReadProject(projectYamlPath)
+	// Get Config definition
+	orchestrationConfig, err := getOdmConfigFile(rootPath)
 	if err != nil {
 		return "", err
 	}
-	// fmt.Println("Project: ", project)
 
 	// If command is a core action
-	// - add (Command to add project to ochestrator) - in construction
+	// - add 	(Command to add project to ochestrator)
+	// - remove (Command to remove project to ochestrator)
 	// -
 	coreAction, ok := actions.ActionList[command.Name]
 	if ok {
@@ -49,15 +83,14 @@ func Coordinator(command *utils.Command) (string, error) {
 
 	// Setup plugin manager for use
 	pluginManagerOptions := &plugin.PluginManagerOptions{
-		PluginDir: filepath.Join(rawProjectPath, "tools", "odm", "src", "testplugins"),
+		PluginDir: filepath.Join(rootPath, "tools", "odm", "src", "testplugins"),
 		// Verbose:   cli.logging.Verbose,
 	}
 
 	pluginManager := plugin.NewPluginManager(pluginManagerOptions)
 
-	// If project defined action
-
-	action, ok := project.Actions[command.Name]
+	// If action defined in config
+	action, ok := orchestrationConfig.Actions[command.Name]
 	if !ok {
 		return "", fmt.Errorf("action not found")
 	}
