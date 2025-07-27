@@ -88,13 +88,13 @@ func CopyFolderContents(src, dst string) error {
 			return os.MkdirAll(dstPath, info.Mode())
 		} else {
 			// Copy file
-			return copyFile(path, dstPath)
+			return CopyFile(path, dstPath)
 		}
 	})
 }
 
 // Helper function to copy individual files
-func copyFile(src, dst string) error {
+func CopyFile(src, dst string) error {
 	// Open source file
 	srcFile, err := os.Open(src)
 	if err != nil {
@@ -122,4 +122,9 @@ func copyFile(src, dst string) error {
 	}
 
 	return nil
+}
+
+func WriteFile(filePath string, content *string) error {
+	return os.WriteFile(filePath, []byte(*content), 0644)
+
 }
