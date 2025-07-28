@@ -228,7 +228,7 @@ func createSidebaritem(text string, itemType string, url string, indent int) str
 	case "header":
 		return fmt.Sprintf("%s - %s", indentText, text)
 	case "link":
-		return fmt.Sprintf("%s - [%s](%s)", indentText, text, url)
+		return fmt.Sprintf("%s - [%s](%s)", indentText, strings.ReplaceAll(text, ".md", ""), url)
 
 	default:
 		return ""
