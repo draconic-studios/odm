@@ -16,56 +16,56 @@ type DockerCompose struct {
 
 // Service represents a service definition in docker-compose
 type Service struct {
-	Image           string                 `yaml:"image,omitempty"`
-	Environment     map[string]string      `yaml:"environment,omitempty"` // Changed to []string
-	Build           *BuildConfig           `yaml:"build,omitempty"`
-	ContainerName   string                 `yaml:"container_name,omitempty"`
-	Command         interface{}            `yaml:"command,omitempty"`    // string or []string
-	Entrypoint      interface{}            `yaml:"entrypoint,omitempty"` // string or []string
-	EnvFile         interface{}            `yaml:"env_file,omitempty"`   // string or []string
-	Ports           []string               `yaml:"ports,omitempty"`
-	Expose          []string               `yaml:"expose,omitempty"`
-	Volumes         []string               `yaml:"volumes,omitempty"`
-	VolumesFrom     []string               `yaml:"volumes_from,omitempty"`
-	Networks        interface{}            `yaml:"networks,omitempty"`   // []string or map[string]NetworkConfig
-	DependsOn       interface{}            `yaml:"depends_on,omitempty"` // []string or map[string]DependsOnConfig
-	Links           []string               `yaml:"links,omitempty"`
-	ExternalLinks   []string               `yaml:"external_links,omitempty"`
-	Restart         string                 `yaml:"restart,omitempty"`
-	User            string                 `yaml:"user,omitempty"`
-	WorkingDir      string                 `yaml:"working_dir,omitempty"`
-	Hostname        string                 `yaml:"hostname,omitempty"`
-	DomainName      string                 `yaml:"domainname,omitempty"`
-	MacAddress      string                 `yaml:"mac_address,omitempty"`
-	Privileged      bool                   `yaml:"privileged,omitempty"`
-	ReadOnly        bool                   `yaml:"read_only,omitempty"`
-	StdinOpen       bool                   `yaml:"stdin_open,omitempty"`
-	Tty             bool                   `yaml:"tty,omitempty"`
-	CPU             float64                `yaml:"cpu_shares,omitempty"`
-	CPUs            string                 `yaml:"cpus,omitempty"`
-	CPUSet          string                 `yaml:"cpuset,omitempty"`
-	Memory          string                 `yaml:"mem_limit,omitempty"`
-	MemSwap         string                 `yaml:"memswap_limit,omitempty"`
-	ShmSize         string                 `yaml:"shm_size,omitempty"`
-	PidMode         string                 `yaml:"pid,omitempty"`
-	IPC             string                 `yaml:"ipc,omitempty"`
-	SecurityOpt     []string               `yaml:"security_opt,omitempty"`
-	StopSignal      string                 `yaml:"stop_signal,omitempty"`
-	StopGracePeriod *time.Duration         `yaml:"stop_grace_period,omitempty"`
-	Ulimits         map[string]interface{} `yaml:"ulimits,omitempty"`
-	Devices         []string               `yaml:"devices,omitempty"`
-	Labels          map[string]string      `yaml:"labels,omitempty"`
-	LogDriver       string                 `yaml:"log_driver,omitempty"`
-	LogOpt          map[string]string      `yaml:"log_opt,omitempty"`
-	ExtraHosts      []string               `yaml:"extra_hosts,omitempty"`
-	DNS             interface{}            `yaml:"dns,omitempty"` // string or []string
-	DNSSearch       []string               `yaml:"dns_search,omitempty"`
-	DNSOpt          []string               `yaml:"dns_opt,omitempty"`
-	TmpFS           interface{}            `yaml:"tmpfs,omitempty"` // string or []string
-	Secrets         []string               `yaml:"secrets,omitempty"`
-	Configs         []string               `yaml:"configs,omitempty"`
-	Deploy          *DeployConfig          `yaml:"deploy,omitempty"`
-	HealthCheck     *HealthCheckConfig     `yaml:"healthcheck,omitempty"`
+	Image           string             `yaml:"image,omitempty"`
+	Environment     map[string]string  `yaml:"environment,omitempty"` // Changed to []string
+	Build           *BuildConfig       `yaml:"build,omitempty"`
+	ContainerName   string             `yaml:"container_name,omitempty"`
+	Command         any                `yaml:"command,omitempty"`    // string or []string
+	Entrypoint      any                `yaml:"entrypoint,omitempty"` // string or []string
+	EnvFile         any                `yaml:"env_file,omitempty"`   // string or []string
+	Ports           []string           `yaml:"ports,omitempty"`
+	Expose          []string           `yaml:"expose,omitempty"`
+	Volumes         []string           `yaml:"volumes,omitempty"`
+	VolumesFrom     []string           `yaml:"volumes_from,omitempty"`
+	Networks        any                `yaml:"networks,omitempty"`   // []string or map[string]NetworkConfig
+	DependsOn       any                `yaml:"depends_on,omitempty"` // []string or map[string]DependsOnConfig
+	Links           []string           `yaml:"links,omitempty"`
+	ExternalLinks   []string           `yaml:"external_links,omitempty"`
+	Restart         string             `yaml:"restart,omitempty"`
+	User            string             `yaml:"user,omitempty"`
+	WorkingDir      string             `yaml:"working_dir,omitempty"`
+	Hostname        string             `yaml:"hostname,omitempty"`
+	DomainName      string             `yaml:"domainname,omitempty"`
+	MacAddress      string             `yaml:"mac_address,omitempty"`
+	Privileged      bool               `yaml:"privileged,omitempty"`
+	ReadOnly        bool               `yaml:"read_only,omitempty"`
+	StdinOpen       bool               `yaml:"stdin_open,omitempty"`
+	Tty             bool               `yaml:"tty,omitempty"`
+	CPU             float64            `yaml:"cpu_shares,omitempty"`
+	CPUs            string             `yaml:"cpus,omitempty"`
+	CPUSet          string             `yaml:"cpuset,omitempty"`
+	Memory          string             `yaml:"mem_limit,omitempty"`
+	MemSwap         string             `yaml:"memswap_limit,omitempty"`
+	ShmSize         string             `yaml:"shm_size,omitempty"`
+	PidMode         string             `yaml:"pid,omitempty"`
+	IPC             string             `yaml:"ipc,omitempty"`
+	SecurityOpt     []string           `yaml:"security_opt,omitempty"`
+	StopSignal      string             `yaml:"stop_signal,omitempty"`
+	StopGracePeriod *time.Duration     `yaml:"stop_grace_period,omitempty"`
+	Ulimits         map[string]any     `yaml:"ulimits,omitempty"`
+	Devices         []string           `yaml:"devices,omitempty"`
+	Labels          map[string]string  `yaml:"labels,omitempty"`
+	LogDriver       string             `yaml:"log_driver,omitempty"`
+	LogOpt          map[string]string  `yaml:"log_opt,omitempty"`
+	ExtraHosts      []string           `yaml:"extra_hosts,omitempty"`
+	DNS             any                `yaml:"dns,omitempty"` // string or []string
+	DNSSearch       []string           `yaml:"dns_search,omitempty"`
+	DNSOpt          []string           `yaml:"dns_opt,omitempty"`
+	TmpFS           any                `yaml:"tmpfs,omitempty"` // string or []string
+	Secrets         []string           `yaml:"secrets,omitempty"`
+	Configs         []string           `yaml:"configs,omitempty"`
+	Deploy          *DeployConfig      `yaml:"deploy,omitempty"`
+	HealthCheck     *HealthCheckConfig `yaml:"healthcheck,omitempty"`
 }
 
 // BuildConfig represents build configuration
@@ -145,7 +145,7 @@ type PlacementConfig struct {
 
 // HealthCheckConfig represents health check configuration
 type HealthCheckConfig struct {
-	Test        interface{}    `yaml:"test,omitempty"` // string or []string
+	Test        any            `yaml:"test,omitempty"` // string or []string
 	Interval    *time.Duration `yaml:"interval,omitempty"`
 	Timeout     *time.Duration `yaml:"timeout,omitempty"`
 	Retries     int            `yaml:"retries,omitempty"`
@@ -158,7 +158,7 @@ type Network struct {
 	Driver     string            `yaml:"driver,omitempty"`
 	DriverOpts map[string]string `yaml:"driver_opts,omitempty"`
 	IPAM       *IPAMConfig       `yaml:"ipam,omitempty"`
-	External   interface{}       `yaml:"external,omitempty"` // bool or map[string]string
+	External   any               `yaml:"external,omitempty"` // bool or map[string]string
 	Labels     map[string]string `yaml:"labels,omitempty"`
 	EnableIPv6 bool              `yaml:"enable_ipv6,omitempty"`
 	Attachable bool              `yaml:"attachable,omitempty"`
@@ -168,16 +168,16 @@ type Network struct {
 
 // IPAMConfig represents IPAM configuration
 type IPAMConfig struct {
-	Driver  string                   `yaml:"driver,omitempty"`
-	Config  []map[string]interface{} `yaml:"config,omitempty"`
-	Options map[string]string        `yaml:"options,omitempty"`
+	Driver  string            `yaml:"driver,omitempty"`
+	Config  []map[string]any  `yaml:"config,omitempty"`
+	Options map[string]string `yaml:"options,omitempty"`
 }
 
 // Volume represents a volume definition
 type Volume struct {
 	Driver     string            `yaml:"driver,omitempty"`
 	DriverOpts map[string]string `yaml:"driver_opts,omitempty"`
-	External   interface{}       `yaml:"external,omitempty"` // bool or map[string]string
+	External   any               `yaml:"external,omitempty"` // bool or map[string]string
 	Labels     map[string]string `yaml:"labels,omitempty"`
 	Name       string            `yaml:"name,omitempty"`
 }
@@ -185,7 +185,7 @@ type Volume struct {
 // Secret represents a secret definition
 type Secret struct {
 	File     string            `yaml:"file,omitempty"`
-	External interface{}       `yaml:"external,omitempty"` // bool or map[string]string
+	External any               `yaml:"external,omitempty"` // bool or map[string]string
 	Labels   map[string]string `yaml:"labels,omitempty"`
 	Name     string            `yaml:"name,omitempty"`
 }
@@ -193,7 +193,7 @@ type Secret struct {
 // Config represents a config definition
 type Config struct {
 	File     string            `yaml:"file,omitempty"`
-	External interface{}       `yaml:"external,omitempty"` // bool or map[string]string
+	External any               `yaml:"external,omitempty"` // bool or map[string]string
 	Labels   map[string]string `yaml:"labels,omitempty"`
 	Name     string            `yaml:"name,omitempty"`
 }

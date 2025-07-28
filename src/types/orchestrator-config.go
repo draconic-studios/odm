@@ -1,33 +1,42 @@
 package types
 
 type Orchestrator struct {
-	Name      string             `yaml:"name"`
-	Projects  map[string]Project `yaml:"projects"`
-	Libraries map[string]Project `yaml:"libraries"`
-	Tools     map[string]Project `yaml:"tools"`
-	Actions   map[string]Action  `yaml:"actions"`
-	Plugins   map[string]Plugin  `yaml:"plugins"`
+	Name         string             `yaml:"name" json:"name"`
+	Documentaton Documentaton       `yaml:"documentaton" json:"documentaton"`
+	Projects     map[string]Project `yaml:"projects" json:"projects"`
+	Libraries    map[string]Project `yaml:"libraries" json:"libraries"`
+	Tools        map[string]Project `yaml:"tools" json:"tools"`
+	Actions      map[string]Action  `yaml:"actions" json:"actions"`
+	Plugins      map[string]Plugin  `yaml:"plugins" json:"plugins"`
 }
 
 type Plugin struct {
-	Name string `yaml:"name"`
+	Name string `yaml:"name" json:"name"`
 }
 type Project struct {
-	Name string `yaml:"name"`
-	Path string `yaml:"path"`
-	Repo string `yaml:"repo"`
-	Type string `yaml:"type"`
+	Name string `yaml:"name" json:"name"`
+	Path string `yaml:"path" json:"path"`
+	Repo string `yaml:"repo" json:"repo"`
+	Type string `yaml:"type" json:"type"`
 }
 type Action struct {
-	Args  map[string]string `yaml:"args"`
-	Tasks []Task            `yaml:"tasks"`
+	Args  map[string]string `yaml:"args" json:"args"`
+	Tasks []Task            `yaml:"tasks" json:"tasks"`
 }
 
 type Task struct {
-	Executer string         `yaml:"executer"`
-	Options  map[string]any `yaml:"options"`
-	Input    map[string]any `yaml:"input"`
+	Executer string         `yaml:"executer" json:"executer"`
+	Options  map[string]any `yaml:"options" json:"options"`
+	Input    map[string]any `yaml:"input" json:"input"`
 	Output   map[string]any
+}
+
+// ========================================
+// Core Action: build docs
+type Documentaton struct {
+	DocsPath string `yaml:"docs-path" json:"docs-path"`
+	DocType  string `yaml:"doc-type" json:"doc-type"`
+	Output   string `yaml:"output" json:"output"`
 }
 
 // ========================================

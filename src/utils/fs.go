@@ -30,10 +30,9 @@ func FileExists(path string) error {
 	return nil
 }
 
-func CreateFolders(basePath string, folders []string) error {
+func CreateFolder(basePath string, folder string) error {
 	// Path with multiple levels
-	foldersWithBasepPath := append([]string{basePath}, folders...)
-	dirPath := filepath.Join(foldersWithBasepPath...) // Cross-platform path construction
+	dirPath := filepath.Join(basePath, folder) // Cross-platform path construction
 	permissions := os.FileMode(0755)
 
 	// Attempt to create the directory and all necessary parents

@@ -2,6 +2,7 @@ package actions
 
 import (
 	"fmt"
+	"odm/types"
 	"odm/utils"
 	"os"
 	"os/exec"
@@ -129,7 +130,7 @@ func RemoveGitSubmodule(parentRepoPath, submodulePath string) error {
 	return nil
 }
 
-func Remove(command *utils.Command) (string, error) {
+func Remove(command *utils.Command, _ *types.Orchestrator) (string, error) {
 
 	if len(command.Args) < 1 {
 		return "", fmt.Errorf("insufficient arguments passed")

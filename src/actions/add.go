@@ -2,6 +2,7 @@ package actions
 
 import (
 	"fmt"
+	"odm/types"
 	"odm/utils"
 	"os"
 	"os/exec"
@@ -65,7 +66,7 @@ func AddGitSubmodule(parentRepoPath, submoduleURL, submodulePath string) (string
 	return fmt.Sprintf("Successfully added submodule '%s' from '%s' to '%s'\n", submodulePath, submoduleURL, cmdDir), nil
 }
 
-func Add(command *utils.Command) (string, error) {
+func Add(command *utils.Command, _ *types.Orchestrator) (string, error) {
 
 	if len(command.Args) < 2 {
 		return "", fmt.Errorf("insufficient arguments passed")
