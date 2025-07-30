@@ -15,7 +15,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func Env(body *odmplugin.ExecutionRequestBody) (string, error) {
+func ExecuterEnv(body *odmplugin.ExecutionRequestBody) (string, error) {
 	var options types.EnvOptions
 	var rootPath string
 	var err error

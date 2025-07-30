@@ -15,7 +15,7 @@ type CopyOptions struct {
 	Type        string
 }
 
-func Copy(body *odmplugin.ExecutionRequestBody) (string, error) {
+func ExecuterCopy(body *odmplugin.ExecutionRequestBody) (string, error) {
 	var options CopyOptions
 	var err error
 

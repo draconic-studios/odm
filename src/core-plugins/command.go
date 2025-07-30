@@ -32,7 +32,12 @@ func ExecuterCommand(body *odmplugin.ExecutionRequestBody) (string, error) {
 	if !ok {
 		return "", fmt.Errorf("command is not a string")
 	}
-	output, err := utils.RunCommand(cmdPath, command)
+
+	args, ok := value.([]string)
+	if !ok {
+		return "", fmt.Errorf("args is not a arry of strings")
+	}
+	output, err := utils.RunCommand(cmdPath, command, args...)
 
 	if err != nil {
 		return "", err
