@@ -3,10 +3,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"odm/actions"
 	coreplugins "odm/core-plugins"
+	"odm/orchestrator"
 	"odm/plugin"
-	"odm/types"
 	"odm/utils"
 	"os"
 	"path/filepath"
@@ -22,10 +21,21 @@ const (
 	// ... define more as needed
 )
 
-func getOdmConfigFile(rootPath string) (*types.Orchestrator, error) {
+type Coordinator struct {
+	Orchestrator  *orchestrator.Orchestrator
+	Command       *utils.Command
+	RootPath      string
+	PluginManager *plugin.PluginManager
+}
 
+// Read odm config file if it is either json or yanl
+func (c *Coordinator) GetOdmConfigFile() (*orchestrator.Orchestrator, error) {
+
+	if c.RootPath == "" {
+		return nil, fmt.Errorf("root path not provided")
+	}
 	// Get contents of root folder
-	rootContents, err := utils.ReadFolderContents(rootPath)
+	rootContents, err := utils.ReadFolderContents(c.RootPath)
 	if err != nil {
 		return nil, err
 	}
@@ -49,62 +59,33 @@ func getOdmConfigFile(rootPath string) (*types.Orchestrator, error) {
 	}
 
 	// Read and parse config file
-	configPath := filepath.Join(rootPath, fmt.Sprintf("odm.config.%s", configType))
-	config, err := utils.ReadOdmConfig(configPath, configType)
+	configPath := filepath.Join(c.RootPath, fmt.Sprintf("odm.config.%s", configType))
+
+	orc := &orchestrator.Orchestrator{
+		RootPath: c.RootPath,
+		FilePath: configPath,
+		FileType: configType,
+	}
+	err = orc.ReadOdmConfig()
 	if err != nil {
 		return nil, err
 	}
 
-	return config, nil
+	return orc, nil
 }
 
-// Take in Users command and executes the assosicated functionality. returns (msg, err)
-func Coordinator(command *utils.Command) (string, error) {
-	fmt.Println("Coorindation entry")
-	// if "help" present in command
-	if command.Help {
-		return "help Command found", nil
-	}
-
-	rootPath, ok := command.Flags["root-path"]
+// execute defined action
+func (c *Coordinator) executeDefinedAction(actionName string) error {
+	// Get action declartion
+	action, ok := c.Orchestrator.Config.Actions[actionName]
 	if !ok {
-		return "", fmt.Errorf("root path not found")
+		return fmt.Errorf("action not found: %s", actionName)
 	}
 
-	// Get Config definition
-	orchestrationConfig, err := getOdmConfigFile(rootPath)
-	if err != nil {
-		return "", err
-	}
-
-	// If command is a core action
-	// - add 	(Command to add project to ochestrator)
-	// - remove (Command to remove project to ochestrator)
-	// - build-docs (Command to build out a web server serving docs from orchestrator and submodules)
-
-	if coreAction, ok := actions.ActionList[command.Name]; ok {
-		result, err := coreAction(command, orchestrationConfig)
-		if err != nil {
-			return "", err
-		}
-		return result, nil
-	}
-
-	// Setup plugin manager for use
-	pluginManagerOptions := &plugin.PluginManagerOptions{
-		PluginDir: filepath.Join(rootPath, "tools", "odm", "src", "testplugins"),
-		// Verbose:   cli.logging.Verbose,
-	}
-
-	pluginManager := plugin.NewPluginManager(pluginManagerOptions)
-
-	// If action defined in config
-	action, ok := orchestrationConfig.Actions[command.Name]
-	if !ok {
-		return "", fmt.Errorf("action not found")
-	}
-
+	// Setup base input/output for task cycle
 	currentOutput := ""
+
+	// loop tasks and execute
 	for _, task := range action.Tasks {
 
 		// Create request body
@@ -119,7 +100,7 @@ func Coordinator(command *utils.Command) (string, error) {
 		if ok {
 			result, err := corePlugin(taskBody)
 			if err != nil {
-				return "", err
+				return err
 			}
 			// Set output for next task
 			currentOutput = result
@@ -128,36 +109,135 @@ func Coordinator(command *utils.Command) (string, error) {
 
 		// Check plugin exists
 		var pluginExists bool
-		for _, p := range pluginManager.Plugins {
+		for _, p := range c.PluginManager.Plugins {
 			if p == task.Executer {
 				pluginExists = true
 			}
 		}
 		if !pluginExists {
-			return "", fmt.Errorf("plugin: %s not found", task.Executer)
+			return fmt.Errorf("plugin: %s not found", task.Executer)
 		}
 
 		// Json request body
 		body, err := json.Marshal(taskBody)
 		if err != nil {
-			return "", err
+			return err
 		}
 
 		// Run plugin
-		output, err := pluginManager.Run(task.Executer, string(body))
+		output, err := c.PluginManager.Run(task.Executer, string(body))
 		if err != nil {
-			return "", err
+			return err
 		}
 
 		// Set output for next task
 		currentOutput = string(output)
 
 	}
+	return nil
+}
+
+// is command a core action
+func (c *Coordinator) isDefinedAction(action string) bool {
+	_, ok := c.Orchestrator.Config.Actions[action]
+	return ok
+}
+
+// Initialize Coordinator
+func (c *Coordinator) initCoordinator(command *utils.Command) error {
+	fmt.Println("Initialize Coorindator")
+
+	// Set root path
+	rootPath, ok := command.Flags["root-path"]
+	if !ok {
+		return fmt.Errorf("root path not found")
+	}
+	c.RootPath = rootPath
+
+	// Get Orchestrator
+	orc, err := c.GetOdmConfigFile()
+	if err != nil {
+		return err
+	}
+	c.Orchestrator = orc
+
+	return nil
+}
+
+// Initialize Plugin Manager
+func (c *Coordinator) initPluginManager() error {
+	fmt.Println("Initialize plugin manager")
+
+	// Default plugin location
+	if c.Orchestrator.Config.PluginConfig.Location == "" {
+		c.Orchestrator.Config.PluginConfig.Location = ".plugins"
+	}
+	if c.Orchestrator.Config.PluginConfig.Location == "" {
+		c.Orchestrator.Config.PluginConfig.PluginSuffix = "-plugin"
+	}
+
+	// Setup plugin manager for use
+	pluginManagerOptions := &plugin.PluginManagerOptions{
+		PluginDir:    filepath.Join(c.RootPath, c.Orchestrator.Config.PluginConfig.Location),
+		PluginSuffix: c.Orchestrator.Config.PluginConfig.PluginSuffix,
+		// Verbose:   cli.logging.Verbose,
+	}
+
+	c.PluginManager = plugin.NewPluginManager(pluginManagerOptions)
+
+	return nil
+}
+
+func (c *Coordinator) runHelp(command *utils.Command) (string, error) {
+	// TODO add help text for commands
+	fmt.Println("Help")
+
+	return "", nil
+}
+
+// Take in Users command and executes the assosicated functionality. returns (msg, err)
+func (c *Coordinator) runCoordinator(command *utils.Command) (string, error) {
+	/*
+		1. check if help command is passed
+		2. check if core action and execute
+		3. check if defined action and execute
+	*/
+
+	fmt.Println("Coorindation entry")
+	// if "help" present in command
+	if command.Help {
+		return c.runHelp(command)
+
+	}
+
+	// If command is a core action
+	// - add 	(Command to add project to ochestrator)
+	// - remove (Command to remove project to ochestrator)
+	// !move this to a plugin - build-docs (Command to build out a web server serving docs from orchestrator and submodules)
+	if c.Orchestrator.IsCoreAction(c.Command.Name) {
+		err := c.Orchestrator.ExecuteCoreAction(c.Command)
+		if err != nil {
+			return "", err
+		}
+		return "Executed Action", nil
+
+	}
+
+	// If action defined in config
+	isAction := c.isDefinedAction(command.Name)
+
+	if !isAction {
+		return "", fmt.Errorf("action not found")
+	}
+
+	// Execute defined action
+	c.executeDefinedAction(command.Name)
 
 	return "", nil
 
 }
 
+// get user command and parse into struct
 func HandleInput() (*utils.Command, error) {
 
 	// Check for args
@@ -194,6 +274,7 @@ func HandleInput() (*utils.Command, error) {
 
 func main() {
 
+	// Parse input in command struct
 	cmd, err := HandleInput()
 	if err != nil {
 		fmt.Println("Error:", err)
@@ -201,7 +282,11 @@ func main() {
 	}
 	fmt.Println(cmd)
 
-	result, err := Coordinator(cmd)
+	// create coordinator
+	newCoordinator := &Coordinator{}
+
+	// Execute command
+	result, err := newCoordinator.runCoordinator(cmd)
 	if err != nil {
 		fmt.Println("Error:", err)
 		os.Exit(2)

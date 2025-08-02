@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"maps"
-	"odm/types"
 	"odm/utils"
 	"os"
 	"path/filepath"
@@ -15,8 +14,32 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// =============== Types =================
+// Core Plugin: Env
+
+type EnvOptions struct {
+	Items  []BuildItem // list of items to create final env file
+	Output string      // output path for .env file
+
+}
+
+type BuildItem struct {
+	File     string // e.g json, yaml, env
+	FilePath string // path to file reletive to root path
+	Keys     []BuildItemKey
+	EnvKeys  []string // e.g "key=value" env to look for within a .env file (if empty copy entire file)
+}
+
+// for json/yaml file to find key values within a file
+type BuildItemKey struct {
+	Key     string // path to value within a map (e.g "web.clientID")
+	EnvName string // name of env within final file (e.g "CLIENT_ID=value")
+}
+
+// ========================================
+
 func ExecuterEnv(body *odmplugin.ExecutionRequestBody) (string, error) {
-	var options types.EnvOptions
+	var options EnvOptions
 	var rootPath string
 	var err error
 
@@ -32,7 +55,7 @@ func ExecuterEnv(body *odmplugin.ExecutionRequestBody) (string, error) {
 	}
 
 	// Parse options
-	if itemsValue, ok := body.Options["items"].([]types.BuildItem); ok {
+	if itemsValue, ok := body.Options["items"].([]BuildItem); ok {
 		options.Items = itemsValue
 	}
 
@@ -47,7 +70,7 @@ func ExecuterEnv(body *odmplugin.ExecutionRequestBody) (string, error) {
 	}
 
 	// Items
-	if buildItemsValue, ok := body.Options["items"].([]types.BuildItem); ok {
+	if buildItemsValue, ok := body.Options["items"].([]BuildItem); ok {
 		options.Items = buildItemsValue
 	}
 
@@ -97,7 +120,7 @@ func ExecuterEnv(body *odmplugin.ExecutionRequestBody) (string, error) {
 }
 
 // get env from data map
-func getEnvFromMap(dataMap *map[string]any, keys *[]types.BuildItemKey) (*map[string]string, error) {
+func getEnvFromMap(dataMap *map[string]any, keys *[]BuildItemKey) (*map[string]string, error) {
 	newMap := make(map[string]string)
 
 	for _, keyPath := range *keys {

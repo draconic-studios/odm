@@ -14,8 +14,7 @@ import (
 	odmPlugin "github.com/hembrow-innovations/odm-plugin"
 )
 
-// TODO Log verbose
-
+// plugin struct
 type PluginManager struct {
 	pluginDir    string
 	pluginSuffix string
@@ -24,12 +23,14 @@ type PluginManager struct {
 	Plugins      []string
 }
 
+// options to configure plugin manager
 type PluginManagerOptions struct {
 	PluginDir    string
 	PluginSuffix string
 	Verbose      bool
 }
 
+// create instance of plugin manager
 func NewPluginManager(options *PluginManagerOptions) *PluginManager {
 	newManager := &PluginManager{
 		pluginDir:    options.PluginDir,
@@ -42,12 +43,14 @@ func NewPluginManager(options *PluginManagerOptions) *PluginManager {
 	return newManager
 }
 
+// print text
 func (pm *PluginManager) printVerbose(text string) {
 	if pm.verbose {
 		fmt.Println(text)
 	}
 }
 
+// load plugin from path
 func (pm *PluginManager) loadPlugin(name string, pluginsPath string) (odmPlugin.Executer, error) {
 	pluginPath := filepath.Join(pluginsPath, name)
 

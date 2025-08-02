@@ -1,9 +1,7 @@
-package actions
+package git
 
 import (
 	"fmt"
-	"odm/types"
-	"odm/utils"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -14,11 +12,9 @@ import (
 //
 // parentRepoPath: The absolute or relative path to the parent Git repository.
 //
-//	If empty, the current working directory is assumed.
+// if empty, the current working directory is assumed.
 //
 // submodulePath:  The local path within the parent repository where the submodule
-//
-//	was added (e.g., "my-submodule-folder").
 func RemoveGitSubmodule(parentRepoPath, submodulePath string) error {
 	// Determine the directory to execute the git command in.
 	var cmdDir string
@@ -130,16 +126,59 @@ func RemoveGitSubmodule(parentRepoPath, submodulePath string) error {
 	return nil
 }
 
-func Remove(command *utils.Command, _ *types.Orchestrator) (string, error) {
-
-	if len(command.Args) < 1 {
-		return "", fmt.Errorf("insufficient arguments passed")
+// AddGitSubmodule adds a Git repository as a submodule to the current repository.
+//
+// parentRepoPath: The absolute or relative path to the parent Git repository.
+//
+// if empty, the current working directory is assumed.
+//
+// submoduleURL:   The URL of the Git repository to add as a submodule.
+//
+// submodulePath:  The local path within the parent repository where the submodule
+func AddGitSubmodule(parentRepoPath, submoduleURL, submodulePath string) error {
+	// Determine the directory to execute the git command in.
+	// If parentRepoPath is empty, we assume the current working directory.
+	var cmdDir string
+	if parentRepoPath != "" {
+		absPath, err := filepath.Abs(parentRepoPath)
+		if err != nil {
+			return fmt.Errorf("failed to get absolute path for parent repository: %w", err)
+		}
+		cmdDir = absPath
+	} else {
+		currentDir, err := os.Getwd()
+		if err != nil {
+			return fmt.Errorf("failed to get current working directory: %w", err)
+		}
+		cmdDir = currentDir
 	}
 
-	subModulePath := command.Args[0]
+	// Change to the parent repository directory before executing the git command
+	// to ensure it's executed in the correct context.
+	originalDir, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("failed to get original working directory: %w", err)
+	}
+	defer os.Chdir(originalDir) // Defer changing back to the original directory
 
-	err := RemoveGitSubmodule(command.Flags["project-path"], subModulePath)
+	if err := os.Chdir(cmdDir); err != nil {
+		return fmt.Errorf("failed to change directory to %s: %w", cmdDir, err)
+	}
 
-	return "Successfully removed sub module", err
+	fmt.Printf("Attempting to add submodule '%s' from '%s' into '%s' in directory '%s'\n", submodulePath, submoduleURL, cmdDir, submodulePath)
 
+	// Construct the git submodule add command
+	cmd := exec.Command("git", "submodule", "add", submoduleURL, submodulePath)
+
+	// Capture stdout and stderr for better error reporting
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	// Run the command
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to add git submodule: %w", err)
+	}
+
+	fmt.Printf("Successfully added submodule '%s' from '%s' to '%s'\n", submodulePath, submoduleURL, cmdDir)
+	return nil
 }
