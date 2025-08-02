@@ -2,8 +2,10 @@ package plugin
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
+	"odm/utils"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -16,27 +18,34 @@ import (
 
 // plugin struct
 type PluginManager struct {
-	pluginDir    string
-	pluginSuffix string
-	verbose      bool
-	clients      map[string]*plugin.Client
-	Plugins      []string
+	pluginDir string
+	verbose   bool
+	clients   map[string]*plugin.Client
+	Plugins   []PluginDeclaration
 }
 
 // options to configure plugin manager
 type PluginManagerOptions struct {
-	PluginDir    string
-	PluginSuffix string
-	Verbose      bool
+	PluginDir string
+	Verbose   bool
+}
+
+// PluginConfig defines the structure of our plugin manifest.
+type PluginDeclaration struct {
+	Name     string `json:"name"`
+	Version  string `json:"version"`
+	Language string `json:"language"`
+	Source   string `json:"source"`
+	Type     string `json:"type"`
+	Package  string `json:"package"`
 }
 
 // create instance of plugin manager
 func NewPluginManager(options *PluginManagerOptions) *PluginManager {
 	newManager := &PluginManager{
-		pluginDir:    options.PluginDir,
-		pluginSuffix: options.PluginSuffix,
-		verbose:      options.Verbose,
-		clients:      make(map[string]*plugin.Client),
+		pluginDir: options.PluginDir,
+		verbose:   options.Verbose,
+		clients:   make(map[string]*plugin.Client),
 	}
 	newManager.init()
 
@@ -50,9 +59,31 @@ func (pm *PluginManager) printVerbose(text string) {
 	}
 }
 
+// Get plugin dec from pm
+func (pm *PluginManager) getPluginInfo(name string) (*PluginDeclaration, error) {
+	var pl *PluginDeclaration
+	for _, p := range pm.Plugins {
+		if p.Name == name {
+			pl = &p
+		}
+	}
+
+	if pl == nil {
+		return nil, fmt.Errorf("plugin not found")
+	}
+
+	return pl, nil
+}
+
 // load plugin from path
-func (pm *PluginManager) loadPlugin(name string, pluginsPath string) (odmPlugin.Executer, error) {
-	pluginPath := filepath.Join(pluginsPath, name)
+func (pm *PluginManager) loadPlugin(name string) (odmPlugin.Executer, error) {
+
+	pl, err := pm.getPluginInfo(name)
+	if err != nil {
+		return nil, err
+	}
+
+	pluginPath := pl.Source
 
 	// Check if plugin binary exists
 	if _, err := os.Stat(pluginPath); os.IsNotExist(err) {
@@ -99,27 +130,55 @@ func (pm *PluginManager) loadPlugin(name string, pluginsPath string) (odmPlugin.
 	return executer, nil
 }
 
-// discoverPlugins finds all plugins with a specified suffix within a directory path
-func (pm *PluginManager) discoverPlugins(suffix string, pluginPath string) ([]string, error) {
-	files, err := os.ReadDir(pluginPath)
+// Read plugin declaration file
+func (pm *PluginManager) readDeclaration(declarationPath string) (*PluginDeclaration, error) {
+	var pluginDeclaration PluginDeclaration
+	dataBytes, err := os.ReadFile(declarationPath)
 	if err != nil {
 		return nil, err
 	}
 
-	var plugins []string
-	for _, file := range files {
-		if file.IsDir() {
+	err = json.Unmarshal(dataBytes, &pluginDeclaration)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pluginDeclaration, nil
+}
+
+// discoverPlugins finds all plugins with a specified suffix within a directory path
+func (pm *PluginManager) discoverPlugins(pluginPath string) ([]PluginDeclaration, error) {
+
+	decFolder := filepath.Join(pluginPath, "declarations")
+	contents, err := utils.ReadFolderContents(decFolder)
+	if err != nil {
+		return nil, err
+	}
+
+	var plugins []PluginDeclaration
+	for _, item := range *contents {
+		if item.IsDir() {
 			continue
 		}
 
 		// Check if file is executable and matches naming convention
-		name := file.Name()
-		if strings.HasSuffix(name, suffix) {
-			pluginPath := filepath.Join(pluginPath, name)
-			if info, err := os.Stat(pluginPath); err == nil && info.Mode()&0111 != 0 {
-				plugins = append(plugins, name)
+		name := item.Name()
+
+		if strings.Contains(name, ".json") {
+			decPath := filepath.Join(decFolder, name)
+			pluginDec, err := pm.readDeclaration(decPath)
+			if err != nil {
+				continue
 			}
+			plugins = append(plugins, *pluginDec)
+
 		}
+		// if strings.HasSuffix(name, suffix) {
+		// 	pluginPath := filepath.Join(pluginPath, name)
+		// 	if info, err := os.Stat(pluginPath); err == nil && info.Mode()&0111 != 0 {
+		// 		plugins = append(plugins, name)
+		// 	}
+		// }
 	}
 
 	return plugins, nil
@@ -142,11 +201,8 @@ func (pm *PluginManager) init() error {
 	}
 
 	// Discover available plugins
-	// Default suffix to "-plugin" on filename
-	if pm.pluginSuffix == "" {
-		pm.pluginSuffix = "-plugin"
-	}
-	plugins, err := pm.discoverPlugins(pm.pluginSuffix, pm.pluginDir)
+
+	plugins, err := pm.discoverPlugins(pm.pluginDir)
 	if err != nil {
 		return fmt.Errorf("error discovering plugins: %v", err)
 	}
@@ -164,7 +220,7 @@ func (pm *PluginManager) Run(pluginName string, body string) (string, error) {
 	defer pm.cleanup()
 
 	pm.printVerbose("Loading plugin")
-	executer, err := pm.loadPlugin(pluginName, pm.pluginDir)
+	executer, err := pm.loadPlugin(pluginName)
 
 	if err != nil {
 		return "", fmt.Errorf("failed to load plugin %s: %v", pluginName, err)

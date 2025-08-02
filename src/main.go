@@ -110,7 +110,7 @@ func (c *Coordinator) executeDefinedAction(actionName string) error {
 		// Check plugin exists
 		var pluginExists bool
 		for _, p := range c.PluginManager.Plugins {
-			if p == task.Executer {
+			if p.Name == task.Executer {
 				pluginExists = true
 			}
 		}
@@ -178,8 +178,7 @@ func (c *Coordinator) initPluginManager() error {
 
 	// Setup plugin manager for use
 	pluginManagerOptions := &plugin.PluginManagerOptions{
-		PluginDir:    filepath.Join(c.RootPath, c.Orchestrator.Config.PluginConfig.Location),
-		PluginSuffix: c.Orchestrator.Config.PluginConfig.PluginSuffix,
+		PluginDir: filepath.Join(c.RootPath, c.Orchestrator.Config.PluginConfig.Location),
 		// Verbose:   cli.logging.Verbose,
 	}
 
