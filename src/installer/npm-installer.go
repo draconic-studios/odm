@@ -1,7 +1,6 @@
 package installer
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"odm/plugin"
@@ -10,24 +9,16 @@ import (
 	"path/filepath"
 )
 
-// Package.json
-type PackageJson struct {
-	Main string `json:"main"` // path to executable
-}
-
-// NPMInstaller implements the PluginInstaller interface for npm.
-type NPMInstaller struct{}
-
-func (i *NPMInstaller) Install(ctx context.Context, plugin plugin.PluginDeclaration, opts PluginInstallOptions) error {
-	pluginFolderPath := filepath.Join(opts.RootPath, opts.PluginFolder)
+func (i *Installation) NpmInstall() error {
+	pluginFolderPath := filepath.Join(i.RootPath, i.PluginFolder)
 
 	// Construct the command to run, e.g., 'npm install @my-plugins/javascript-plugin@1.2.3'
-	pkgSpec := plugin.Package
-	if plugin.Version != "" {
-		pkgSpec = fmt.Sprintf("%s@%s", plugin.Package, plugin.Version)
+	pkgSpec := i.Declaration.Package
+	if i.Declaration.Version != "" {
+		pkgSpec = fmt.Sprintf("%s@%s", i.Declaration.Package, i.Declaration.Version)
 
 	}
-	cmd := exec.CommandContext(ctx, "npm", "install", pkgSpec)
+	cmd := exec.CommandContext(i.Ctx, "npm", "install", pkgSpec)
 
 	// Set the working directory to where you want to install plugins.
 	// For example, a dedicated 'plugins' directory.
@@ -42,29 +33,23 @@ func (i *NPMInstaller) Install(ctx context.Context, plugin plugin.PluginDeclarat
 	fmt.Printf("Installed npm package %s\n", pkgSpec)
 
 	// Read and parse package.json
-	var packageJson PackageJson
-	packageJsonPath := filepath.Join(pluginFolderPath, "package.json")
-	bytesData, err := os.ReadFile(packageJsonPath)
+	var pluginDeclaration *plugin.PluginDeclaration
+	pluginDeclarationPath := filepath.Join(pluginFolderPath, "plugin.json")
+	bytesData, err := os.ReadFile(pluginDeclarationPath)
 	if err != nil {
 		return err
 	}
-	err = json.Unmarshal(bytesData, &packageJson)
+	err = json.Unmarshal(bytesData, &pluginDeclaration)
 	if err != nil {
 		return err
 	}
 
-	// check main file exists and has a value in pckage.json
-	if packageJson.Main == "" {
-		return fmt.Errorf("executable path not provided in package.json file under key: main")
+	if pluginDeclaration.Source == "" {
+		return fmt.Errorf("executable path not provided in plugin declaration json")
 	}
-
-	// Create paths
-	packagePath := filepath.Join(pluginFolderPath, "node_modules", plugin.Package)
-	declarationPath := filepath.Join(packagePath, "plugin.json")
-	executeableFilePath := filepath.Join(packagePath, packageJson.Main)
 
 	// Install plugin declaration
-	err = InstallPluginDeclaration(pluginFolderPath, declarationPath, executeableFilePath)
+	err = i.InstallPluginDeclaration()
 	if err != nil {
 		return err
 	}

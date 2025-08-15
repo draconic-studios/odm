@@ -29,15 +29,15 @@ type Coordinator struct {
 }
 
 // Read odm config file if it is either json or yanl
-func (c *Coordinator) GetOdmConfigFile() (*orchestrator.Orchestrator, error) {
+func (c *Coordinator) GetOdmConfigFile() error {
 
 	if c.RootPath == "" {
-		return nil, fmt.Errorf("root path not provided")
+		return fmt.Errorf("root path not provided")
 	}
 	// Get contents of root folder
 	rootContents, err := utils.ReadFolderContents(c.RootPath)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// determine type of config file yaml or json
@@ -55,7 +55,7 @@ func (c *Coordinator) GetOdmConfigFile() (*orchestrator.Orchestrator, error) {
 
 	// error if config does not exist
 	if configType == "" {
-		return nil, fmt.Errorf("odm config file not found")
+		return fmt.Errorf("odm config file not found")
 	}
 
 	// Read and parse config file
@@ -68,10 +68,10 @@ func (c *Coordinator) GetOdmConfigFile() (*orchestrator.Orchestrator, error) {
 	}
 	err = orc.ReadOdmConfig()
 	if err != nil {
-		return nil, err
+		return err
 	}
-
-	return orc, nil
+	c.Orchestrator = orc
+	return nil
 }
 
 // execute defined action
@@ -85,9 +85,10 @@ func (c *Coordinator) executeDefinedAction(actionName string) error {
 	// Setup base input/output for task cycle
 	currentOutput := ""
 
+	fmt.Printf("%d tasks to execute\n", len(action.Tasks))
 	// loop tasks and execute
-	for _, task := range action.Tasks {
-
+	for idx, task := range action.Tasks {
+		fmt.Printf("Executing Task %d: %s\n", idx+1, task.Executer)
 		// Create request body
 		taskBody := &odmplugin.ExecutionRequestBody{
 			Args:    action.Args,
@@ -98,8 +99,10 @@ func (c *Coordinator) executeDefinedAction(actionName string) error {
 		// If task is core plugin execute
 		corePlugin, ok := coreplugins.CorePluginList[task.Executer]
 		if ok {
+			fmt.Println("Executing core plugin")
 			result, err := corePlugin(taskBody)
 			if err != nil {
+				fmt.Printf("Error executing core plugin: %s\n", err)
 				return err
 			}
 			// Set output for next task
@@ -146,7 +149,7 @@ func (c *Coordinator) isDefinedAction(action string) bool {
 // Initialize Coordinator
 func (c *Coordinator) initCoordinator(command *utils.Command) error {
 	fmt.Println("Initialize Coorindator")
-
+	c.Command = command
 	// Set root path
 	rootPath, ok := command.Flags["root-path"]
 	if !ok {
@@ -155,12 +158,14 @@ func (c *Coordinator) initCoordinator(command *utils.Command) error {
 	c.RootPath = rootPath
 
 	// Get Orchestrator
-	orc, err := c.GetOdmConfigFile()
+	err := c.GetOdmConfigFile()
 	if err != nil {
 		return err
 	}
-	c.Orchestrator = orc
 
+	if c.Orchestrator == nil {
+		return fmt.Errorf("orchestrater not initialized")
+	}
 	return nil
 }
 
@@ -196,6 +201,9 @@ func (c *Coordinator) runHelp(command *utils.Command) (string, error) {
 
 // Take in Users command and executes the assosicated functionality. returns (msg, err)
 func (c *Coordinator) runCoordinator(command *utils.Command) (string, error) {
+	if c.Orchestrator == nil {
+		return "", fmt.Errorf("orchestrater not initialized")
+	}
 	/*
 		1. check if help command is passed
 		2. check if core action and execute
@@ -285,6 +293,11 @@ func main() {
 	newCoordinator := &Coordinator{}
 
 	// Execute command
+	err = newCoordinator.initCoordinator(cmd)
+	if err != nil {
+		fmt.Println("Error:", err)
+		os.Exit(2)
+	}
 	result, err := newCoordinator.runCoordinator(cmd)
 	if err != nil {
 		fmt.Println("Error:", err)

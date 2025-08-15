@@ -4,41 +4,71 @@ import (
 	"context"
 	"fmt"
 	"odm/plugin"
+	"path/filepath"
+	"strings"
 )
+
+type Installation struct {
+	RootPath                  string // Ochestrator Path (./)
+	PluginFolder              string // Path to plugins (.odm/plugins)
+	PluginDeclarationListPath string
+	Declaration               plugin.PluginDeclaration
+	Ctx                       context.Context
+}
 
 // PluginInstaller is an interface for installing plugins from different sources.
 type PluginInstaller interface {
 	Install(ctx context.Context, pluginSource plugin.PluginDeclaration, opts PluginInstallOptions) error
 }
 
-// Options for the install
-type PluginInstallOptions struct {
-	RootPath     string
-	PluginFolder string
-}
-
-// installPlugin handles the main logic of finding the right installer.
-func InstallPlugin(opts PluginInstallOptions, plugin plugin.PluginDeclaration) error {
-	var ctx context.Context
+// initialize Installation struct
+func (i *Installation) initInstaller() error {
 
 	// Pre installation
-	err := PreInstall(opts)
+	err := i.PreInstall()
 	if err != nil {
 		return err
 	}
 
-	// A map to hold our different installers, keyed by the source type.
-	installers := map[string]PluginInstaller{
-		"npm": &NPMInstaller{},
-		// "pypi": &PipInstaller{}, // ! Stopped til odm works then pip package support with start
-		// Add other installers here...
+	i.Ctx = context.Background()
+	return nil
+}
+
+// Options for the install
+type PluginInstallOptions struct {
+	RootPath     string
+	PluginFolder string
+	Plugin       plugin.PluginDeclaration
+}
+
+// Get installer
+func (i *Installation) start() error {
+	switch strings.ToLower(i.Declaration.Type) {
+	case "npm":
+		return i.NpmInstall()
+
+	default:
+		return fmt.Errorf("unknown installation type")
 	}
 
-	installer, ok := installers[plugin.Type]
-	if !ok {
-		return fmt.Errorf("unsupported plugin type: %s", plugin.Type)
+}
+
+// installPlugin handles the main logic of finding the right installer.
+func InstallPlugin(opts PluginInstallOptions) error {
+
+	// Init installation
+	ins := &Installation{
+		RootPath:                  opts.RootPath,
+		PluginFolder:              opts.PluginFolder,
+		Declaration:               opts.Plugin,
+		PluginDeclarationListPath: filepath.Join(opts.RootPath, opts.PluginFolder, "plugins", "plugins.json"),
 	}
 
-	fmt.Printf("Installing plugin %s from %s...\n", plugin.Package, plugin.Type)
-	return installer.Install(ctx, plugin, opts)
+	err := ins.initInstaller()
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Installing plugin %s from %s...\n", opts.Plugin.Name, opts.Plugin.Type)
+	return ins.start()
 }

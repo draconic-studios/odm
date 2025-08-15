@@ -3,6 +3,8 @@ package orchestrator
 import (
 	"fmt"
 	"odm/git"
+	"odm/installer"
+	"odm/plugin"
 	"odm/utils"
 	"slices"
 	"strings"
@@ -18,7 +20,7 @@ ACTIONS: actions performed by main cli
 
 // check if core action exists
 func (o *Orchestrator) IsCoreAction(cmd string) bool {
-	actionsList := []string{"add", "remove"}
+	actionsList := []string{"add", "remove", "install"}
 	return slices.Contains(actionsList, cmd)
 }
 
@@ -55,6 +57,27 @@ func (o *Orchestrator) ExecuteCoreAction(cmd *utils.Command) error {
 		projectName := cmd.Args[0]
 		err = o.RemoveProject(projectName)
 		return err
+	case "install":
+		// validate input
+		if len(cmd.Args) < 2 {
+			return fmt.Errorf("insufficient arguments passed")
+		}
+		installType := cmd.Args[0]
+		packageName := cmd.Args[1]
+		opts := installer.PluginInstallOptions{
+			RootPath:     cmd.Flags["root-path"],
+			PluginFolder: ".odm/plugins",
+			Plugin: plugin.PluginDeclaration{
+				Type:    installType,
+				Package: packageName,
+			},
+		}
+		err = installer.InstallPlugin(opts)
+		if err != nil {
+			return err
+		}
+		return nil
+
 	default:
 		return fmt.Errorf("core action not defined")
 	}
