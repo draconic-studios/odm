@@ -4,7 +4,10 @@
 - No `Co-Authored-By` lines
 - TDD, DRY, YAGNI; prefer one-liner solutions when clear
 - No CI/CD or GitHub Actions
-
+- Worktrees **disabled** — never `git worktree add` or agent isolation worktrees
+- No new git branches for agent work; cleanup when done
+- File size target ≤1000 LOC, hard limit 1250
+- Markdown: never tables — use `- **{text}**: {text}`
 ## Agent skills
 
 
