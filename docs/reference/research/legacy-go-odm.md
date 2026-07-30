@@ -2,9 +2,11 @@
 
 **Question:** What does this repo's Go ODM implement today (CLI surface, config shape, submodules, plugins, actions) that migration docs must call out as replace, drop, or optionally map?
 
-**Scope:** Facts from this codebase only (`src/`, `README.md`, `scripts/`). No external product docs.
+**Scope:** Facts from this codebase only (`src/`, `README.md`, `scripts/` as of research time). No external product docs.
 
 **Date:** 2026-07-31
+
+**Note:** Go `src/` and `scripts/` were removed after this note was written. Paths below refer to tree at git tag `legacy-go-archive` (or history before removal).
 
 ---
 
