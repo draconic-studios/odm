@@ -1,6 +1,6 @@
 # Architecture
 
-System shape for ODM v1 design. Domain terms: root `CONTEXT.md`. Product framing: `vision.md` (when present). Config keys: `config.md`. Git lifecycle: `multi-git.md`.
+System shape for ODM v1 design. Domain terms: root `CONTEXT.md`. Product framing: `vision.md`. Config keys: `config.md`. Git lifecycle: `multi-git.md`.
 
 ## ODM state directory (`.odm/`)
 
@@ -71,19 +71,87 @@ ODM does **not** ignore all of `.odm/` with negation exceptions. New files under
 
 Presence of an empty `.odm/` without `odm.config.yaml` does **not** count as a Workspace for discovery.
 
-## Ownership boundaries (stub)
+## System narrative
 
-Full product narrative and crate layout: **Vision and architecture narrative**. Locked here only as it touches the state directory:
+Outside-in flow for a Workspace:
 
-| Owner | Responsibility |
-|-------|----------------|
-| **ODM** | Workspace config, pin file, CLI UX, multi-git lifecycle, federation scope, paths under `.odm/` listed above, `worktrees/` placement |
-| **Progen (crates)** | Single-store content, in-store index/query (engine defaults may live beside the store) |
-| **User / git** | Auth, commit policy, content of Projects and Progens |
-| **Agent tools** | Their own config homes; ODM may link packs into them |
+1. **Human or agent** invokes the `odm` binary.
+2. **CLI** parses globals and routes commands (`cli.md`).
+3. **Workspace core** loads `.odm/odm.config.yaml` (and pin when present), resolves config **names** to paths, enforces discovery (`--root` or walk).
+4. **Subsystems** (all name-driven from config; none invent undeclared Projects or Progens):
+   - **Git lifecycle** — plain clones at Project/Progen paths; pin file; Worktree slots under `worktrees/<project>/<slot>/` (`multi-git.md`).
+   - **Progen façade** — scope union → N× single-root progen engine calls; ODM-owned index/cache only under `.odm/progen/<name>/` (`progen.md`).
+   - **Actions** — load Action bundle files → shell-out to command bodies.
+   - **Agent packs** (sketch) — install/link into agent-native homes.
+5. **On disk, not owned as ODM content** — Primary checkouts, Progen stores, worktree slot trees (paths may be managed clones; content is the user’s).
+
+**Edge rule:** Workspace config is the only layout source of truth.
+
+```text
+human / agent
+    │
+    ▼
+odm (CLI)
+    │
+    ▼
+workspace core  ── reads .odm/odm.config.yaml (+ pin)
+    │
+    ├── git lifecycle ──► primary checkouts, worktrees/
+    ├── progen façade ──► progen stores (+ .odm/progen/<name>/ indexes)
+    ├── actions ────────► shell-out (user/Nx/scripts)
+    └── agent packs ────► agent config homes (sketch)
+```
+
+## Ownership boundaries
+
+- **ODM owns**
+  - Workspace discovery, Workspace config, pin file
+  - `.odm/` layout and `worktrees/` placement
+  - Multi-git lifecycle (clone/fetch/pin/status/doctor orchestration)
+  - Federation and query scope (`--progen`, `--progen-group`, default-all)
+  - CLI surface, exit codes, `--json` shapes
+  - Action and Generator dispatch (load bundles and invoke; not necessarily template-engine guts)
+  - Agent-pack install/link into agent homes
+  - Gitignore maintenance when `manage_gitignore` is enabled
+- **Progen (crates) owns**
+  - Single-store content model, index, query/context internals
+  - In-store paths and engine defaults beside a store
+  - Store verbs re-exported under `odm progen …`
+- **Shell-out / external owns**
+  - `git` for VCS operations (ODM orchestrates; does not reimplement git)
+  - Action command bodies (user scripts, Nx targets, etc.)
+  - Agent runtimes and their config homes
+  - Optional remote template fetch for generators (sketch)
+- **User owns**
+  - Auth, commit policy, content of Projects and Progens
+
+Product-level summary: `vision.md`.
+
+## Crate layout (design intent)
+
+Rust monorepo shape for ownership and tests — not a promise of empty crates on day one. **One binary** ships.
+
+```text
+odm (bin)              # CLI only: parse, UX, exit codes
+odm-core               # Workspace, config, pin, discovery, paths
+odm-git                # multi-git lifecycle (shells git)
+odm-progen             # federation/scope + façade over progen crates
+odm-actions            # load/run Action bundles
+odm-agent              # pack link/install (sketch-depth OK; may start thin in bin/core)
+# progen upstream crates (path or vendored) — store / index / query
+# no odm-serve in v1
+```
+
+Rules:
+
+- **Depend inward** — `odm` → feature crates → `odm-core`. Progen crates never depend on ODM.
+- **One product binary** — crates are boundaries, not multiple distributeables.
+- **Sketch features** (`agent`, `generate`) may live as thin modules until they earn a crate.
+- **Non-goal** — deep Serve/MCP (`odm serve`) is out of the v1 design package.
 
 ## Related
 
+- Vision: `vision.md`
 - Config schema: `config.md`
 - Multi-git + pin semantics: `multi-git.md`
 - Progen federation: `progen.md`

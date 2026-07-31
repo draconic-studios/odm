@@ -62,6 +62,7 @@ A coherent, reviewable design package under `docs/` (plus root `CONTEXT.md`) tha
 - [[issues-7-multi-git-and-pins]] — plain clones in `docs/reference/multi-git.md`; config/pin under `.odm/`; sync=fetch-only; opt-in auto pin; no submodules.
 - [[issues-8-odm-dot-directory-contract]] — `.odm/` layout + discovery in `docs/reference/architecture.md`; worktrees outside `.odm/`; config/pin tracked; caches ignored.
 - [[issues-9-cli-surface-v1]] — command tree + globals in `docs/reference/cli.md`: `init`, `sync`/`pin`/`status`/`doctor`, `project` (+ git passthrough; worktree sketch), `progen` lifecycle+façade, top-level `find`/`context`, `run`, sketch `generate`/`agent`; exit 0–4; no serve/MCP.
+- [[issues-10-vision-and-architecture-narrative]] — product one-liner, jobs, non-goals, ownership, system narrative, crate intent in `docs/reference/vision.md` + `docs/reference/architecture.md`.
 
 
 ## Not yet specified
