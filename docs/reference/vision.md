@@ -49,7 +49,7 @@ Full boundary table and crate intent: `architecture.md`.
 
 - Distributed as a **static `odm` binary** (packaging channels beyond the design package are unspecified here).
 - **ODM product repository ≠ consumer Workspace**; `odm init` bootstraps the latter.
-- Implementation home is a **Rust workspace** integrating progen as crates; legacy Go is inspiration only (procedure: `migration.md` when present; research notes under `research/`).
+- Implementation home is this **Rust monorepo**; legacy Go is archive/inspiration only (delivery: `phased-delivery.md`; research: `research/legacy-go-odm.md`).
 
 ## Related
 
@@ -58,3 +58,4 @@ Full boundary table and crate intent: `architecture.md`.
 - CLI: `cli.md`
 - Progen federation: `progen.md`
 - Multi-git + pins: `multi-git.md`
+- Phased delivery (greenfield, phases, ship): `phased-delivery.md`

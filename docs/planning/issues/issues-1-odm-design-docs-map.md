@@ -35,8 +35,7 @@ A coherent, reviewable design package under `docs/` (plus root `CONTEXT.md`) tha
     worktrees.md         # sketch
     graph.md             # sketch
     env-gen-packs.md     # sketch
-    migration.md
-    phased-delivery.md
+    phased-delivery.md   # greenfield + phase spine; no migration.md
   docs/adr/              # sparingly
   ```
 - **Specify fully:** workspace + config + multi-git (no submodules) + progen multi-store + CLI surface + doc conventions.
@@ -63,7 +62,7 @@ A coherent, reviewable design package under `docs/` (plus root `CONTEXT.md`) tha
 - [[issues-8-odm-dot-directory-contract]] — `.odm/` layout + discovery in `docs/reference/architecture.md`; worktrees outside `.odm/`; config/pin tracked; caches ignored.
 - [[issues-9-cli-surface-v1]] — command tree + globals in `docs/reference/cli.md`: `init`, `sync`/`pin`/`status`/`doctor`, `project` (+ git passthrough; worktree sketch), `progen` lifecycle+façade, top-level `find`/`context`, `run`, sketch `generate`/`agent`; exit 0–4; no serve/MCP.
 - [[issues-10-vision-and-architecture-narrative]] — product one-liner, jobs, non-goals, ownership, system narrative, crate intent in `docs/reference/vision.md` + `docs/reference/architecture.md`.
-
+- [[issues-11-migration-and-repo-home]] — no `migration.md`; greenfield Rust-first in this repo; phase spine + ship intent in `docs/reference/phased-delivery.md`.
 
 ## Not yet specified
 
@@ -74,7 +73,6 @@ A coherent, reviewable design package under `docs/` (plus root `CONTEXT.md`) tha
 - Concrete frontmatter/kind parity with life-engine vs progen today
 - Packaging channels beyond GitHub Releases (brew, etc.)
 - Worktree branch naming templates and `odm agent start` flow (sketch depth TBD)
-- Optional reader for legacy Go `odm.config.yaml` actions shape
 - Full flag tables for every re-exported `odm progen` store verb (implement against progenitor + scope rules)
 
 ## Out of scope

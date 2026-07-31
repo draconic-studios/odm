@@ -292,7 +292,7 @@ Based only on what this codebase implements or claims.
 | Optional external plugin executers | Extensibility (even if unfinished) |
 | Cross-platform single binary distribution | `scripts/os-arch-build.sh` intent |
 
-Prefer **clean contracts** in Rust redesign rather than byte-compatible YAML if tags/typos (`documentaton`, `ymal`) and dual layouts are fixed deliberately — call out breaking rename in migration.md.
+Prefer **clean contracts** in Rust redesign rather than byte-compatible YAML if tags/typos (`documentaton`, `ymal`) and dual layouts are fixed deliberately. Product stance is greenfield (see `phased-delivery.md`), not a compatibility migration.
 
 ### 9.2 Drop (do not port as-is)
 
@@ -350,7 +350,7 @@ No worktree CLI, no pin file, no progen/federation, no nested odm roots, no serv
 
 ---
 
-## 11. One-line summary for migration.md
+## 11. One-line summary
 
-Legacy Go ODM is a single-binary CLI that loads root `odm.config.{yaml,json}`, runs hard-coded `add`/`remove`/`install` plus named action pipelines of `cmd`/`copy`/`env` (and unfinished HashiCorp plugins), and treats multi-repo as git submodules — with docs features and plugin install paths incomplete; Rust redesign should replace the config+actions+component model, drop go-plugin/npm installers/stale docker help, and only optionally map submodules and env/copy task shapes.
+Legacy Go ODM is a single-binary CLI that loads root `odm.config.{yaml,json}`, runs hard-coded `add`/`remove`/`install` plus named action pipelines of `cmd`/`copy`/`env` (and unfinished HashiCorp plugins), and treats multi-repo as git submodules — with docs features and plugin install paths incomplete. Rust ODM is greenfield in this repo (`phased-delivery.md`); use this note as optional historical input only.
 )
