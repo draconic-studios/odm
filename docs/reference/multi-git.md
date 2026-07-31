@@ -1,0 +1,155 @@
+# Multi-git lifecycle and pin file
+
+How ODM materializes and maintains **plain git clones** for declared Projects and Progens. Domain terms: root `CONTEXT.md`. Config shape: `docs/reference/config.md`. Exact CLI verbs/flags: `docs/reference/cli.md` (illustrative names here only).
+
+## Non-goals
+
+- **Git submodules** are not a supported multi-repo model (not clone, not sync, not migration target).
+- **Worktree slots** (parallel agent/human trees on one Project) are sketched elsewhere (`worktrees.md`); this doc covers Primary checkouts and multi-clone via separate config entries.
+- ODM does not store credentials; auth is whatever `git` already uses (SSH agent, credential helper, etc.).
+
+## Managed vs unmanaged
+
+A config entry is **managed** when it has a **`url`** (Project or Progen).
+
+| Entry | ODM git lifecycle |
+|-------|-------------------|
+| `url` set | clone / sync (fetch) / pin record / pin apply / optional tree delete on rm |
+| path only (no `url`) | **never** runs git; user owns the tree entirely |
+
+Path-only entries may still exist on disk for local-only layouts. Sync and pin ignore them.
+
+## Plain clones
+
+Each managed entry’s **Primary checkout** is a normal git working tree at its config `path` (relative to Workspace root).
+
+- No `.gitmodules`, no submodule init/update.
+- Nested managed paths are allowed (e.g. a Progen repo under a Project path): each remains its own git repo.
+- Parallel branches of the “same” remote are **multiple entries** (distinct names, paths, optional `branch`), not one entry with many trees.
+
+### Optional `branch`
+
+Managed entries may set **`branch`**. When set, clone checks out that branch (creating local tracking as git normally would). When unset, clone uses the remote’s default HEAD.
+
+`branch` is a checkout preference, not a pin. **Pin authority is always the recorded commit SHA.**
+
+## Workspace git
+
+- Workspace root **may** be a git repository; ODM does not require it for day-to-day commands once a Workspace exists.
+- **`odm init`** creates a git repo at the Workspace root **by default**. Skip with a no-git flag (exact flag in cli.md).
+- When the Workspace is a git repo, managed checkouts are ordinary nested directories (usually ignored — see gitignore below). The Workspace repo tracks ODM config and optional pin file under `.odm/`, not the nested project histories. Full `.odm/` contract: `architecture.md`.
+
+## Materialize (clone)
+
+When ODM must ensure a managed entry exists on disk:
+
+| Disk state at `path` | Behavior |
+|----------------------|----------|
+| missing | `git clone <url> <path>` (full history; `branch` if set) |
+| empty directory | clone into it |
+| git repo, `origin` URL matches config `url` (normalized) | already materialized; do not re-clone |
+| git repo, `origin` mismatch | **fail** (no silent rewrite of remotes) |
+| exists, not a git repo | **fail** (never delete or adopt user data) |
+
+URL must be acceptable to `git clone`. No zip/rsync fallback in v1.
+
+## Sync
+
+**Sync** means: ensure present, then refresh remotes — **not** move HEAD.
+
+1. If missing (or empty dir): materialize (clone).
+2. If present and valid: `git fetch` (default remote).
+3. **Never** checkout, reset, merge, or rebase as part of sync.
+
+Pin apply is a separate operation when trees must match locked revisions.
+
+## Add and remove
+
+Semantics (command names in cli.md):
+
+### Add
+
+1. Write the Project or Progen entry into Workspace config (`path`, `url`, optional `branch` / `type`).
+2. If `url` is set: materialize (clone), unless a **no-clone** option defers disk work (config-only declare for offline/edit flows).
+
+### Remove
+
+1. Remove the entry from Workspace config (un-declare).
+2. Working tree **stays** by default.
+3. Optional **delete** flag: remove the working tree only if the tree is clean (or not a git repo). Dirty tree → **fail** unless **force**. Un-declare still allowed when delete is not requested.
+
+## Nested paths and ordering
+
+Managed paths may nest. When operating on **all** managed entries:
+
+- Order by **increasing path depth** (parents before children) for materialize/sync.
+- Fail-fast on the first hard error; do not continue as if the batch succeeded.
+- Pin auto-updates apply only to entries that succeeded in that run.
+
+Single-name operations affect only that entry (still subject to nest rules if clone would require a missing parent path — parent must already exist or be managed and materialized first).
+
+## Gitignore management
+
+Config key **`manage_gitignore`** (boolean, **default true** when omitted): when the Workspace is a git repo, ODM maintains ignore rules so managed checkout paths are not committed into ancestor repos.
+
+- Updates `.gitignore` in the **Workspace root** and in any **ancestor managed checkout** that contains another managed path.
+- When `manage_gitignore` is false, ODM does not edit ignore files (user is responsible).
+- Exact ignore file format and markers are an implementation detail; behavior is “managed paths stay untracked in parents.”
+
+## Pin file
+
+**Path:** `.odm/odm.lock.yaml` (fixed basename beside Workspace config). Not referenced from inside config.
+
+### Creation
+
+- **Auto-create** on the first successful materialize (clone) of any managed entry **only if** the Workspace root is already a git repository.
+- Non-git Workspaces never get a pin file from auto-create (explicit pin init may exist later in CLI; not required for this model).
+- Until the file exists, there is no pin behavior.
+
+### While present (auto-maintain)
+
+After successful clone, sync, or other lifecycle ops that leave a defined HEAD on a managed entry, ODM **updates** that entry’s recorded revision to the current full commit SHA.
+
+- Auto-maintain keeps the lock **accurate**.
+- Auto-maintain does **not** checkout pins during sync.
+
+### Contents
+
+```yaml
+version: 1
+pins:
+  api:
+    rev: "0123456789abcdef0123456789abcdef01234567"
+    url: https://github.com/acme/api.git
+    branch: main          # optional metadata; rev is authoritative
+  product-docs:
+    rev: "abcdef0123456789abcdef0123456789abcdef01"
+    url: https://github.com/acme/product-docs.git
+```
+
+- Keys are **entity names** (Project or Progen) that are managed.
+- Drop pins for names removed from config on the next successful update pass; add pins when a managed entry is first materialized.
+- Path-only entities never appear.
+
+### Pin apply
+
+Separate operation (name in cli.md): for each pin whose path exists, check out **`rev` as detached HEAD**.
+
+- Dirty working tree → **fail** unless force.
+- Missing path → skip or fail per CLI (design default: fail for named apply; for all-apply, fail-fast).
+- Does not change config. After a successful apply, auto-maintain leaves `rev` unchanged (HEAD already at pin).
+
+## Batch vs single
+
+Lifecycle ops accept **one entity name** or **all managed entries**. Default workspace-wide sync = all managed, depth-ordered, fail-fast.
+
+## Explicit non-use of submodules
+
+Legacy Go ODM used `git submodule add` / remove. Rust ODM **replaces** that with plain clones + optional pin file. Migration docs must not map “keep submodules”; they map “declare path+url and clone.”
+
+## Related
+
+- Workspace config keys and entry fields: `config.md`
+- `.odm/` tracked vs ephemeral layout: `architecture.md` / ODM state directory contract
+- Worktree slots (sketch): `worktrees.md`
+- CLI verbs: `cli.md`

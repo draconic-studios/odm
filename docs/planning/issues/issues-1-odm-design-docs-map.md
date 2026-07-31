@@ -46,7 +46,7 @@ A coherent, reviewable design package under `docs/` (plus root `CONTEXT.md`) tha
   - `.odm/` = ODM state + config only; does **not** own managed checkouts/progens; core parts are **tracked**; ephemeral index/worktrees/cache gitignored.
   - Progens live at any path (`docs/…`, `documentation/…`, `notes/…`); config is source of truth for layout.
   - Query scope: default all progens; `--progen` one or many; named combinations only in ODM config; **no cross-store links inside a progen store**.
-  - Workspace git optional; pin file (`odm.lock.yaml`) opt-in.
+  - Workspace git optional (`odm init` git-inits by default); pin file (`.odm/odm.lock.yaml`) auto when Workspace is git; config under `.odm/`.
   - Distribute static binary; `odm init` bootstraps a consumer workspace (ODM product repo ≠ user workspace).
   - Integrate progen as crates (one binary); ODM owns UX; progen owns store/index/context internals.
 - **Source draft:** user-supplied ODM Design (session); baseline refs: progenitor, life-engine docs, this repo's Go legacy.
@@ -56,6 +56,12 @@ A coherent, reviewable design package under `docs/` (plus root `CONTEXT.md`) tha
 
 - [[issues-3-research-progenitor-surface]] — progen stack is single-root MD+frontmatter+SQLite FTS; no multi-root; ODM must orchestrate federation. Notes: `docs/reference/research/progenitor-surface.md` (branch `research/progenitor-surface`).
 - [[issues-4-research-legacy-go-odm]] — Go ODM is submodule+actions+partial plugins; replace config/VCS lifecycle; drop go-plugin path. Notes: `docs/reference/research/legacy-go-odm.md` (branch `research/legacy-go-odm`).
+- [[issues-2-domain-glossary]] — ubiquitous language in root `CONTEXT.md`: Workspace, Project, Progen, Progen group, ODM state directory, Primary checkout, Worktree slot, Agent pack, Workspace config, Pin file, Action; never “brain”.
+- [[issues-5-config-schema-spine]] — v1 Workspace config in `docs/reference/config.md`: maps by name; `progen_groups`; `actions`/`generators` as bundle file pointers; no layout templates; pin file by basename. *(path amended by Multi-git: config under `.odm/`)*
+- [[issues-6-progen-scope-and-federation]] — federation in `docs/reference/progen.md`: default all Progens; `--progen` / `--progen-group` union; single-Progen writes; no cross-store wikilinks; external MD links OK; ODM orchestrates single-root ops.
+- [[issues-7-multi-git-and-pins]] — plain clones in `docs/reference/multi-git.md`; config/pin under `.odm/`; sync=fetch-only; opt-in auto pin; no submodules.
+- [[issues-8-odm-dot-directory-contract]] — `.odm/` layout + discovery in `docs/reference/architecture.md`; worktrees outside `.odm/`; config/pin tracked; caches ignored.
+- [[issues-9-cli-surface-v1]] — command tree + globals in `docs/reference/cli.md`: `init`, `sync`/`pin`/`status`/`doctor`, `project` (+ git passthrough; worktree sketch), `progen` lifecycle+façade, top-level `find`/`context`, `run`, sketch `generate`/`agent`; exit 0–4; no serve/MCP.
 
 
 ## Not yet specified
@@ -66,9 +72,9 @@ A coherent, reviewable design package under `docs/` (plus root `CONTEXT.md`) tha
 - Whether multi-root federation is upstreamed into progen crates later
 - Concrete frontmatter/kind parity with life-engine vs progen today
 - Packaging channels beyond GitHub Releases (brew, etc.)
-- How much of standalone `progen` CLI UX is re-exported vs fully redesigned under `odm progen`
 - Worktree branch naming templates and `odm agent start` flow (sketch depth TBD)
 - Optional reader for legacy Go `odm.config.yaml` actions shape
+- Full flag tables for every re-exported `odm progen` store verb (implement against progenitor + scope rules)
 
 ## Out of scope
 
