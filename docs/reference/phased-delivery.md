@@ -27,11 +27,14 @@ Sketch-only areas (worktrees, graph/tags, env, generators depth, agent packs) ar
 
 ### 1. Design package
 
-**Done means:**
+**Done means** (acceptance checklist; full record on planning issue design-package-acceptance):
 
-- Reviewable design under `docs/reference/` (+ root `CONTEXT.md`) covering vision, architecture, config, CLI, multi-git, progen federation, and this delivery spine
-- Open questions listed; no unresolved conflicts with locked decisions
-- Acceptance for the design map agreed (`issues-13` or successor)
+- **Files present** — root `CONTEXT.md`; full-spec refs: `vision`, `architecture`, `config`, `cli`, `progen`, `multi-git`, `phased-delivery`; sketches: `worktrees`, `graph`, `env-gen-packs`. Not required: `concepts.md`, ADRs, research notes
+- **Depth** — full-spec enough to start Implement core without reopening fundamentals; sketches at the locked sketch bar (not Ship gates); CONTEXT = product nouns only, no “brain”
+- **No unresolved conflicts** — map Decisions match cited files; required files don’t contradict locked choices; CONTEXT vocabulary used in refs; Out-of-scope / Not-yet-specified not silently promoted
+- **Open questions** — map **Not yet specified** is the register (may be non-empty); no unnamed design blockers
+- **Ready** — safe to chart a later **Implement core** map only; this phase does not start implementation
+- **Close** — checklist green → close acceptance ticket → close design map. Human gate = closing that ticket
 
 **Out of this phase:**
 
@@ -111,4 +114,5 @@ Dogfood or CI artifacts may exist during phases 2–4. They are not “ODM v1 sh
 - CLI: `cli.md`
 - Multi-git: `multi-git.md`
 - Progen: `progen.md`
+- Sketch sections: `worktrees.md`, `graph.md`, `env-gen-packs.md`
 - Legacy facts (optional): `research/legacy-go-odm.md`

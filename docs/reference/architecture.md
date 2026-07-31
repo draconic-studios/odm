@@ -155,5 +155,7 @@ Rules:
 - Config schema: `config.md`
 - Multi-git + pin semantics: `multi-git.md`
 - Progen federation: `progen.md`
-- Worktree slot behavior (sketch): `worktrees.md`
+- Worktree slots (sketch): `worktrees.md`
+- Code↔doc index (sketch): `graph.md`
+- Env / generators / packs (sketch): `env-gen-packs.md`
 - CLI (`--root`, init): `cli.md`

@@ -2,7 +2,7 @@
 id: issues-1
 title: "ODM design docs map"
 description: "Wayfinder map: coherent reviewable design package under docs/ for the Rust ODM redesign (no implementation)."
-status: open
+status: closed
 tags:
   - planning
   - issue
@@ -63,6 +63,8 @@ A coherent, reviewable design package under `docs/` (plus root `CONTEXT.md`) tha
 - [[issues-9-cli-surface-v1]] — command tree + globals in `docs/reference/cli.md`: `init`, `sync`/`pin`/`status`/`doctor`, `project` (+ git passthrough; worktree sketch), `progen` lifecycle+façade, top-level `find`/`context`, `run`, sketch `generate`/`agent`; exit 0–4; no serve/MCP.
 - [[issues-10-vision-and-architecture-narrative]] — product one-liner, jobs, non-goals, ownership, system narrative, crate intent in `docs/reference/vision.md` + `docs/reference/architecture.md`.
 - [[issues-11-migration-and-repo-home]] — no `migration.md`; greenfield Rust-first in this repo; phase spine + ship intent in `docs/reference/phased-delivery.md`.
+- [[issues-12-sketch-sections-depth]] — sketch bar + `worktrees.md` / `graph.md` / `env-gen-packs.md`; serve/MCP and sketch absences explicit; not Ship gates.
+- [[issues-13-design-package-acceptance]] — acceptance checklist (files, depth, no conflicts, open-question register, ready = later Implement core map only); green run closes this map. Recorded on the issue + `phased-delivery.md` Design package Done-means.
 
 ## Not yet specified
 
@@ -72,7 +74,7 @@ A coherent, reviewable design package under `docs/` (plus root `CONTEXT.md`) tha
 - Whether multi-root federation is upstreamed into progen crates later
 - Concrete frontmatter/kind parity with life-engine vs progen today
 - Packaging channels beyond GitHub Releases (brew, etc.)
-- Worktree branch naming templates and `odm agent start` flow (sketch depth TBD)
+- Worktree branch naming templates and full `odm agent start` flow (beyond sketch)
 - Full flag tables for every re-exported `odm progen` store verb (implement against progenitor + scope rules)
 
 ## Out of scope

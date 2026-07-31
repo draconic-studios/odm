@@ -5,7 +5,7 @@ Command tree and global flags for the `odm` binary. Domain terms: root `CONTEXT.
 Depth markers:
 
 - **Full** — behavior locked here (enough to implement without reopening).
-- **Sketch** — name reserved + one-liner; detail in later docs / [[issues-12-sketch-sections-depth]].
+- **Sketch** — name reserved + one-liner; depth in `worktrees.md`, `graph.md`, `env-gen-packs.md`.
 
 ## Binary and non-goals
 
@@ -236,7 +236,7 @@ odm run <action-name> [--project <name>] [--wt <slot>] [--json] [--] [extra-args
 odm generate <generator-name> [generator-flags…]
 ```
 
-Resolve Generator by name from bundles; template/package behavior deferred (`config.md` deferred list, issue 12).
+Resolve Generator by name from bundles; template/package behavior deferred (`config.md`, `env-gen-packs.md`).
 
 ---
 
@@ -251,7 +251,7 @@ odm agent prompt <id> --progen …     # thin wrap of progen prompt when specifi
 ```
 
 - Honors `--project`, `--wt`, `--progen`, `--json` where relevant.
-- Full start/pack/prompt flows: issue 12 / worktrees / env-gen-packs docs.
+- Full start/pack/prompt flows: `worktrees.md`, `env-gen-packs.md`.
 - Not MCP/`serve`.
 
 ---
@@ -269,4 +269,4 @@ odm agent prompt <id> --progen …     # thin wrap of progen prompt when specifi
 - Clone / sync / pin semantics: `multi-git.md`
 - Federation and scope: `progen.md`
 - Upstream command inventory: `research/progenitor-surface.md`
-- Sketch depth follow-up: planning issue sketch sections
+- Sketch depth: `worktrees.md`, `graph.md`, `env-gen-packs.md`
