@@ -5,6 +5,7 @@ use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
 use clap::Parser;
+use odm_actions::{list_actions, run_action, RunOptions};
 use odm_core::{
     abs_checkout, build_status, discover_root, format_doctor_human, format_status_human,
     init_workspace, load_workspace, path_buf_to_rel, pin_apply, pin_status, progen_add, progen_rm,
@@ -370,6 +371,62 @@ fn run(cli: Cli, out: &GlobalOut) -> Result<i32, OdmError> {
                 print!("{}", format_context_human(&hit));
             }
             Ok(0)
+        }
+        Commands::Run {
+            action,
+            project,
+            wt,
+            extra,
+        } => {
+            let root = discover_root(cli.root.as_deref(), &std::env::current_dir()?)?;
+            let ws = load_workspace(&root)?;
+            match action {
+                None => {
+                    let listed = list_actions(&ws);
+                    if out.json {
+                        let actions: Vec<_> = listed
+                            .iter()
+                            .map(|(name, def)| {
+                                serde_json::json!({
+                                    "name": name,
+                                    "tasks": def.tasks.iter().map(|t| {
+                                        serde_json::json!({
+                                            "run": t.run,
+                                            "dir": t.dir,
+                                        })
+                                    }).collect::<Vec<_>>(),
+                                })
+                            })
+                            .collect();
+                        print_json(&serde_json::json!({ "actions": actions }))?;
+                    } else if listed.is_empty() {
+                        println!("(no actions)");
+                    } else {
+                        for (name, _) in listed {
+                            println!("{name}");
+                        }
+                    }
+                    Ok(0)
+                }
+                Some(name) => {
+                    let code = run_action(
+                        &ws,
+                        &name,
+                        RunOptions {
+                            project: project.as_deref(),
+                            wt: wt.as_deref(),
+                            extra_args: &extra,
+                        },
+                    )?;
+                    if out.json {
+                        print_json(&serde_json::json!({
+                            "action": name,
+                            "exitCode": code,
+                        }))?;
+                    }
+                    Ok(code)
+                }
+            }
         }
     }
 }

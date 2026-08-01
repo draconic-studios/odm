@@ -341,12 +341,21 @@ version = "0.1.0"
 dependencies = [
  "assert_cmd",
  "clap",
+ "odm-actions",
  "odm-core",
  "odm-git",
  "odm-progen",
  "predicates",
  "serde",
  "serde_json",
+ "tempfile",
+]
+
+[[package]]
+name = "odm-actions"
+version = "0.1.0"
+dependencies = [
+ "odm-core",
  "tempfile",
 ]
 

@@ -86,6 +86,19 @@ pub enum Commands {
         /// Note id, or `progen:id`.
         id: String,
     },
+
+    /// List or run an Action from merged bundles.
+    Run {
+        /// Action name (omit to list).
+        action: Option<String>,
+        #[arg(long)]
+        project: Option<String>,
+        #[arg(long)]
+        wt: Option<String>,
+        /// Extra args after `--`
+        #[arg(last = true)]
+        extra: Vec<String>,
+    },
 }
 
 #[derive(Debug, Subcommand)]
