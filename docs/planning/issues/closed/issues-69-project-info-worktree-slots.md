@@ -2,7 +2,7 @@
 id: issues-69
 title: "project info reports registered worktree slots"
 description: "odm project info includes registered worktree_slots like status."
-status: open
+status: closed
 issue-type: feature-request
 severity: medium
 tags:
@@ -60,11 +60,11 @@ None
 
 **Acceptance criteria:**
 
-- [ ] `odm project info <p> --json` includes `worktree_slots` array with name/path
-- [ ] Registered slot appears; empty when none
-- [ ] Human mentions slots when present
-- [ ] cli.md updated
-- [ ] `cargo test` green
+- [x] `odm project info <p> --json` includes `worktree_slots` array with name/path
+- [x] Registered slot appears; empty when none
+- [x] Human mentions slots when present
+- [x] cli.md updated
+- [x] `cargo test` green
 
 **Out of scope:**
 
@@ -75,3 +75,7 @@ None
 ## Acceptance
 
 Mirror Agent Brief checklist.
+
+## Answer
+
+`ProjectInfoDto` always includes `worktree_slots: Vec<WorktreeSlotInfo>` filled via soft-fail `worktree_list` (same as status). Human prints `worktrees: a, b` only when non-empty. Unit + `cli_worktree` integration + `cli.md` updated. `cargo test` green.

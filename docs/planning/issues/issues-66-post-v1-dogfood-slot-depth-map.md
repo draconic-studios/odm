@@ -40,6 +40,7 @@ After polish map [[issues-60-post-v1-polish-map]] closed (`find --limit`, status
 - Prefer order: 67 (docs) unblocked; 68 independent; 69 after status shape known (already landed); 70 independent; 71 after orphan semantics (already landed) — all unblocked at seed.
 - **67 closed:** CHANGELOG Unreleased records `find --limit` (default 200) and status registered `worktree_slots`; orphans remain doctor-only; no prune/dirty claims yet.
 - **68 closed:** core-desk README + `core_desk_worktree_status_find_gate` dogfood worktree add/list, status `worktree_slots`, and `find --limit` against `DeskUniqueToken`.
+- **69 closed:** `project info` JSON always has registered `worktree_slots` (`name`/`path`); soft-fail to `[]`; human `worktrees: …` when non-empty.
 
 ## Not yet specified
 

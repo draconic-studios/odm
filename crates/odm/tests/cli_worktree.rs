@@ -230,6 +230,76 @@ fn worktree_add_list_git_wt_rm_roundtrip() {
 }
 
 #[test]
+fn project_info_includes_registered_worktree_slots() {
+    let dir = tempdir().unwrap();
+    let root = dir.path().join("ws");
+    workspace_with_git_project(&root);
+
+    // empty before add
+    let empty_out = odm()
+        .args([
+            "--root",
+            root.to_str().unwrap(),
+            "--json",
+            "project",
+            "info",
+            "alpha",
+        ])
+        .assert()
+        .success()
+        .get_output()
+        .stdout
+        .clone();
+    let empty: serde_json::Value = serde_json::from_slice(&empty_out).unwrap();
+    assert_eq!(empty["worktree_slots"], serde_json::json!([]));
+
+    odm()
+        .args([
+            "--root",
+            root.to_str().unwrap(),
+            "project",
+            "worktree",
+            "add",
+            "alpha",
+            "slot1",
+            "--branch",
+            "slot1",
+        ])
+        .assert()
+        .success();
+
+    let info_out = odm()
+        .args([
+            "--root",
+            root.to_str().unwrap(),
+            "--json",
+            "project",
+            "info",
+            "alpha",
+        ])
+        .assert()
+        .success()
+        .get_output()
+        .stdout
+        .clone();
+    let info: serde_json::Value = serde_json::from_slice(&info_out).unwrap();
+    assert_eq!(info["worktree_slots"][0]["name"], "slot1");
+    assert_eq!(info["worktree_slots"][0]["path"], "worktrees/alpha/slot1");
+
+    odm()
+        .args([
+            "--root",
+            root.to_str().unwrap(),
+            "project",
+            "info",
+            "alpha",
+        ])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("worktrees: slot1"));
+}
+
+#[test]
 fn project_git_wt_missing_slot_fails_without_creating_path() {
     let dir = tempdir().unwrap();
     let root = dir.path().join("ws");

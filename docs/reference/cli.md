@@ -137,7 +137,7 @@ odm project worktree add <project> <slot> [--branch <b>]
 odm project worktree rm <project> <slot> [--force]
 ```
 
-- **`list` / `info`**: config + disk/git summary; `--json`.
+- **`list` / `info`**: config + disk/git summary; `--json`. `info` includes registered `worktree_slots: [ { "name", "path" } ]` (`path` is `worktrees/<project>/<slot>`; empty array when none / non-git / list soft-fails). Human lists slot names only when non-empty (`worktrees: a, b`).
 - **`add`**: write Project entry; if `url` set, materialize unless `--no-clone` (`multi-git.md`).
 - **`rm`**: un-declare; tree **kept** by default; `--delete` removes tree if clean; dirty → fail unless `--force`. Does **not** delete `worktrees/<project>/`.
 - **`git`**: run `git -C <primary-or-wt> <git-args…>` (argv after `--`, not a shell string). Exit code = git’s. On success, if pin file exists and **HEAD changed** on **Primary**, **auto-maintain** that entity’s pin (not “sync”). `--wt` selects slot working tree (must exist; no auto-create; pin maintain stays Primary-only).

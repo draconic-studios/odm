@@ -1,8 +1,8 @@
 //! `odm project list` / `info` — config ⨝ observation → DTO.
 
 use odm_core::{
-    build_status, load_pin, observe_workspace, EntityObservation, OdmError, PinState,
-    StatusSnapshot, Workspace,
+    build_status, load_pin, observe_workspace, worktree_list, EntityObservation, OdmError,
+    PinState, StatusSnapshot, Workspace, WorktreeSlotInfo,
 };
 use odm_git::Git;
 use serde::Serialize;
@@ -43,6 +43,8 @@ pub struct ProjectInfoDto {
     pub dirty: Option<bool>,
     pub pin_rev: Option<String>,
     pub pin_state: PinState,
+    /// Registered worktree slots (`name` + `path`); always present, empty when none.
+    pub worktree_slots: Vec<WorktreeSlotInfo>,
 }
 
 /// Pure projection: Workspace config ⨝ status snapshot → list DTO.
@@ -95,6 +97,8 @@ pub fn project_info_from(
         dirty: obs.dirty,
         pin_rev: obs.pin_rev.clone(),
         pin_state: obs.pin_state,
+        // Filled by [`project_info`] via soft-fail `worktree_list`.
+        worktree_slots: vec![],
     }
 }
 
@@ -125,14 +129,19 @@ pub fn project_info<R: odm_git::CommandRunner>(
         .iter()
         .find(|p| p.name == name)
         .ok_or_else(|| OdmError::usage(format!("unknown project '{name}'")))?;
-    Ok(project_info_from(
+    let mut dto = project_info_from(
         name,
         &entry.path,
         entry.url.as_deref(),
         entry.branch.as_deref(),
         entry.type_.as_deref(),
         st,
-    ))
+    );
+    dto.worktree_slots = match worktree_list(git, ws, name) {
+        Ok(out) => out.slots,
+        Err(_) => vec![],
+    };
+    Ok(dto)
 }
 
 /// Human multi-line list (beside DTO; not a third presentation home).
@@ -178,6 +187,10 @@ pub fn format_project_info_human(dto: &ProjectInfoDto) -> String {
         out.push_str(&format!("origin: {o}\n"));
     }
     out.push_str(&format!("pin_state: {:?}\n", dto.pin_state));
+    if !dto.worktree_slots.is_empty() {
+        let names: Vec<&str> = dto.worktree_slots.iter().map(|s| s.name.as_str()).collect();
+        out.push_str(&format!("worktrees: {}\n", names.join(", ")));
+    }
     out
 }
 
@@ -187,7 +200,7 @@ mod tests {
     use std::collections::BTreeMap;
     use std::path::PathBuf;
 
-    use odm_core::{EntityStatus, PinState, ProjectEntry, WorkspaceConfig};
+    use odm_core::{EntityStatus, PinState, ProjectEntry, WorkspaceConfig, WorktreeSlotInfo};
 
     fn ws_one(name: &str, path: &str) -> Workspace {
         let mut projects = BTreeMap::new();
@@ -319,5 +332,120 @@ mod tests {
         };
         let dto = project_info_from("local", "projects/local", None, None, None, &obs);
         assert!(dto.origin.is_none());
+    }
+
+    #[test]
+    fn project_info_dto_worktree_slots_always_present_empty_by_default() {
+        let obs = EntityObservation {
+            name: "alpha".into(),
+            path: "projects/alpha".into(),
+            url: None,
+            managed: false,
+            abs_path: Some(PathBuf::from("/tmp/ws/projects/alpha")),
+            resolve_error: None,
+            on_disk: true,
+            is_git: true,
+            head: Some("abc".into()),
+            origin: None,
+            dirty: Some(false),
+            pin_rev: None,
+            pin_state: PinState::None,
+        };
+        let dto = project_info_from("alpha", "projects/alpha", None, None, None, &obs);
+        let v = serde_json::to_value(&dto).unwrap();
+        assert_eq!(v["worktree_slots"], serde_json::json!([]));
+        assert!(dto.worktree_slots.is_empty());
+    }
+
+    #[test]
+    fn project_info_dto_worktree_slots_json_name_and_path() {
+        let mut dto = project_info_from(
+            "alpha",
+            "projects/alpha",
+            None,
+            None,
+            None,
+            &EntityObservation {
+                name: "alpha".into(),
+                path: "projects/alpha".into(),
+                url: None,
+                managed: false,
+                abs_path: None,
+                resolve_error: None,
+                on_disk: true,
+                is_git: true,
+                head: None,
+                origin: None,
+                dirty: None,
+                pin_rev: None,
+                pin_state: PinState::None,
+            },
+        );
+        dto.worktree_slots = vec![
+            WorktreeSlotInfo {
+                name: "a".into(),
+                path: "worktrees/alpha/a".into(),
+            },
+            WorktreeSlotInfo {
+                name: "b".into(),
+                path: "worktrees/alpha/b".into(),
+            },
+        ];
+        let v = serde_json::to_value(&dto).unwrap();
+        assert_eq!(v["worktree_slots"][0]["name"], "a");
+        assert_eq!(v["worktree_slots"][0]["path"], "worktrees/alpha/a");
+        assert_eq!(v["worktree_slots"][1]["name"], "b");
+        assert_eq!(v["worktree_slots"][1]["path"], "worktrees/alpha/b");
+    }
+
+    #[test]
+    fn format_project_info_human_shows_slots_when_non_empty() {
+        let dto = ProjectInfoDto {
+            name: "alpha".into(),
+            path: "projects/alpha".into(),
+            url: None,
+            branch: None,
+            type_: None,
+            on_disk: true,
+            is_git: true,
+            head: None,
+            origin: None,
+            dirty: None,
+            pin_rev: None,
+            pin_state: PinState::None,
+            worktree_slots: vec![
+                WorktreeSlotInfo {
+                    name: "a".into(),
+                    path: "worktrees/alpha/a".into(),
+                },
+                WorktreeSlotInfo {
+                    name: "b".into(),
+                    path: "worktrees/alpha/b".into(),
+                },
+            ],
+        };
+        let human = format_project_info_human(&dto);
+        assert!(human.contains("worktrees: a, b"), "{human}");
+    }
+
+    #[test]
+    fn format_project_info_human_silent_when_slots_empty() {
+        let dto = ProjectInfoDto {
+            name: "alpha".into(),
+            path: "projects/alpha".into(),
+            url: None,
+            branch: None,
+            type_: None,
+            on_disk: true,
+            is_git: true,
+            head: None,
+            origin: None,
+            dirty: None,
+            pin_rev: None,
+            pin_state: PinState::None,
+            worktree_slots: vec![],
+        };
+        let human = format_project_info_human(&dto);
+        assert!(!human.contains("worktrees"), "{human}");
     }
 }
