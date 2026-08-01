@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`odm project worktree prune`** — remove orphan slot dirs under `worktrees/<project>/` (same orphan definition as doctor). Default deletes empty orphans only (exit `3` if any non-empty orphan remains after partial cleanup); `--force` recursive-deletes orphans. Never deletes registered worktrees. Doctor `--fix` still does not delete orphans.
 - **`odm find --limit`** — max hits per Progen store (default **200**); `0` is rejected with usage exit `1`.
 - **`odm status` worktree slots** — each project includes registered `worktree_slots` (`name` + `path`); human output lists slot names when non-empty. Orphan dirs under `worktrees/` remain doctor-only (not status).
+- **`odm project info` worktree slots** — registered `worktree_slots` (`name` + `path`), same shape as status; empty array when none / non-git / soft-fail; human `worktrees: …` when non-empty.
 
 ### Changed
 

@@ -6,11 +6,13 @@ See `docs/agents/issue-tracker.md`.
 
 ## Maps
 
-_(none open)_
+- [[issues-72-post-v1-honesty-dogfood-map]] — Post-v1 honesty + dogfood after slot depth
 
 ## Frontier (open, unblocked)
 
-_(empty)_
+- [[issues-74-core-desk-prune-dirty-dogfood]] — core-desk prune + doctor dirty/orphan dogfood
+- [[issues-75-clippy-doctor-worktree]] — clippy clean doctor_worktree
+- [[issues-76-readme-slot-depth-honesty]] — root README slot-depth honesty
 
 ## Blocked
 
