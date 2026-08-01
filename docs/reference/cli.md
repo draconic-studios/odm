@@ -118,9 +118,9 @@ Workspace snapshot: configured Projects/Progens, on-disk presence, git/pin drift
 odm doctor [--fix]
 ```
 
-**ODM-side** checks only: config load, declared paths, gitignore management drift, pin file consistency basics, worktree slot orphan **warns** (configured Project dirs under `worktrees/<project>/` that are not registered git worktrees; not fixable). Not store-content doctor (`odm progen doctor`).
+**ODM-side** checks only: config load, declared paths, gitignore management drift, pin file consistency basics, worktree slot orphan **warns** (configured Project dirs under `worktrees/<project>/` that are not registered git worktrees; not fixable), and dirty registered worktree slot **warns** (`worktree_dirty:<project>:<slot>`; not fixable). Not store-content doctor (`odm progen doctor`).
 
-- **`--fix`**: mechanical ODM repairs only (same spirit as upstream progen doctor) — no destructive git rewrites; does not delete orphan worktree dirs.
+- **`--fix`**: mechanical ODM repairs only (same spirit as upstream progen doctor) — no destructive git rewrites; does not delete orphan worktree dirs or clean/stash dirty slots.
 
 ---
 

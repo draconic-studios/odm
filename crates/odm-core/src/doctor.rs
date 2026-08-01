@@ -104,6 +104,7 @@ fn collect_checks<R: odm_git::CommandRunner>(
     checks.push(gitignore_drift_check(ws, git)?);
     checks.extend(pin_checks(ws)?);
     checks.extend(crate::doctor_worktree::worktree_orphan_checks(git, ws));
+    checks.extend(crate::doctor_worktree::worktree_dirty_checks(git, ws));
 
     Ok(checks)
 }

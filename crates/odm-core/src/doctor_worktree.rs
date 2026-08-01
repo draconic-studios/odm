@@ -5,7 +5,7 @@ use odm_git::Git;
 
 use crate::config::Workspace;
 use crate::doctor::{CheckStatus, DoctorCheck};
-use crate::paths::abs_checkout;
+use crate::paths::{abs_checkout, worktree_slot_path};
 use crate::worktree::{validate_slot_name, worktree_list};
 
 /// Warn on `worktrees/<project>/<slot>/` dirs that are not registered git worktrees.
@@ -75,6 +75,38 @@ pub(crate) fn worktree_orphan_checks<R: odm_git::CommandRunner>(
     checks
 }
 
+/// Warn on dirty registered worktree slots. Not fixable; soft-skips probe errors.
+pub(crate) fn worktree_dirty_checks<R: odm_git::CommandRunner>(
+    git: &Git<R>,
+    ws: &Workspace,
+) -> Vec<DoctorCheck> {
+    let mut checks = Vec::new();
+    for (project, _) in &ws.config.projects {
+        let Ok(list) = worktree_list(git, ws, project) else {
+            continue;
+        };
+        for slot in list.slots {
+            let abs = worktree_slot_path(&ws.root, project, &slot.name);
+            if !abs.is_dir() {
+                continue;
+            }
+            match git.is_clean(&abs) {
+                Ok(false) => {
+                    let rel = format!("worktrees/{project}/{}", slot.name);
+                    checks.push(DoctorCheck {
+                        id: format!("worktree_dirty:{project}:{}", slot.name),
+                        status: CheckStatus::Warn,
+                        message: format!("dirty worktree slot working tree: {rel}"),
+                        fixable: false,
+                    });
+                }
+                Ok(true) | Err(_) => {}
+            }
+        }
+    }
+    checks
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -91,7 +123,6 @@ mod tests {
     use crate::config::{ProjectEntry, WorkspaceConfig};
     use crate::doctor::run_doctor;
     use crate::init::{init_workspace, InitOptions};
-    use crate::paths::worktree_slot_path;
 
     #[cfg(unix)]
     use std::os::unix::process::ExitStatusExt;
@@ -338,13 +369,16 @@ mod tests {
             "worktree {}\nHEAD abc\nbranch refs/heads/main\n\n",
             primary.display()
         );
-        // observe: is_repo + head + origin + dirty; orphan: is_repo + worktree list.
+        // observe: is_repo + head + origin + dirty; orphan: is_repo + worktree list;
+        // dirty: is_repo + worktree list (no registered slots → no is_clean).
         // manage_gitignore off → no workspace is_repo. apply_fixes only ensures .odm layout.
         let (runner, _) = ScriptedRunner::new(vec![
             is_repo_true(),
             out_ok_stdout("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"), // head_sha
             out_ok_stdout("https://example.com/alpha.git\n"),             // origin
             out_ok_stdout(""),                                             // is_clean
+            is_repo_true(),
+            out_ok_stdout(&porcelain),
             is_repo_true(),
             out_ok_stdout(&porcelain),
         ]);
@@ -359,6 +393,14 @@ mod tests {
         assert_eq!(c.status, CheckStatus::Warn);
         assert!(!c.fixable);
         assert!(report.ok); // Warn only
+        assert!(
+            report
+                .checks
+                .iter()
+                .all(|c| !c.id.starts_with("worktree_dirty:")),
+            "orphan must not produce dirty checks: {:?}",
+            report.checks
+        );
     }
 
     #[test]
@@ -385,5 +427,201 @@ mod tests {
         let checks = worktree_orphan_checks(&g, &ws);
         assert_eq!(checks.len(), 1);
         assert_eq!(checks[0].id, "worktree_orphan:alpha:real");
+    }
+
+    // --- worktree dirty checks ---
+
+    #[test]
+    fn dirty_registered_slot_warns_not_fixable() {
+        let dir = tempdir().unwrap();
+        let root = dir.path();
+        let primary = ensure_primary(root, "projects/alpha");
+        let slot = worktree_slot_path(root, "alpha", "feat");
+        fs::create_dir_all(&slot).unwrap();
+        let ws = ws_with_project(root.to_path_buf(), "alpha", "projects/alpha");
+        let porcelain = format!(
+            "worktree {}\nHEAD abc\nbranch refs/heads/main\n\n\
+             worktree {}\nHEAD def\nbranch refs/heads/feat\n\n",
+            primary.display(),
+            slot.display(),
+        );
+        let (runner, _) = ScriptedRunner::new(vec![
+            is_repo_true(),
+            out_ok_stdout(&porcelain),
+            out_ok_stdout(" M dirty.txt\n"), // is_clean → dirty
+        ]);
+        let g = Git::with_runner(runner);
+        let checks = worktree_dirty_checks(&g, &ws);
+        assert_eq!(checks.len(), 1);
+        let c = &checks[0];
+        assert_eq!(c.id, "worktree_dirty:alpha:feat");
+        assert_eq!(c.status, CheckStatus::Warn);
+        assert!(!c.fixable);
+        assert!(c.message.contains("worktrees/alpha/feat"));
+    }
+
+    #[test]
+    fn clean_registered_slot_no_dirty_check() {
+        let dir = tempdir().unwrap();
+        let root = dir.path();
+        let primary = ensure_primary(root, "projects/alpha");
+        let slot = worktree_slot_path(root, "alpha", "feat");
+        fs::create_dir_all(&slot).unwrap();
+        let ws = ws_with_project(root.to_path_buf(), "alpha", "projects/alpha");
+        let porcelain = format!(
+            "worktree {}\nHEAD abc\nbranch refs/heads/main\n\n\
+             worktree {}\nHEAD def\nbranch refs/heads/feat\n\n",
+            primary.display(),
+            slot.display(),
+        );
+        let (runner, _) = ScriptedRunner::new(vec![
+            is_repo_true(),
+            out_ok_stdout(&porcelain),
+            out_ok_stdout(""), // is_clean → clean
+        ]);
+        let g = Git::with_runner(runner);
+        let checks = worktree_dirty_checks(&g, &ws);
+        assert!(
+            checks.iter().all(|c| !c.id.starts_with("worktree_dirty:")),
+            "clean slot must not warn: {checks:?}"
+        );
+    }
+
+    #[test]
+    fn orphan_dir_is_not_dirty_checked() {
+        let dir = tempdir().unwrap();
+        let root = dir.path();
+        let primary = ensure_primary(root, "projects/alpha");
+        let orphan = worktree_slot_path(root, "alpha", "stale");
+        fs::create_dir_all(&orphan).unwrap();
+        let ws = ws_with_project(root.to_path_buf(), "alpha", "projects/alpha");
+        let porcelain = format!(
+            "worktree {}\nHEAD abc\nbranch refs/heads/main\n\n",
+            primary.display()
+        );
+        // orphan scan + dirty scan each call worktree_list once
+        let (runner, _) = ScriptedRunner::new(vec![
+            is_repo_true(),
+            out_ok_stdout(&porcelain),
+            is_repo_true(),
+            out_ok_stdout(&porcelain),
+        ]);
+        let g = Git::with_runner(runner);
+        let orphans = worktree_orphan_checks(&g, &ws);
+        let dirty = worktree_dirty_checks(&g, &ws);
+        assert_eq!(orphans.len(), 1);
+        assert_eq!(orphans[0].id, "worktree_orphan:alpha:stale");
+        assert!(
+            dirty.iter().all(|c| !c.id.starts_with("worktree_dirty:")),
+            "orphan must not get dirty check: {dirty:?}"
+        );
+    }
+
+    #[test]
+    fn is_clean_err_skips_slot() {
+        let dir = tempdir().unwrap();
+        let root = dir.path();
+        let primary = ensure_primary(root, "projects/alpha");
+        let slot = worktree_slot_path(root, "alpha", "feat");
+        fs::create_dir_all(&slot).unwrap();
+        let ws = ws_with_project(root.to_path_buf(), "alpha", "projects/alpha");
+        let porcelain = format!(
+            "worktree {}\nHEAD abc\nbranch refs/heads/main\n\n\
+             worktree {}\nHEAD def\nbranch refs/heads/feat\n\n",
+            primary.display(),
+            slot.display(),
+        );
+        let (runner, _) = ScriptedRunner::new(vec![
+            is_repo_true(),
+            out_ok_stdout(&porcelain),
+            out_fail("status failed"),
+        ]);
+        let g = Git::with_runner(runner);
+        let checks = worktree_dirty_checks(&g, &ws);
+        assert!(checks.is_empty(), "probe error must skip: {checks:?}");
+    }
+
+    #[test]
+    fn non_git_primary_skips_dirty_scan() {
+        let dir = tempdir().unwrap();
+        let root = dir.path();
+        ensure_primary(root, "projects/alpha");
+        let slot = worktree_slot_path(root, "alpha", "feat");
+        fs::create_dir_all(&slot).unwrap();
+        let ws = ws_with_project(root.to_path_buf(), "alpha", "projects/alpha");
+        let (runner, _) = ScriptedRunner::new(vec![is_repo_false()]);
+        let g = Git::with_runner(runner);
+        let checks = worktree_dirty_checks(&g, &ws);
+        assert!(checks.is_empty(), "non-git must not dirty-check: {checks:?}");
+    }
+
+    #[test]
+    fn doctor_fix_does_not_clean_dirty_slot() {
+        let dir = tempdir().unwrap();
+        init_workspace(InitOptions {
+            path: dir.path().to_path_buf(),
+            no_git: true,
+            name: None,
+        })
+        .unwrap();
+        let root = dir.path();
+        let primary = ensure_primary(root, "projects/alpha");
+        let slot = worktree_slot_path(root, "alpha", "feat");
+        fs::create_dir_all(&slot).unwrap();
+        let dirty_file = slot.join("dirty.txt");
+        fs::write(&dirty_file, b"uncommitted").unwrap();
+        let mut cfg = WorkspaceConfig {
+            manage_gitignore: Some(false),
+            ..Default::default()
+        };
+        cfg.projects.insert(
+            "alpha".into(),
+            ProjectEntry {
+                path: "projects/alpha".into(),
+                url: None,
+                branch: None,
+                type_: None,
+            },
+        );
+        let ws = Workspace {
+            root: root.to_path_buf(),
+            config: cfg,
+            actions: Default::default(),
+            generators: Default::default(),
+        };
+        let porcelain = format!(
+            "worktree {}\nHEAD abc\nbranch refs/heads/main\n\n\
+             worktree {}\nHEAD def\nbranch refs/heads/feat\n\n",
+            primary.display(),
+            slot.display(),
+        );
+        // observe: is_repo + head + origin + dirty(primary);
+        // orphan: is_repo + worktree list;
+        // dirty: is_repo + worktree list + is_clean(slot).
+        let (runner, _) = ScriptedRunner::new(vec![
+            is_repo_true(),
+            out_ok_stdout("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"),
+            out_ok_stdout("https://example.com/alpha.git\n"),
+            out_ok_stdout(""), // primary clean
+            is_repo_true(),
+            out_ok_stdout(&porcelain),
+            is_repo_true(),
+            out_ok_stdout(&porcelain),
+            out_ok_stdout("?? dirty.txt\n"), // slot dirty
+        ]);
+        let g = Git::with_runner(runner);
+        let report = run_doctor(&g, &ws, true).unwrap();
+        assert!(
+            dirty_file.is_file(),
+            "doctor --fix must not clean/stash slot trees"
+        );
+        let c = report
+            .checks
+            .iter()
+            .find(|c| c.id == "worktree_dirty:alpha:feat")
+            .expect("dirty warn present");
+        assert_eq!(c.status, CheckStatus::Warn);
+        assert!(!c.fixable);
+        assert!(report.ok); // Warn only
     }
 }

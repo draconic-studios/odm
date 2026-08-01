@@ -10,7 +10,6 @@ See `docs/agents/issue-tracker.md`.
 
 ## Frontier (open, unblocked)
 
-- [[issues-70-doctor-dirty-worktree-slots]] — doctor dirty registered slot warns
 - [[issues-71-worktree-orphan-prune]] — project worktree prune orphans
 
 ## Blocked

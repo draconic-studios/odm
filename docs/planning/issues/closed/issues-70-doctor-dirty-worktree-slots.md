@@ -2,7 +2,7 @@
 id: issues-70
 title: "doctor warns on dirty registered worktree slots"
 description: "odm doctor Warn when a registered worktree slot working tree is dirty."
-status: open
+status: closed
 issue-type: feature-request
 severity: medium
 tags:
@@ -70,12 +70,12 @@ None
 
 **Acceptance criteria:**
 
-- [ ] Dirty registered slot → Warn `worktree_dirty:<project>:<slot>`, fixable false
-- [ ] Clean registered slot → no dirty warn
-- [ ] Orphan behavior unchanged
-- [ ] `--fix` does not modify slot trees
-- [ ] worktrees.md + cli.md updated
-- [ ] `cargo test` green
+- [x] Dirty registered slot → Warn `worktree_dirty:<project>:<slot>`, fixable false
+- [x] Clean registered slot → no dirty warn
+- [x] Orphan behavior unchanged
+- [x] `--fix` does not modify slot trees
+- [x] worktrees.md + cli.md updated
+- [x] `cargo test` green
 
 **Out of scope:**
 
@@ -87,3 +87,13 @@ None
 ## Acceptance
 
 Mirror Agent Brief checklist.
+
+## Answer
+
+Landed doctor **Warn** checks for dirty registered worktree slots.
+
+- **`worktree_dirty_checks`** in `doctor_worktree.rs`: for each configured project, `worktree_list` registered slots; `git.is_clean` on slot abs path; `Ok(false)` → Warn `worktree_dirty:<project>:<slot>`, `fixable: false`, message includes `worktrees/<project>/<slot>`. Soft-skip missing dir / `is_clean` Err / list Err. Clean → no check. Orphans unchanged (not dirty-probed).
+- **`doctor.rs`**: thin wire after orphan checks.
+- **`--fix`**: no clean/stash path; integration test asserts dirty file survives `run_doctor(..., true)`.
+- **Docs:** `worktrees.md` Rules + Deferred note; `cli.md` doctor bullet; CHANGELOG Unreleased.
+- **Tests:** dirty warn, clean no-op, orphan-only, is_clean Err skip, non-git skip, doctor_fix does not clean.

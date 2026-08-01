@@ -41,6 +41,7 @@ After polish map [[issues-60-post-v1-polish-map]] closed (`find --limit`, status
 - **67 closed:** CHANGELOG Unreleased records `find --limit` (default 200) and status registered `worktree_slots`; orphans remain doctor-only; no prune/dirty claims yet.
 - **68 closed:** core-desk README + `core_desk_worktree_status_find_gate` dogfood worktree add/list, status `worktree_slots`, and `find --limit` against `DeskUniqueToken`.
 - **69 closed:** `project info` JSON always has registered `worktree_slots` (`name`/`path`); soft-fail to `[]`; human `worktrees: …` when non-empty.
+- **70 closed:** doctor Warn `worktree_dirty:<project>:<slot>` for dirty registered slots (`fixable: false`; soft-skip probe errors; `--fix` does not clean/stash).
 
 ## Not yet specified
 
