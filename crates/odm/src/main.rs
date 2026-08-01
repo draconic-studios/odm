@@ -303,7 +303,7 @@ fn run(cli: Cli, out: &GlobalOut) -> Result<i32, OdmError> {
                         .find(|p| p.name == name)
                         .ok_or_else(|| OdmError::usage(format!("unknown project '{name}'")))?;
                     let origin = if st.is_git {
-                        git.origin_url(&abs_checkout(&ws.root, &entry.path)).ok()
+                        git.origin_url(&abs_checkout(&ws.root, &entry.path)?).ok()
                     } else {
                         None
                     };
@@ -569,7 +569,7 @@ fn run_progen(
                 .ok_or_else(|| OdmError::usage(format!("unknown progen '{name}'")))?;
             let sp = ScopedProgen {
                 name: name.clone(),
-                path: abs_checkout(&ws.root, &entry.path),
+                path: abs_checkout(&ws.root, &entry.path)?,
             };
             let info = vault_info(&sp)?;
             if out.json {

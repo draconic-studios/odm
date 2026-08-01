@@ -431,7 +431,7 @@ pub fn format_doctor_human(report: &DoctorReport) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::config::{save_config, ProjectEntry, WorkspaceConfig};
+    use crate::config::{ProjectEntry, WorkspaceConfig};
     use crate::init::{init_workspace, InitOptions};
     use crate::pin::{save_pin, PinEntry, PinFile};
     use tempfile::tempdir;
@@ -490,6 +490,8 @@ mod tests {
             name: None,
         })
         .unwrap();
+        // Bypass load validation so doctor still samples escape at runtime
+        // (load rejects `..`; observation/doctor share resolve_under_root).
         let mut cfg = WorkspaceConfig::default();
         cfg.projects.insert(
             "bad".into(),
@@ -500,8 +502,12 @@ mod tests {
                 type_: None,
             },
         );
-        save_config(dir.path(), &cfg).unwrap();
-        let ws = load_ws(dir.path());
+        let ws = Workspace {
+            root: dir.path().to_path_buf(),
+            config: cfg,
+            actions: Default::default(),
+            generators: Default::default(),
+        };
         let git = Git::new();
         let report = run_doctor(&git, &ws, false).unwrap();
         let c = report

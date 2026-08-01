@@ -2,13 +2,12 @@
 id: issues-35
 title: "Workspace path policy module"
 description: "Single core path module for primary checkout, worktree slot, progen index, and safe under-root resolve."
-status: open
+status: closed
 issue-type: feature-request
 severity: high
 tags:
   - planning
   - issue
-  - ready-for-agent
   - architecture
   - deepen
 ---
@@ -70,19 +69,28 @@ _(none)_
 - Actions cwd priority unchanged: task `dir` > worktree slot > project primary > workspace root
 
 **Acceptance criteria:**
-- [ ] One core implementation defines Primary checkout resolve, Worktree slot path, and Progen index dir
-- [ ] Doctor `path_declared` and lifecycle checkout resolution share the same escape rules
-- [ ] Actions worktree cwd uses core Worktree slot path helper
-- [ ] Progen index create and lifecycle/progen rm target the same directory helper
-- [ ] Unit tests cover escape rejection and worktree/index path shape
-- [ ] Existing CLI/integration tests for actions cwd and progen still pass
-- [ ] `cargo test` and `cargo clippy -- -D warnings` clean for touched crates
+- [x] One core implementation defines Primary checkout resolve, Worktree slot path, and Progen index dir
+- [x] Doctor `path_declared` and lifecycle checkout resolution share the same escape rules
+- [x] Actions worktree cwd uses core Worktree slot path helper
+- [x] Progen index create and lifecycle/progen rm target the same directory helper
+- [x] Unit tests cover escape rejection and worktree/index path shape
+- [x] Existing CLI/integration tests for actions cwd and progen still pass
+- [x] `cargo test` and `cargo clippy -- -D warnings` clean for touched crates
 
 **Out of scope:**
 - Implementing full worktree add/rm commands
 - Changing on-disk layout paths (only consolidate ownership)
 - Action stdio / RunResult deepening (separate issue)
 - Agent pack paths
+
+## Answer
+
+Shipped as `feat(core): workspace path policy module` (this commit).
+
+- **`odm-core::paths`**: single owner for `resolve_under_root`, `abs_checkout` (Result), `worktree_slot_path`, `progen_index_dir`, plus `odm_dir` / config / pin helpers
+- **Config load** `validate_rel_path` shares escape rules with runtime resolve
+- **Lifecycle / progen / CLI / actions** use Result-based checkout; actions `--wt` uses `worktree_slot_path`; progen index open + `progen_rm` use `progen_index_dir`
+- **Tests**: paths unit suite (escape + shapes), config escape reject, doctor escape sample; full `cargo test` green
 
 ## Comments
 

@@ -3,7 +3,7 @@
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use odm_core::{abs_checkout, ActionDef, ActionTask, OdmError, Workspace};
+use odm_core::{abs_checkout, worktree_slot_path, ActionDef, ActionTask, OdmError, Workspace};
 
 #[derive(Debug, Clone, Copy)]
 pub struct RunOptions<'a> {
@@ -38,10 +38,7 @@ pub fn resolve_cwd(
         let project = project_path.ok_or_else(|| {
             OdmError::usage("--wt requires --project")
         })?;
-        let cwd = ws_root
-            .join("worktrees")
-            .join(project)
-            .join(slot);
+        let cwd = worktree_slot_path(ws_root, project, slot);
         if !cwd.is_dir() {
             return Err(OdmError::usage(format!(
                 "worktree path does not exist: worktrees/{project}/{slot}"
@@ -50,7 +47,7 @@ pub fn resolve_cwd(
         return Ok(cwd);
     }
     if let Some(rel) = project_path {
-        let cwd = abs_checkout(ws_root, rel);
+        let cwd = abs_checkout(ws_root, rel)?;
         if !cwd.is_dir() {
             return Err(OdmError::usage(format!(
                 "project path does not exist: {rel}"

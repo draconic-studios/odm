@@ -1,7 +1,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use odm_core::{odm_dir, OdmError, Workspace};
+use odm_core::{progen_index_dir, OdmError, Workspace};
 use rusqlite::{params, Connection};
 
 use crate::scope::ScopedProgen;
@@ -38,7 +38,7 @@ pub struct IndexStats {
 
 /// `.odm/progen/<name>/`
 pub fn index_dir(ws_root: &Path, progen_name: &str) -> PathBuf {
-    odm_dir(ws_root).join("progen").join(progen_name)
+    progen_index_dir(ws_root, progen_name)
 }
 
 fn index_db_path(ws_root: &Path, progen_name: &str) -> PathBuf {

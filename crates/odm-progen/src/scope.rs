@@ -106,7 +106,7 @@ fn scoped_from_config(
         .ok_or_else(|| OdmError::usage(format!("unknown progen '{name}'")))?;
     Ok(ScopedProgen {
         name: name.to_string(),
-        path: abs_checkout(root, &entry.path),
+        path: abs_checkout(root, &entry.path)?,
     })
 }
 

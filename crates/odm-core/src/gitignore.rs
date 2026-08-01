@@ -1,5 +1,5 @@
 use std::fs;
-use std::path::{Component, Path, PathBuf};
+use std::path::Path;
 
 use crate::config::WorkspaceConfig;
 use crate::error::OdmError;
@@ -281,47 +281,6 @@ fn split_markers(text: &str) -> Option<(String, String)> {
     Some((text[..begin].to_string(), text[after_start..].to_string()))
 }
 
-/// Resolve `rel` under `root`; Err if absolute or escapes via `..`.
-pub fn resolve_under_root(root: &Path, rel: &str) -> Result<PathBuf, OdmError> {
-    let p = Path::new(rel);
-    if p.is_absolute() {
-        return Err(OdmError::workspace(format!(
-            "path must be relative, got '{rel}'"
-        )));
-    }
-    let mut out = root.to_path_buf();
-    for c in p.components() {
-        match c {
-            Component::CurDir => {}
-            Component::Normal(s) => out.push(s),
-            Component::ParentDir => {
-                if !out.pop() || out.as_os_str().is_empty() {
-                    return Err(OdmError::workspace(format!(
-                        "path escapes Workspace root: '{rel}'"
-                    )));
-                }
-                // pop past root?
-                if !out.starts_with(root) {
-                    return Err(OdmError::workspace(format!(
-                        "path escapes Workspace root: '{rel}'"
-                    )));
-                }
-            }
-            Component::RootDir | Component::Prefix(_) => {
-                return Err(OdmError::workspace(format!(
-                    "path must be relative, got '{rel}'"
-                )));
-            }
-        }
-    }
-    if !out.starts_with(root) {
-        return Err(OdmError::workspace(format!(
-            "path escapes Workspace root: '{rel}'"
-        )));
-    }
-    Ok(out)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -457,6 +416,7 @@ mod tests {
 
     #[test]
     fn resolve_under_root_blocks_escape() {
+        use crate::paths::resolve_under_root;
         let root = Path::new("/ws");
         assert!(resolve_under_root(root, "projects/a").is_ok());
         assert!(resolve_under_root(root, "../outside").is_err());

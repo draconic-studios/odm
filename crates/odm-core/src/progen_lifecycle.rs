@@ -8,8 +8,9 @@ use crate::config::{save_config, ProgenEntry, WorkspaceConfig};
 use crate::error::OdmError;
 use crate::gitignore::apply_managed_gitignore;
 use crate::lifecycle::{
-    abs_checkout, all_managed, materialize, maintain_pins_after, ManagedEntity, MaterializeOutcome,
+    all_managed, materialize, maintain_pins_after, ManagedEntity, MaterializeOutcome,
 };
+use crate::paths::{abs_checkout, progen_index_dir};
 use crate::pin::{load_pin, prune_pins, save_pin};
 
 /// Add a progen entry; optional materialize; scaffold vault when path-only / after clone.
@@ -61,7 +62,7 @@ pub fn progen_add<R: odm_git::CommandRunner>(
         }
     }
 
-    let abs = abs_checkout(root, &rel);
+    let abs = abs_checkout(root, &rel)?;
     if managed.is_none() || outcome.is_some() {
         // Path-only always scaffold; managed after successful materialize.
         if managed.is_none() || abs.exists() {
@@ -86,7 +87,7 @@ pub fn progen_rm<R: odm_git::CommandRunner>(
     })?;
 
     if delete {
-        let path = abs_checkout(root, &entry.path);
+        let path = abs_checkout(root, &entry.path)?;
         if path.exists() {
             if git.is_repo(&path)? && !force && !git.is_clean(&path)? {
                 config.progens.insert(name.to_string(), entry);
@@ -99,7 +100,7 @@ pub fn progen_rm<R: odm_git::CommandRunner>(
     }
 
     // Drop ODM-side index cache
-    let idx = crate::config::odm_dir(root).join("progen").join(name);
+    let idx = progen_index_dir(root, name);
     if idx.exists() {
         let _ = remove_path(&idx);
     }

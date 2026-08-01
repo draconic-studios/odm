@@ -6,7 +6,7 @@ use odm_git::Git;
 
 use crate::config::WorkspaceConfig;
 use crate::error::OdmError;
-use crate::gitignore::resolve_under_root;
+use crate::paths::resolve_under_root;
 use crate::pin::PinFile;
 use crate::status::{compute_pin_state, PinState};
 

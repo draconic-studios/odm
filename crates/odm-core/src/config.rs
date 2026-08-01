@@ -6,6 +6,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::OdmError;
 use crate::io::atomic_write;
+use crate::paths::resolve_under_root;
+
+pub use crate::paths::{config_path, odm_dir, pin_path};
 
 /// Canonical Workspace config (`.odm/odm.config.yaml`).
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -131,18 +134,6 @@ impl Workspace {
     }
 }
 
-pub fn config_path(root: &Path) -> PathBuf {
-    root.join(".odm").join("odm.config.yaml")
-}
-
-pub fn pin_path(root: &Path) -> PathBuf {
-    root.join(".odm").join("odm.lock.yaml")
-}
-
-pub fn odm_dir(root: &Path) -> PathBuf {
-    root.join(".odm")
-}
-
 /// Deserialize + validate config at `root` (eager bundle load).
 pub fn load_workspace(root: &Path) -> Result<Workspace, OdmError> {
     let path = config_path(root);
@@ -219,12 +210,19 @@ fn validate_rel_path(kind: &str, name: &str, path: &str) -> Result<(), OdmError>
             "{kind} '{name}' path must not be empty"
         )));
     }
-    let p = Path::new(path);
-    if p.is_absolute() {
-        return Err(OdmError::workspace(format!(
-            "{kind} '{name}' path must be relative, got '{path}'"
-        )));
-    }
+    // Same escape rules as runtime checkout resolve (`paths::resolve_under_root`).
+    resolve_under_root(Path::new("/__odm_ws__"), path).map_err(|e| {
+        let msg = e.to_string();
+        if msg.contains("relative") {
+            OdmError::workspace(format!(
+                "{kind} '{name}' path must be relative, got '{path}'"
+            ))
+        } else {
+            OdmError::workspace(format!(
+                "{kind} '{name}' path must not escape Workspace root, got '{path}'"
+            ))
+        }
+    })?;
     Ok(())
 }
 
@@ -406,6 +404,15 @@ mod tests {
         let dir = tempdir().unwrap();
         let err = validate_and_load_bundles(dir.path(), c).unwrap_err();
         assert!(err.to_string().contains("relative"));
+    }
+
+    #[test]
+    fn escape_path_rejected() {
+        let yaml = "projects:\n  x:\n    path: ../outside\n";
+        let c = parse_config_yaml(yaml).unwrap();
+        let dir = tempdir().unwrap();
+        let err = validate_and_load_bundles(dir.path(), c).unwrap_err();
+        assert!(err.to_string().contains("escape"));
     }
 
     #[test]

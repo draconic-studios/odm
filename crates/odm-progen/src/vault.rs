@@ -13,7 +13,7 @@ pub fn vault_path(ws: &Workspace, name: &str) -> Result<PathBuf, OdmError> {
         .progens
         .get(name)
         .ok_or_else(|| OdmError::usage(format!("unknown progen '{name}'")))?;
-    Ok(abs_checkout(&ws.root, &entry.path))
+    abs_checkout(&ws.root, &entry.path)
 }
 
 #[derive(Debug, Clone)]

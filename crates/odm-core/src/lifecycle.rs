@@ -1,11 +1,12 @@
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use odm_git::Git;
 
 use crate::config::{save_config, ProjectEntry, Workspace, WorkspaceConfig};
 use crate::error::OdmError;
 use crate::gitignore::apply_managed_gitignore;
+use crate::paths::abs_checkout;
 use crate::pin::{load_pin, prune_pins, save_pin, PinEntry, PinFile};
 use crate::url_match::urls_match_with_root;
 
@@ -137,11 +138,6 @@ fn path_depth(rel: &str) -> usize {
         .count()
 }
 
-/// Absolute checkout path for a relative config path.
-pub fn abs_checkout(root: &Path, rel: &str) -> PathBuf {
-    root.join(rel)
-}
-
 /// Resolve config url for `git clone` (relative → absolute under workspace root).
 pub fn resolve_clone_url(root: &Path, url: &str) -> String {
     let t = url.trim();
@@ -169,7 +165,7 @@ pub fn materialize<R: odm_git::CommandRunner>(
     root: &Path,
     entity: &ManagedEntity,
 ) -> Result<MaterializeOutcome, OdmError> {
-    let path = abs_checkout(root, &entity.path);
+    let path = abs_checkout(root, &entity.path)?;
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent).map_err(|e| {
             OdmError::operation(format!(
@@ -251,7 +247,7 @@ pub fn sync_managed<R: odm_git::CommandRunner>(
 
     for entity in &entities {
         let outcome = materialize(git, root, entity)?;
-        let path = abs_checkout(root, &entity.path);
+        let path = abs_checkout(root, &entity.path)?;
         git.fetch(&path)?;
         let head = git.head_sha(&path).ok();
         results.push(SyncResult {
@@ -297,7 +293,7 @@ pub fn maintain_pins_after<R: odm_git::CommandRunner>(
     prune_pins(&mut pin, &managed_names);
 
     for entity in entities {
-        let path = abs_checkout(root, &entity.path);
+        let path = abs_checkout(root, &entity.path)?;
         if !path.exists() || !git.is_repo(&path)? {
             continue;
         }
@@ -411,7 +407,7 @@ pub fn pin_apply<R: odm_git::CommandRunner>(
 
     let mut results = Vec::new();
     for (name, entry, rel) in targets {
-        let path = abs_checkout(root, &rel);
+        let path = abs_checkout(root, &rel)?;
         if !path.exists() {
             return Err(OdmError::not_found(format!(
                 "path missing for '{name}': {rel}"
@@ -514,7 +510,7 @@ pub fn project_rm<R: odm_git::CommandRunner>(
     })?;
 
     if delete {
-        let path = abs_checkout(root, &entry.path);
+        let path = abs_checkout(root, &entry.path)?;
         if path.exists() {
             if git.is_repo(&path)? && !force && !git.is_clean(&path)? {
                 config.projects.insert(name.to_string(), entry);
@@ -571,7 +567,7 @@ pub fn project_git<R: odm_git::CommandRunner>(
     let entry = ws.config.projects.get(name).ok_or_else(|| {
         OdmError::usage(format!("unknown project '{name}'"))
     })?;
-    let path = abs_checkout(&ws.root, &entry.path);
+    let path = abs_checkout(&ws.root, &entry.path)?;
     if !path.exists() {
         return Err(OdmError::not_found(format!(
             "project path missing: {}",
@@ -650,6 +646,7 @@ mod tests {
     use crate::config::{save_config, ProjectEntry, WorkspaceConfig};
     use crate::init::{init_workspace, InitOptions};
     use crate::pin::load_pin;
+    use std::path::PathBuf;
     use std::process::Command;
     use tempfile::tempdir;
 
