@@ -2,7 +2,7 @@
 id: issues-139
 title: "CLI integration: pin force, sync named, project/progen rm"
 description: "Thin binary coverage for pin apply --force, named sync, and membership rm --delete/--force."
-status: open
+status: reviewing
 issue-type: feature-request
 severity: medium
 tags:
