@@ -284,11 +284,11 @@ odm agent pack rm <name>
 - **`--home`:** required agent-native root (may be outside Workspace). Pack materializes at `<home>/<name>/`.
 - **`install`:** recursive copy of source into `<home>/<name>/`. Dest exists without `--force` → exit `3`. With `--force`, replace then copy. Missing source → exit `4`.
 - **`link`:** symlink `<home>/<name>` → absolute resolved source. Same exists/`--force` policy. Platforms without symlink support → clear operation error (no silent copy fallback).
-- **`list`:** registry-backed (`.odm/agent-packs.json`). Human: one name per line sorted; empty → `(no agent packs)`. `--json`: `{ "packs": [ { "name", "source", "path", "mode" } ] }` (`mode` = `"install"` | `"link"`).
-- **`rm`:** drop registry entry and best-effort delete destination (install tree or link symlink). Missing dest still succeeds (stale-registry cleanup). Unknown name → exit `4`. Human: `removed <name> -> <path>`. `--json`: single entry object (same fields as list items) for the removed pack.
-- **install/link/rm `--json`:** single entry object (same fields as list items), not wrapped.
+- **`list`:** registry-backed (`.odm/agent-packs.json`). Human: one name per line sorted; empty → `(no agent packs)`; ` missing` suffix when dest has no path/symlink entry. `--json`: `{ "packs": [ { "name", "source", "path", "mode", "missing" } ] }` (`mode` = `"install"` | `"link"`). `missing` is `true` when the pack path has no path/symlink entry (same rule as status `agent_packs` / doctor `pack_missing`); dangling symlink present is not missing. Doctor still owns the warn check.
+- **`rm`:** drop registry entry and best-effort delete destination (install tree or link symlink). Missing dest still succeeds (stale-registry cleanup). Unknown name → exit `4`. Human: `removed <name> -> <path>`. `--json`: single entry object (same fields as list items, including `missing`) for the removed pack.
+- **install/link/rm `--json`:** single entry object (same fields as list items, including `missing`), not wrapped.
 - Human success: `installed <name> -> <path>` / `linked <name> -> <path>` / `removed <name> -> <path>`.
-- Deferred: pack manifest, marketplace, config-declared packs (`env-gen-packs.md`); status pack inventory landed on `odm status` (`agent_packs`; doctor `pack_missing` warn separate — see doctor); `agent start` runtime.
+- Deferred: pack manifest, marketplace, config-declared packs (`env-gen-packs.md`); status pack inventory and pack list/entry `missing` observation landed (`agent_packs` / `agent pack list`; doctor `pack_missing` warn separate — see doctor); `agent start` runtime.
 
 ### `odm agent prompt` — **v1 thin** (context work-package)
 
@@ -317,7 +317,7 @@ odm agent start [--project] [--wt] …
 ## Full vs sketch matrix
 
 - **Full**: global flags (including `--wt` path binding); `init` (headless; `--interactive` not implemented); `sync`; `pin apply|status`; `status`; `doctor` (includes pack_missing warn); `project list|add|rm|info|git|worktree` (v1); `progen` lifecycle + **partial** store façade (implemented verbs above); `find`; `context`; `run`; `generate` (v1 local template + `--dry-run`); `agent pack` (v1 local install/link/list/rm); `agent prompt` (v1 thin context work-package).
-- **Sketch / deferred**: `init --interactive`; reserved progen store verbs; `agent start`; deferred worktree features (config slots, pin↔slot, auto-prune on doctor, branch templates, global `--wt` depth — `worktrees.md`; doctor orphan/dirty **warn**, explicit `worktree prune` / `prune --all`, registered slot `dirty` on list/status/info, and status/info `worktree_orphans` observation landed); generate remote/templating (`--dry-run` landed); pack marketplace/manifest/config declarations (`env-gen-packs.md`; status `agent_packs` inventory + doctor `pack_missing` warn landed).
+- **Sketch / deferred**: `init --interactive`; reserved progen store verbs; `agent start`; deferred worktree features (config slots, pin↔slot, auto-prune on doctor, branch templates, global `--wt` depth — `worktrees.md`; doctor orphan/dirty **warn**, explicit `worktree prune` / `prune --all`, registered slot `dirty` on list/status/info, and status/info `worktree_orphans` observation landed); generate remote/templating (`--dry-run` landed); pack marketplace/manifest/config declarations (`env-gen-packs.md`; status `agent_packs` inventory, pack list/entry `missing`, and doctor `pack_missing` warn landed).
 
 - **Absent**: `serve`, MCP, top-level action verbs, `ops` namespace, path-valued scope flags.
 

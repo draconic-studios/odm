@@ -2,7 +2,7 @@
 id: issues-107
 title: "docs honesty pack list missing"
 description: "cli.md / env-gen-packs / CHANGELOG (and README if needed) document pack list missing field."
-status: open
+status: closed
 issue-type: feature-request
 severity: low
 tags:
@@ -66,10 +66,10 @@ See Agent Brief.
 
 **Acceptance criteria:**
 
-- [ ] cli.md documents list/entry `missing` + human suffix + shared install/link/rm fields
-- [ ] env-gen-packs.md not contradictory
-- [ ] CHANGELOG Unreleased mentions the observation
-- [ ] No false “deferred” claim for pack list missing
+- [x] cli.md documents list/entry `missing` + human suffix + shared install/link/rm fields
+- [x] env-gen-packs.md not contradictory
+- [x] CHANGELOG Unreleased mentions the observation
+- [x] No false “deferred” claim for pack list missing
 
 **Out of scope:**
 
@@ -79,4 +79,15 @@ See Agent Brief.
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met
+
+## Answer
+
+Docs-only honesty after 105/106:
+
+- **cli.md:** pack list JSON `{ name, source, path, mode, missing }`; human ` missing` suffix; install/link/rm entry JSON includes `missing`; path rule aligned with status/doctor; deferred matrix marks list/entry observation landed.
+- **env-gen-packs.md:** list bullet documents `missing` + shared entry shape; status notes parity with pack list.
+- **phased-delivery.md:** agent pack spine notes list/entry `missing`.
+- **CHANGELOG [Unreleased]:** pack list/entry `missing` bullet.
+- **README:** unchanged (no pack list shape claim).
+- No Rust changes.

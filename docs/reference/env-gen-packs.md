@@ -76,10 +76,10 @@ odm agent pack rm <name>
 - **`--home`:** required; pack at `<home>/<name>/`.
 - **`install`:** recursive copy. Exists without `--force` → exit `3`. Missing source → exit `4`.
 - **`link`:** symlink to absolute source; same force policy; no silent copy fallback when symlinks unavailable.
-- **`list`:** human one name per line (empty → `(no agent packs)`); JSON shapes in `cli.md`.
+- **`list`:** human one name per line (empty → `(no agent packs)`; ` missing` suffix when dest absent); `--json` packs include `name` / `source` / `path` / `mode` / `missing` (same path rule as status/doctor; dangling symlink not missing). install/link/rm `--json` share that entry shape. Details: `cli.md`.
 - **`rm`:** drop registry entry and best-effort delete dest; missing dest still OK; unknown name → exit `4`. Human/JSON shapes in `cli.md`.
 - **Doctor:** missing-path **warn** `pack_missing:<name>` when a registry path has no path/symlink entry (`fixable: false`; `--fix` does not edit registry or delete pack paths). Dangling symlink present is not missing. Details: `cli.md`.
-- **Status:** top-level `agent_packs` inventory on `odm status` (`name` / `source` / `path` / `mode` / `missing`); human **Agent packs:** section when non-empty. `missing` matches the doctor path rule; doctor still owns the warn. Details: `cli.md`.
+- **Status:** top-level `agent_packs` inventory on `odm status` (`name` / `source` / `path` / `mode` / `missing`); human **Agent packs:** section when non-empty. `missing` matches the doctor path rule and pack list observation; doctor still owns the warn. Details: `cli.md`.
 
 **Deferred (still explicit):**
 
