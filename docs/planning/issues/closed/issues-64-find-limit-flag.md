@@ -2,7 +2,7 @@
 id: issues-64
 title: "odm find --limit flag"
 description: "Expose find hit limit (default 200) as --limit instead of hardcoding in main."
-status: open
+status: closed
 issue-type: feature-request
 severity: medium
 tags:
@@ -61,11 +61,11 @@ None (docs ticket 62 may race; this ticket owns the flag docs once implemented)
 
 **Acceptance criteria:**
 
-- [ ] `odm find` without `--limit` behaves as before (default 200)
-- [ ] `odm find --limit N` respects N for N≥1
-- [ ] `--limit 0` → exit 1 usage
-- [ ] cli.md documents `--limit`
-- [ ] `cargo test` green
+- [x] `odm find` without `--limit` behaves as before (default 200)
+- [x] `odm find --limit N` respects N for N≥1
+- [x] `--limit 0` → exit 1 usage
+- [x] cli.md documents `--limit`
+- [x] `cargo test` green
 
 **Out of scope:**
 
@@ -76,4 +76,8 @@ None (docs ticket 62 may race; this ticket owns the flag docs once implemented)
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met
+
+## Answer
+
+Shipped `odm find --limit <n>` (clap default 200, find-only). `main` rejects `--limit 0` via `OdmError::usage` (exit 1) and passes `limit` into existing `find_notes_dto` → per-store `limit_per`. Tests: `find_limit_zero_is_usage`, `find_limit_caps_hits` in `progen_vault.rs`. `cli.md` documents synopsis + per-store semantics.

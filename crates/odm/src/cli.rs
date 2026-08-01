@@ -87,6 +87,9 @@ pub enum Commands {
     Find {
         /// Free-text query (empty = list scoped notes).
         query: Option<String>,
+        /// Max hits per Progen store (default 200).
+        #[arg(long, default_value_t = 200)]
+        limit: usize,
     },
 
     /// In-store note neighborhood via wikilinks.

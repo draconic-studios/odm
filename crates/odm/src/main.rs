@@ -318,11 +318,14 @@ fn run(cli: Cli, out: &GlobalOut) -> Result<i32, OdmError> {
             }
         }
         Commands::Progen { cmd } => run_progen(cli.root.as_deref(), &cli.progen, out, cmd),
-        Commands::Find { query } => {
+        Commands::Find { query, limit } => {
+            if limit == 0 {
+                return Err(OdmError::usage("--limit must be at least 1"));
+            }
             let root = discover_root(cli.root.as_deref(), &std::env::current_dir()?)?;
             let ws = load_workspace(&root)?;
             let q = query.unwrap_or_default();
-            let dto = find_notes_dto(&ws, &q, &cli.progen, &cli.progen_group, 200)?;
+            let dto = find_notes_dto(&ws, &q, &cli.progen, &cli.progen_group, limit)?;
             if out.json {
                 print_json(&dto)?;
             } else {

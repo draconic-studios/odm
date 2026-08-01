@@ -10,7 +10,6 @@ See `docs/agents/issue-tracker.md`.
 
 ## Frontier (open, unblocked)
 
-- [[issues-64-find-limit-flag]] — `odm find --limit` (`ready-for-agent`)
 - [[issues-65-status-worktree-slots]] — status registered worktree slots (`ready-for-agent`)
 
 ## Blocked

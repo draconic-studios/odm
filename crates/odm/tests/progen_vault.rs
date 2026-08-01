@@ -319,6 +319,69 @@ fn find_requires_progen_configured() {
 }
 
 #[test]
+fn find_limit_zero_is_usage() {
+    let dir = tempdir().unwrap();
+    let root = dir.path().join("ws");
+    fs::create_dir_all(&root).unwrap();
+    odm()
+        .current_dir(&root)
+        .args(["init", "--no-git", "."])
+        .assert()
+        .success();
+    odm()
+        .current_dir(&root)
+        .args(["progen", "add", "desk", "--path", "vaults/desk"])
+        .assert()
+        .success();
+    odm()
+        .current_dir(&root)
+        .args(["find", "x", "--limit", "0"])
+        .assert()
+        .failure()
+        .code(1)
+        .stderr(predicate::str::contains("limit"));
+}
+
+#[test]
+fn find_limit_caps_hits() {
+    let dir = tempdir().unwrap();
+    let root = dir.path().join("ws");
+    fs::create_dir_all(&root).unwrap();
+    odm()
+        .current_dir(&root)
+        .args(["init", "--no-git", "."])
+        .assert()
+        .success();
+    odm()
+        .current_dir(&root)
+        .args(["progen", "add", "desk", "--path", "vaults/desk"])
+        .assert()
+        .success();
+
+    let vault = root.join("vaults/desk");
+    for (name, id) in [("one.md", "n1"), ("two.md", "n2"), ("three.md", "n3")] {
+        fs::write(
+            vault.join(name),
+            format!("---\nid: {id}\n---\nLimitToken shared body.\n"),
+        )
+        .unwrap();
+    }
+
+    odm()
+        .current_dir(&root)
+        .args(["progen", "reindex"])
+        .assert()
+        .success();
+
+    let v = json_stdout(
+        odm()
+            .current_dir(&root)
+            .args(["find", "LimitToken", "--limit", "1", "--json"]),
+    );
+    assert_eq!(v["hits"].as_array().unwrap().len(), 1);
+}
+
+#[test]
 fn multi_progen_scope() {
     let dir = tempdir().unwrap();
     let root = dir.path().join("ws");

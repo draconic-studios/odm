@@ -196,13 +196,13 @@ Flag parity with upstream: pass through where it does not fight ODM globals; do 
 ### `odm find` — **full**
 
 ```text
-odm find [query] [--progen …] [--progen-group …] [--json]
+odm find [query] [--limit <n>] [--progen …] [--progen-group …] [--json]
 ```
 
 - Federated **FTS** query: fan-out per selected store; merge per `progen.md` (tag `"progen"`, identity `(progen, id)`, stable Progen order). No facet flags on the ODM CLI.
 - Default scope: all configured Progens (`--progen` / `--progen-group` narrow).
 - Empty query → list scoped notes (same path as a free-text query).
-- Default max hits: **200** per store (hardcoded today; no `--limit` flag until shipped).
+- `--limit` max hits **per store**, default **200**; `0` rejected (usage exit `1`).
 - Zero hits → exit `0`, empty list.
 - Empty `progens` map → error (no progen scope) — exit `2` or `1` as fits “no scope configured”.
 - Not named `query` on the ODM binary.
