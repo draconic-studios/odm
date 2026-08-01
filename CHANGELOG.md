@@ -38,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`odm generate --force` file↔dir type conflicts** — per-path remove then write when dest type disagrees with the template (dir where file needed, or file where dir needed), matching symlink overwrite behavior; unit tests cover both directions.
 - **`odm run --json` stdout/stderr** — envelope always includes captured `stdout` and `stderr` strings (concatenated across tasks in order) so agents can debug failures without a second non-JSON run; capture still keeps process stdout clean JSON.
 - **Entity name uniqueness / path safety** — Project and Progen names must be unique across both maps and path-safe tokens (no `/` `\` `.` `..`); enforced on config load and membership add.
 - **`odm run` missing cwd paths** — known project path or `--wt` slot missing on disk now exits `4` (`not_found`); unknown project names still exit `1` (`usage`).

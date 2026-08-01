@@ -2,7 +2,7 @@
 id: issues-135
 title: "generate --force handles file/dir type conflicts"
 description: "force overwrite fails mid-copy on file↔directory conflicts leaving a partial tree; symlinks already remove conflicts."
-status: open
+status: closed
 issue-type: bug
 severity: medium
 tags:
@@ -53,12 +53,12 @@ None
 
 **Acceptance criteria:**
 
-- [ ] Type conflicts succeed under --force
-- [ ] Tests cover file↔dir both ways
-- [ ] `cargo test -p odm-core` green
+- [x] Type conflicts succeed under --force
+- [x] Tests cover file↔dir both ways
+- [x] `cargo test -p odm-core` green
 
 **Out of scope:** remote generators; variable substitution.
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met

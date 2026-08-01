@@ -29,7 +29,8 @@ pub fn generator<'a>(ws: &'a Workspace, name: &str) -> Result<&'a GeneratorDef, 
 /// - Url-only generators return a usage error (remote deferred).
 /// - Without `force`, fails if dest exists as a file or non-empty directory.
 /// - Empty dest directory is allowed without `force`.
-/// - With `force`, overwrites files in place; does not delete unrelated extras.
+/// - With `force`, overwrites files in place; removes file↔dir type conflicts
+///   at each path; does not delete unrelated extras.
 /// - With `dry_run`, validates and counts would-copy files but writes nothing
 ///   (including no force overwrites).
 pub fn generate_local(
@@ -140,6 +141,34 @@ fn count_tree(src: &Path) -> Result<u32, OdmError> {
     Ok(count)
 }
 
+/// If `to` exists with a type that blocks writing `want_dir`, remove it (file or tree).
+fn remove_type_conflict(to: &Path, want_dir: bool) -> Result<(), OdmError> {
+    let meta = match fs::symlink_metadata(to) {
+        Ok(m) => m,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(()),
+        Err(e) => {
+            return Err(OdmError::operation(format!(
+                "failed to stat {}: {e}",
+                to.display()
+            )));
+        }
+    };
+    let ft = meta.file_type();
+    let is_dir = ft.is_dir();
+    if want_dir == is_dir {
+        return Ok(());
+    }
+    if is_dir {
+        fs::remove_dir_all(to).map_err(|e| {
+            OdmError::operation(format!("failed to remove {}: {e}", to.display()))
+        })
+    } else {
+        fs::remove_file(to).map_err(|e| {
+            OdmError::operation(format!("failed to remove {}: {e}", to.display()))
+        })
+    }
+}
+
 /// Recursively copy `src` directory contents into `dst`. Counts files and symlinks.
 fn copy_tree(src: &Path, dst: &Path) -> Result<u32, OdmError> {
     let mut copied = 0u32;
@@ -157,6 +186,7 @@ fn copy_tree(src: &Path, dst: &Path) -> Result<u32, OdmError> {
         })?;
 
         if ft.is_dir() {
+            remove_type_conflict(&to, true)?;
             fs::create_dir_all(&to).map_err(|e| {
                 OdmError::operation(format!("failed to create {}: {e}", to.display()))
             })?;
@@ -173,6 +203,7 @@ fn copy_tree(src: &Path, dst: &Path) -> Result<u32, OdmError> {
                     ))
                 })?;
             }
+            remove_type_conflict(&to, false)?;
             fs::copy(&from, &to).map_err(|e| {
                 OdmError::operation(format!(
                     "failed to copy {} -> {}: {e}",
@@ -340,6 +371,60 @@ mod tests {
             "tpl"
         );
         // Unrelated extra file preserved.
+        assert_eq!(
+            fs::read_to_string(root.join("out/extra.txt")).unwrap(),
+            "keep"
+        );
+    }
+
+    #[test]
+    fn force_file_over_dir_type_conflict() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        setup_template(root, "t", &[("clash", "from-file")]);
+
+        let mut gens = BTreeMap::new();
+        gens.insert("g".into(), gen_template("t"));
+        let ws = ws_with(root.to_path_buf(), gens);
+
+        fs::create_dir_all(root.join("out/clash/nested")).unwrap();
+        fs::write(root.join("out/clash/nested/stale.txt"), "debris").unwrap();
+        fs::write(root.join("out/extra.txt"), "keep").unwrap();
+
+        let out = generate_local(&ws, "g", "out", true, false).unwrap();
+        assert_eq!(out.copied, 1);
+        assert!(root.join("out/clash").is_file());
+        assert_eq!(
+            fs::read_to_string(root.join("out/clash")).unwrap(),
+            "from-file"
+        );
+        assert_eq!(
+            fs::read_to_string(root.join("out/extra.txt")).unwrap(),
+            "keep"
+        );
+    }
+
+    #[test]
+    fn force_dir_over_file_type_conflict() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        setup_template(root, "t", &[("clash/inner.txt", "nested")]);
+
+        let mut gens = BTreeMap::new();
+        gens.insert("g".into(), gen_template("t"));
+        let ws = ws_with(root.to_path_buf(), gens);
+
+        fs::create_dir_all(root.join("out")).unwrap();
+        fs::write(root.join("out/clash"), "was-file").unwrap();
+        fs::write(root.join("out/extra.txt"), "keep").unwrap();
+
+        let out = generate_local(&ws, "g", "out", true, false).unwrap();
+        assert_eq!(out.copied, 1);
+        assert!(root.join("out/clash").is_dir());
+        assert_eq!(
+            fs::read_to_string(root.join("out/clash/inner.txt")).unwrap(),
+            "nested"
+        );
         assert_eq!(
             fs::read_to_string(root.join("out/extra.txt")).unwrap(),
             "keep"

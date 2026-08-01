@@ -31,7 +31,6 @@ See `docs/agents/issue-tracker.md`.
 - [[issues-132-cli-json-ux-hardening]] — prune JSON / progen messages / dual wt (`ready-for-agent`)
 - [[issues-133-git-noninteractive]] — git no auth hang (`ready-for-agent`)
 - [[issues-134-wikilink-fence-frontmatter]] — fences + bad FM (`ready-for-agent`)
-- [[issues-135-generate-force-type-conflict]] — generate force type clash (`ready-for-agent`)
 - [[issues-136-docs-honesty-release-policy]] — Releases / AGENTS / progen.md (`ready-for-agent`)
 
 ### Test coverage (unblocked)
