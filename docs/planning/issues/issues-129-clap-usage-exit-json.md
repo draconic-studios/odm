@@ -2,7 +2,7 @@
 id: issues-129
 title: "Clap parse errors exit 1 and honor --json"
 description: "Clap usage failures exit 2 with human stderr; docs say usage exit 1; --json ignored on parse errors."
-status: open
+status: reviewing
 issue-type: bug
 severity: high
 tags:
