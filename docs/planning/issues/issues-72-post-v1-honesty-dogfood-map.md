@@ -37,6 +37,7 @@ After dogfood/slot-depth map [[issues-66-post-v1-dogfood-slot-depth-map]] closed
 - Prefer order: 73 (docs) unblocked; 76 (docs) unblocked; 75 (clippy) unblocked; 74 (dogfood) unblocked — all unblocked at seed.
 - **issues-73 closed** — CHANGELOG Unreleased records `project info` `worktree_slots`; phased-delivery Phase spine includes prune, dirty-slot doctor, find `--limit`, status+info slots; deferred no longer lists bare GC (aligns with `worktrees.md`).
 - **issues-74 closed** — core-desk README + `core_desk_prune_dirty_doctor_gate` dogfood orphan/dirty doctor warns and `project worktree prune` (empty orphan removed; registered slot kept).
+- **issues-75 closed** — `doctor_worktree.rs` clippy `for_kv_map` + `single_match` cleaned in dirty checks only; behavior unchanged.
 
 ## Not yet specified
 

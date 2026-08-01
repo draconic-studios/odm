@@ -81,7 +81,7 @@ pub(crate) fn worktree_dirty_checks<R: odm_git::CommandRunner>(
     ws: &Workspace,
 ) -> Vec<DoctorCheck> {
     let mut checks = Vec::new();
-    for (project, _) in &ws.config.projects {
+    for project in ws.config.projects.keys() {
         let Ok(list) = worktree_list(git, ws, project) else {
             continue;
         };
@@ -90,17 +90,14 @@ pub(crate) fn worktree_dirty_checks<R: odm_git::CommandRunner>(
             if !abs.is_dir() {
                 continue;
             }
-            match git.is_clean(&abs) {
-                Ok(false) => {
-                    let rel = format!("worktrees/{project}/{}", slot.name);
-                    checks.push(DoctorCheck {
-                        id: format!("worktree_dirty:{project}:{}", slot.name),
-                        status: CheckStatus::Warn,
-                        message: format!("dirty worktree slot working tree: {rel}"),
-                        fixable: false,
-                    });
-                }
-                Ok(true) | Err(_) => {}
+            if let Ok(false) = git.is_clean(&abs) {
+                let rel = format!("worktrees/{project}/{}", slot.name);
+                checks.push(DoctorCheck {
+                    id: format!("worktree_dirty:{project}:{}", slot.name),
+                    status: CheckStatus::Warn,
+                    message: format!("dirty worktree slot working tree: {rel}"),
+                    fixable: false,
+                });
             }
         }
     }
