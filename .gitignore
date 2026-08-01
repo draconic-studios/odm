@@ -22,3 +22,10 @@ dist/
 .odm/index/
 .odm/cache/
 .odm/worktrees/
+
+# Website Playwright (website/)
+website/node_modules/
+website/test-results/
+website/playwright-report/
+website/blob-report/
+website/playwright/.cache/

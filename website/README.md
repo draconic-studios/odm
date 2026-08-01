@@ -10,6 +10,21 @@ python3 -m http.server 8080 --directory website
 # → http://127.0.0.1:8080/
 ```
 
+## Browser tests (Playwright)
+
+Local-only smoke tests against a static server of this directory. Package manager: **npm** (lockfile committed).
+
+```bash
+cd website
+npm install
+npx playwright install chromium
+npm run test:e2e
+# optional UI mode:
+npm run test:e2e:ui
+```
+
+Config: `playwright.config.ts` (serves `.` on port 4173 via `serve`). Tests live in `e2e/`. Artifacts (`test-results/`, `playwright-report/`, etc.) are gitignored.
+
 ## GitHub Pages
 
 GitHub branch deploy only supports `/` or `/docs`, not `/website`. This repo deploys `website/` via a single workflow: `.github/workflows/pages.yml`.

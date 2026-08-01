@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Website Playwright** — local e2e harness under `website/` (`npm run test:e2e`; chromium smoke on home title).
 - **`odm generate`** — v1 local template materialize: list Generators from bundles; `generate <name> --dest <path> [--force]` copies a local template tree under the Workspace (remote/url-only run deferred with a clear error).
 - **`odm generate --dry-run`** — no-write preview: same validation as a real run; reports file count that would be copied; human `would generate …`; JSON includes `dry_run: true` (real runs emit `dry_run: false`).
 

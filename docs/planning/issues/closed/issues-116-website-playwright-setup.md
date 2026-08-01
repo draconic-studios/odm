@@ -2,7 +2,7 @@
 id: issues-116
 title: "Website Playwright setup"
 description: "Add Playwright toolchain for website/ static site (local config, deps, scripts, docs)."
-status: open
+status: closed
 issue-type: feature-request
 severity: medium
 tags:
@@ -67,11 +67,11 @@ None
 
 **Acceptance criteria:**
 
-- [ ] Playwright installed with lockfile; config serves `website/`
-- [ ] One smoke test passes locally after documented install steps
-- [ ] `website/README.md` documents install + run
-- [ ] Artifacts gitignored; no CI requirement unless already trivial
-- [ ] No full page matrix (that is 117)
+- [x] Playwright installed with lockfile; config serves `website/`
+- [x] One smoke test passes locally after documented install steps
+- [x] `website/README.md` documents install + run
+- [x] Artifacts gitignored; no CI requirement unless already trivial
+- [x] No full page matrix (that is 117)
 
 **Out of scope:**
 
@@ -82,4 +82,4 @@ None
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met

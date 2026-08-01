@@ -111,6 +111,8 @@ odm generate hello --dest out/hello
 cargo test
 ```
 
+Website browser smoke tests (Playwright): see [`website/README.md`](website/README.md).
+
 ## Legacy Go
 
 The previous Go CLI was removed. Recoverable as git tag `legacy-go-archive` (or history before that change). Not a compatibility baseline — see [docs/reference/research/legacy-go-odm.md](docs/reference/research/legacy-go-odm.md).
