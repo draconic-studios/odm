@@ -6,6 +6,7 @@ mod project;
 mod progen;
 mod run;
 mod status;
+mod worktree;
 
 pub use find::{find_notes_dto, FindDto};
 pub use materialize::{
@@ -24,3 +25,8 @@ pub use run::{
     format_action_list_human, list_actions_dto, ActionListDto, ActionListItem, ActionTaskDto,
 };
 pub use status::status_snapshot;
+pub use worktree::{
+    format_worktree_add_human, format_worktree_list_human, format_worktree_rm_human,
+    worktree_list_dto, worktree_slot_action_dto, WorktreeListDto, WorktreeSlotActionDto,
+    WorktreeSlotDto,
+};

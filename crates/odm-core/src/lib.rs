@@ -15,6 +15,7 @@ mod pin;
 mod pin_maintain;
 mod status;
 mod url_match;
+mod worktree;
 
 pub use checkout::{
     all_managed, materialize, resolve_clone_url, resolve_managed, sort_by_depth, sync_managed,
@@ -56,3 +57,7 @@ pub use status::{
     PinState, StatusSnapshot,
 };
 pub use url_match::{normalize_git_url, urls_match, urls_match_with_root};
+pub use worktree::{
+    validate_slot_name, worktree_add, worktree_list, worktree_rm, WorktreeListOutcome,
+    WorktreeSlotInfo, WorktreeSlotOutcome,
+};

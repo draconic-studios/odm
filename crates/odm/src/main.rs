@@ -8,14 +8,17 @@ use clap::Parser;
 use odm::commands::{
     find_notes_dto, format_action_list_human, format_progen_add_human, format_progen_info_human,
     format_progen_list_human, format_project_add_human, format_project_info_human,
-    format_project_list_human, list_actions_dto, list_projects, list_progens, materialize_json,
+    format_project_list_human, format_worktree_add_human, format_worktree_list_human,
+    format_worktree_rm_human, list_actions_dto, list_projects, list_progens, materialize_json,
     materialize_json_opt, materialize_sync_human, progen_info, project_info, status_snapshot,
+    worktree_list_dto, worktree_slot_action_dto,
 };
 use odm_actions::{run_action, CwdTarget, RunOptions, StdioMode};
 use odm_core::{
     discover_root, format_doctor_human, format_status_human, init_workspace, load_workspace,
     path_buf_to_rel, pin_apply, pin_status, project_add, project_git, project_rm, run_doctor,
-    sync_managed, InitOptions, OdmError, ProgenEntry, ProjectEntry,
+    sync_managed, worktree_add, worktree_list, worktree_rm, InitOptions, OdmError, ProgenEntry,
+    ProjectEntry,
 };
 use odm_git::Git;
 use odm_progen::{
@@ -24,7 +27,7 @@ use odm_progen::{
     open_single, reindex_for_cli, rm_progen,
 };
 
-use cli::{AgentCmd, Cli, Commands, PinCmd, ProgenCmd, ProjectCmd};
+use cli::{AgentCmd, Cli, Commands, PinCmd, ProgenCmd, ProjectCmd, ProjectWorktreeCmd};
 use output::{print_error, print_json, GlobalOut};
 
 fn main() -> ExitCode {
@@ -273,7 +276,44 @@ fn run(cli: Cli, out: &GlobalOut) -> Result<i32, OdmError> {
                     let status = project_git(&git, &ws, &name, &git_args)?;
                     Ok(status.code().unwrap_or(1))
                 }
-                ProjectCmd::Worktree { .. } => Err(OdmError::not_implemented("project worktree")),
+                ProjectCmd::Worktree { cmd } => match cmd {
+                    ProjectWorktreeCmd::List { project } => {
+                        let outcome = worktree_list(&git, &ws, &project)?;
+                        if out.json {
+                            print_json(&worktree_list_dto(&outcome))?;
+                        } else {
+                            print!("{}", format_worktree_list_human(&outcome));
+                        }
+                        Ok(0)
+                    }
+                    ProjectWorktreeCmd::Add {
+                        project,
+                        slot,
+                        branch,
+                    } => {
+                        let outcome =
+                            worktree_add(&git, &ws, &project, &slot, branch.as_deref())?;
+                        if out.json {
+                            print_json(&worktree_slot_action_dto(&outcome))?;
+                        } else {
+                            println!("{}", format_worktree_add_human(&outcome));
+                        }
+                        Ok(0)
+                    }
+                    ProjectWorktreeCmd::Rm {
+                        project,
+                        slot,
+                        force,
+                    } => {
+                        let outcome = worktree_rm(&git, &ws, &project, &slot, force)?;
+                        if out.json {
+                            print_json(&worktree_slot_action_dto(&outcome))?;
+                        } else {
+                            println!("{}", format_worktree_rm_human(&outcome));
+                        }
+                        Ok(0)
+                    }
+                },
             }
         }
         Commands::Progen { cmd } => run_progen(cli.root.as_deref(), &cli.progen, out, cmd),

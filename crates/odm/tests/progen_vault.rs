@@ -150,8 +150,6 @@ fn generate_and_agent_stubs_exit_1() {
         vec!["agent", "pack"],
         vec!["agent", "start"],
         vec!["agent", "prompt", "x"],
-        vec!["project", "worktree"],
-        vec!["project", "worktree", "add", "x"],
     ] {
         odm()
             .current_dir(&root)

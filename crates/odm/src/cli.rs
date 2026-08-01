@@ -165,10 +165,39 @@ pub enum ProjectCmd {
         #[arg(last = true)]
         git_args: Vec<String>,
     },
-    /// Worktree slot helpers (not implemented).
+    /// Worktree slot lifecycle.
     Worktree {
-        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
-        rest: Vec<String>,
+        #[command(subcommand)]
+        cmd: ProjectWorktreeCmd,
+    },
+}
+
+#[derive(Debug, Subcommand)]
+pub enum ProjectWorktreeCmd {
+    /// List worktree slots for a project.
+    List {
+        /// Project name.
+        project: String,
+    },
+    /// Add a worktree slot.
+    Add {
+        /// Project name.
+        project: String,
+        /// Slot name (simple path segment).
+        slot: String,
+        /// Create and check out a new branch.
+        #[arg(long)]
+        branch: Option<String>,
+    },
+    /// Remove a worktree slot.
+    Rm {
+        /// Project name.
+        project: String,
+        /// Slot name.
+        slot: String,
+        /// Force remove (dirty worktree).
+        #[arg(long)]
+        force: bool,
     },
 }
 

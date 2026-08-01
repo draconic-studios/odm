@@ -44,6 +44,7 @@ Productize **Worktree slots** per `docs/reference/worktrees.md` and `cli.md`: na
 - Path helper already in core (`issues-35`).
 - Slice tickets: [[issues-41-odm-git-worktree-ops]], [[issues-42-worktree-slot-lifecycle]], [[issues-43-project-git-wt-resolve]], [[issues-44-worktree-integration-and-docs]].
 - **issues-41 closed:** `odm-git` exposes `worktree_add` / `worktree_list` / `worktree_remove` + `WorktreeEntry` (porcelain); fake-runner unit tests lock argv and parse.
+- **issues-42 closed:** core `worktree_list`/`add`/`rm` + slot name validation; CLI `odm project worktree list|add|rm` with JSON DTOs; unit tests via fake git runner.
 
 ## Not yet specified
 

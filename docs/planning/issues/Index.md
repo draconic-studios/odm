@@ -10,12 +10,11 @@ See `docs/agents/issue-tracker.md`.
 
 ## Frontier (open, unblocked)
 
-- [[issues-42-worktree-slot-lifecycle]] — core + CLI worktree slot list/add/rm (`ready-for-agent`)
+- [[issues-43-project-git-wt-resolve]] — `project git --wt` slot cwd (`ready-for-agent`)
 
 ## Blocked
 
-- [[issues-43-project-git-wt-resolve]] — blocked by [[issues-42-worktree-slot-lifecycle]]
-- [[issues-44-worktree-integration-and-docs]] — blocked by [[issues-42-worktree-slot-lifecycle]], [[issues-43-project-git-wt-resolve]]
+- [[issues-44-worktree-integration-and-docs]] — blocked by [[issues-43-project-git-wt-resolve]]
 
 ## Architecture deepen (post-0.1.0)
 
