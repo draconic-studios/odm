@@ -2,7 +2,7 @@
 id: issues-81
 title: "core-desk dogfood prune --all and slot dirty status"
 description: "Extend core-desk README + integration gate for prune --all and dirty slots on status."
-status: open
+status: closed
 issue-type: feature-request
 severity: low
 tags:
@@ -65,10 +65,10 @@ See Agent Brief.
 
 **Acceptance criteria:**
 
-- [ ] core-desk README documents prune --all and dirty on status/list
-- [ ] Integration test covers prune --all success path
-- [ ] Integration test covers dirty true on list or status JSON for a registered slot
-- [ ] `cargo test` green
+- [x] core-desk README documents prune --all and dirty on status/list
+- [x] Integration test covers prune --all success path
+- [x] Integration test covers dirty true on list or status JSON for a registered slot
+- [x] `cargo test` green
 
 **Out of scope:**
 
@@ -79,3 +79,11 @@ See Agent Brief.
 ## Acceptance
 
 Mirror Agent Brief checklist.
+
+## Answer
+
+Dogfood gate landed without product changes.
+
+- **README:** `examples/core-desk/README.md` documents `prune --all` / `--force` + JSON shape; status/list `dirty` field and optional dirty demo; doctor orphan/dirty + per-project prune wording kept accurate (no auto-prune).
+- **Test:** `core_desk_prune_all_and_slot_dirty_gate` — empty alpha orphan → `prune --all` JSON (`all: true`, pruned entry, dir gone); registered dirty slot → status + list `"dirty": true`; `rm --force` cleanup.
+- `cargo test` green.

@@ -62,22 +62,33 @@ odm pin apply
 # Worktree slots (git primary after sync; --branch avoids double-checkout of main)
 odm project worktree add alpha dogfood --branch odm-dogfood
 odm project worktree list alpha
-odm status                 # human lists slot names when non-empty
-odm status --json          # projects[].worktree_slots: [{ "name", "path" }]
+odm status                 # human lists slot names when non-empty (dirty suffix when dirty)
+odm status --json          # projects[].worktree_slots: [{ "name", "path", "dirty" }]
+# list --json: { "project", "slots": [{ "name", "path", "dirty" }] }
+# dirty is true / false / null (null = cleanliness probe failed)
 # path shape: worktrees/alpha/dogfood
-# optional cleanup: odm project worktree rm alpha dogfood
+# optional dirty demo (then clean up):
+#   echo x > worktrees/alpha/dogfood/dirty.txt
+#   odm status --json      # dogfood.dirty == true
+#   odm project worktree list alpha --json
+#   odm project worktree rm alpha dogfood --force
+# optional cleanup (clean slot): odm project worktree rm alpha dogfood
 
 # Orphan / dirty doctor + prune (empty dirs under worktrees/<project>/ that are not registered)
 mkdir -p worktrees/alpha/stale-orphan
 odm doctor                 # warn worktree_orphan:alpha:stale-orphan (not fixable)
-# optional dirty registered slot:
+# optional dirty registered slot (doctor warn only — does not auto-prune or clean):
 #   echo x > worktrees/alpha/dogfood/dirty.txt
 #   odm doctor             # warn worktree_dirty:alpha:dogfood (not fixable)
 # doctor --fix does NOT delete orphans or clean dirty slots
 odm project worktree prune alpha
-# removes empty orphan dirs; non-empty orphans need --force
+# removes empty orphan dirs for one project; non-empty orphans need --force
 # exit 3 when non-empty orphans remain without --force
 # odm project worktree prune alpha --force
+# workspace-wide orphan GC (every configured project; same empty/--force rules):
+odm project worktree prune --all
+# odm project worktree prune --all --force
+# --json: { "all": true, "pruned": [{ "project", "name", "path" }], "skipped_nonempty": [...] }
 
 # Progen / Obsidian vault
 odm progen list

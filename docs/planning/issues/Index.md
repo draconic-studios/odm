@@ -6,11 +6,11 @@ See `docs/agents/issue-tracker.md`.
 
 ## Maps
 
-- [[issues-77-post-v1-worktree-observation-map]] — Post-v1 worktree multi-prune + slot dirty observation
+_(none open)_
 
 ## Frontier (open, unblocked)
 
-- [[issues-81-core-desk-worktree-observation-dogfood]] — core-desk dogfood prune --all + dirty status (`ready-for-agent`)
+_(empty — seed next slice)_
 
 ## Blocked
 
@@ -36,3 +36,4 @@ _(none remaining)_
 - [[issues-60-post-v1-polish-map]] — Post-v1 polish (docs honesty, doctor split, find limit, status slots)
 - [[issues-66-post-v1-dogfood-slot-depth-map]] — Post-v1 dogfood + worktree slot depth (CHANGELOG, core-desk, info slots, dirty doctor, orphan prune)
 - [[issues-72-post-v1-honesty-dogfood-map]] — Post-v1 honesty + dogfood after slot depth (phased-delivery/CHANGELOG, core-desk prune/dirty, clippy, README)
+- [[issues-77-post-v1-worktree-observation-map]] — Post-v1 worktree multi-prune + slot dirty observation

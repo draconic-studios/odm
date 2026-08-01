@@ -2,7 +2,7 @@
 id: issues-77
 title: "Post-v1 worktree multi-prune + slot dirty observation map"
 description: "Wayfinder map: workspace-wide worktree prune --all; dirty flag on registered slots in list/status/info; docs + dogfood."
-status: open
+status: closed
 issue-type: feature-request
 tags:
   - planning
@@ -39,6 +39,8 @@ After honesty/dogfood map [[issues-72-post-v1-honesty-dogfood-map]] closed, pull
 - **78 closed:** `odm project worktree prune --all [--force]` — multi-project orphan GC via `worktree_prune_all`; soft-skip non-git/missing; exit 3 on skipped nonempty; distinct `--all` JSON with `skipped_nonempty`.
 - **79 closed:** registered slots expose `dirty: Option<bool>` on `worktree list` / `status` / `project info` via `is_clean` (soft null on probe err); human ` dirty` suffix; doctor reuses list dirty; orphans still doctor/prune only.
 - **80 closed:** docs honesty — phased-delivery Phase spine + deferred, cli.md matrix/worktree blurb, worktrees.md Deferred aligned for prune `--all` + slot dirty; CHANGELOG/README already accurate.
+- **81 closed:** core-desk README + `core_desk_prune_all_and_slot_dirty_gate` dogfood prune `--all` and status/list `"dirty": true`.
+- **Map complete:** destination delivered; further deferred product stays out of scope.
 
 ## Not yet specified
 
@@ -56,3 +58,7 @@ After honesty/dogfood map [[issues-72-post-v1-honesty-dogfood-map]] closed, pull
 ## Blocked by
 
 None
+
+## Answer
+
+Map destination delivered via children 78–81: multi-project prune `--all`, slot dirty observation on list/status/info, reference docs honesty, core-desk dogfood gate.
