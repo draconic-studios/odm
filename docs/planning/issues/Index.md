@@ -6,15 +6,18 @@ See `docs/agents/issue-tracker.md`.
 
 ## Maps
 
-_(none open)_
+- [[issues-82-post-v1-pack-lifecycle-hardening-map]] — Post-v1 pack rm + doctor pack_missing + worktree module split
 
 ## Frontier (open, unblocked)
 
-_(empty — seed next slice)_
+- [[issues-84-agent-pack-rm-core]] — pack_rm core API (ready-for-agent)
+- [[issues-86-doctor-pack-missing]] — doctor pack_missing warn (ready-for-agent)
 
 ## Blocked
 
-_(none)_
+- [[issues-85-agent-pack-rm-cli]] — blocked by 84
+- [[issues-87-pack-lifecycle-docs-honesty]] — blocked by 84+85+86
+- [[issues-88-core-desk-pack-rm-dogfood]] — blocked by 84+85
 
 ## Architecture deepen (post-0.1.0)
 
