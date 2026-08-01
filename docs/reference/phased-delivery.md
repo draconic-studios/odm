@@ -49,7 +49,22 @@ Sketch-only areas (worktrees, graph/tags, env, generators depth, agent packs) ar
 - Rust workspace in this repo matching crate intent in `architecture.md` (at least bin + core + git boundaries as real code)
 - Workspace discovery, `.odm/` layout, Workspace config load, pin file basics
 - Multi-git lifecycle for declared Projects (plain clones; no submodules): sync/pin/status/doctor as in `cli.md` / `multi-git.md`
-- CLI spine: `init` and core verbs above; globals (`--root`, exit codes) per `cli.md`
+- CLI spine: `init`, `sync` / `pin` / `status` / `doctor`, `project` lifecycle; globals (`--root`, `--json`, exit codes) per `cli.md`
+- Dogfood Workspace `examples/core-desk` (local bare fixtures) + integration harness (init → add → sync → pin → status → doctor)
+- Full v1 config schema loads (including non-core maps); no progen façade / `run` / sketch CLIs in this phase
+
+**Slice order** (vertical; unbuilt core verbs exit `1` “not implemented”):
+
+1. Cargo skeleton (`odm` / `odm-core` / `odm-git`)
+2. Config, discovery, `init`
+3. Git materialize/sync + `project add` / `list`
+4. Pin status/apply + auto-maintain
+5. `status` + gitignore manage
+6. `doctor` (+ mechanical `--fix`)
+7. `project` rm / info / git
+8. `examples/core-desk` + integration harness gate
+
+Full acceptance checklist: planning issue vertical-slice-order-and-core-acceptance (Implement core map).
 
 **Out of this phase:**
 

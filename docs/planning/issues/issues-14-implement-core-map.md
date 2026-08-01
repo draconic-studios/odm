@@ -39,6 +39,14 @@ Working **Implement core** in this repo per `docs/reference/phased-delivery.md` 
 
 - [[issues-15-vertical-slice-order-and-core-acceptance]] — Vertical slices 1–8 (skeleton → init → git/add → pin → status/gitignore → doctor → project rest → core-desk+harness); stubs exit 1; map-close checklist in ticket + `phased-delivery.md` phase 2.
 - [[issues-16-odm-git-shell-contract]] — `odm-git`: `Git` + runner; absolute paths + `-C`; ops clone/fetch/init/head/clean/origin/detach/run; typed errors; capture stderr on fail; policy in core.
+- [[issues-17-config-and-pin-serde-model]] — **done** — serde deny-unknown; BTreeMap; eager bundles; atomic write; pin v1 (`odm-core`).
+- [[issues-18-cli-error-and-exit-code-spine]] — **done** — OdmError→exit 1–4; JSON error envelope; bare success JSON.
+- [[issues-19-core-desk-example-layout]] — **done** — fixtures alpha/beta bare + preseeded config; no checkouts committed.
+- [[issues-20-core-json-shapes]] — (open) snake_case bare objects for init/status/doctor/pin/project.
+- [[issues-21-gitignore-manage-markers]] — (partial) markers + workspace-root seed on init landed; ancestor nested updates still open.
+- [[issues-22-doctor-check-matrix]] — (open) check ids + --fix gitignore/dirs only; no pin rewrite.
+- [[issues-23-integration-test-harness]] — (partial) crates/odm/tests + assert_cmd smoke; full core-desk harness open.
+- [[issues-24-url-origin-match-rules]] — **done** — normalize strip .git/SCP/ports; no https↔ssh equate.
 
 ## Not yet specified
 
