@@ -2,7 +2,7 @@
 id: issues-97
 title: "docs honesty for status/info worktree orphans"
 description: "Document landed worktree_orphans on status and project info; strike deferred status orphan listing where implemented."
-status: open
+status: closed
 issue-type: feature-request
 severity: low
 tags:
@@ -62,11 +62,11 @@ See Agent Brief.
 
 **Acceptance criteria:**
 
-- [ ] worktrees.md / cli.md / phased-delivery honest about landed orphans on status + info
-- [ ] Deferred lists no longer treat status orphan listing as pure TODO
-- [ ] CHANGELOG [Unreleased] records the feature
-- [ ] Remaining deferred worktree items still listed
-- [ ] No product code changes; `cargo test` green
+- [x] worktrees.md / cli.md / phased-delivery honest about landed orphans on status + info
+- [x] Deferred lists no longer treat status orphan listing as pure TODO
+- [x] CHANGELOG [Unreleased] records the feature
+- [x] Remaining deferred worktree items still listed
+- [x] No product code changes; `cargo test` green
 
 **Out of scope:**
 
@@ -75,4 +75,15 @@ See Agent Brief.
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met
+
+## Answer
+
+Docs-only honesty after 95+96:
+
+- **worktrees.md:** Rules — status/info report registered slots **and** `worktree_orphans` (observation); list stays registered-only; doctor warn + prune cleanup. Deferred struck status orphan listing; remaining deferred kept; landed parenthetical.
+- **cli.md:** status + project info document `worktree_orphans` JSON + human `orphans: …`; sketch matrix marks status/info orphans landed.
+- **phased-delivery.md:** Phase spine bullet for status/info `worktree_orphans`; deferred bullet updated.
+- **CHANGELOG [Unreleased]:** status/info worktree orphans bullet; removed “doctor-only (not status)” clause.
+- **README:** one-line note that status/info report orphan slot dirs.
+- No Rust changes; `cargo test` green.

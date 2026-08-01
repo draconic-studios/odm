@@ -60,7 +60,7 @@ odm run            # list actions
 odm run <name>
 ```
 
-`odm status` and `odm project info` report registered worktree slots; `odm status` also lists registered agent packs.
+`odm status` and `odm project info` report registered worktree slots and orphan slot dirs; `odm status` also lists registered agent packs.
 
 Generators (local template) and worktree slots:
 

@@ -10,7 +10,6 @@ See `docs/agents/issue-tracker.md`.
 
 ## Frontier (open, unblocked)
 
-- [[issues-97-status-orphans-docs-honesty]] — docs honesty status/info orphans (`ready-for-agent`)
 - [[issues-98-core-desk-status-orphans-dogfood]] — core-desk status orphans dogfood (`ready-for-agent`)
 
 ## Blocked

@@ -39,6 +39,7 @@ After status packs map [[issues-89-post-v1-status-packs-map]] closed, pull the n
 - Prefer order: 95 unblocked first; 96 blocked by 95 (reuse shape); 97 blocked by 95+96; 98 blocked by 95+96.
 - **95 closed:** `EntityStatus.worktree_orphans` on projects (`{name,path}`, sorted); soft-fail `[]`; human `orphans: …`; public `worktree_orphans` / `worktree_orphan_infos`; doctor DRY unchanged ids.
 - **96 closed:** `ProjectInfoDto.worktree_orphans` always-present `Vec` (`{name,path}`); fill via list + `worktree_orphan_infos`; human `orphans: …` (unindented info style); registered slots excluded.
+- **97 closed:** docs honesty — worktrees/cli/phased-delivery/CHANGELOG/README record landed status+info `worktree_orphans`; deferred no longer pure-TODO for orphan listing; doctor warn + prune remain cleanup.
 
 ## Not yet specified
 

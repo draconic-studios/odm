@@ -37,7 +37,7 @@ odm project worktree prune --all [--force]
 - Slot only on a **Project** whose Primary checkout is a **git** repo. Non-git Project → hard error on `worktree add` / list / rm / prune (exit `3` operation).
 - Slot name: non-empty name token (no path separators, no `.` / `..`); names only, not filesystem paths.
 - **Primary checkout is never a slot.** Omit `--wt` → Primary.
-- `project rm` does **not** delete `worktrees/<project>/` by default (same keep-tree spirit as Project trees). Orphan slot dirs are possible; `odm doctor` **warns** on configured-project slot dirs that are not registered git worktrees (`fixable: false` — does **not** delete on `--fix`). Cleanup is **`project worktree prune`** (explicit manual GC). `odm status`, `project info`, and `worktree list` report **registered** slots only (same filter), including per-slot `dirty`; orphans remain doctor-warn + prune.
+- `project rm` does **not** delete `worktrees/<project>/` by default (same keep-tree spirit as Project trees). Orphan slot dirs are possible; `odm doctor` **warns** on configured-project slot dirs that are not registered git worktrees (`fixable: false` — does **not** delete on `--fix`). Cleanup is **`project worktree prune`** (explicit manual GC). `odm status` and `project info` report **registered** slots (`worktree_slots`, including per-slot `dirty`) **and** orphan dirs (`worktree_orphans`: `{name,path}` — observation only). `worktree list` stays **registered** slots only. Doctor warn + prune remain the cleanup path.
 - `odm doctor` also **warns** on **dirty registered** worktree slots (`worktree_dirty:<project>:<slot>`, `fixable: false` — `--fix` does not clean or stash). Clean registered slots produce no dirty check. Probe errors soft-skip. Primary dirty remains status/entity observation, not this check.
 
 ## Deferred
@@ -47,8 +47,9 @@ odm project worktree prune --all [--force]
 - Auto prune on `doctor --fix` (prune stays an explicit command)
 - Pin file interaction with slots (pin stays Primary-oriented unless later decided)
 - Multi-Project or Workspace-level slot **entities** (config/placement beyond per-Project dirs; prune `--all` multi-project orphan GC already landed)
-- `status` listing of orphan dirs (registered slot dirty observation landed on list/status/info; doctor dirty-slot **warn** landed; orphans stay doctor-warn + prune)
 - Global `--wt` deep behavior beyond path binding on `project git` / `run`
+
+Landed (not deferred): registered slot dirty on list/status/info; status/info `worktree_orphans` observation; doctor orphan/dirty **warn**; explicit `worktree prune` / `prune --all`.
 
 ## Non-goals
 

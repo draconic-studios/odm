@@ -35,6 +35,7 @@ Post-0.1.0 **landed outside the original Ship spine** (not required before v0.1.
 - **Status `agent_packs`** — top-level registry inventory on `odm status` (`name` + `source` + `path` + `mode` + `missing`); empty array when none / soft-fail; doctor still owns `pack_missing` warn (`env-gen-packs.md` / `cli.md`)
 - **`odm find --limit`** — max hits per Progen store (default 200)
 - **Status + project info `worktree_slots`** — registered slots (`name` + `path` + `dirty`) on `odm status` projects and `odm project info` (same shape on `worktree list`); empty when none / non-git / soft-fail
+- **Status + project info `worktree_orphans`** — orphan slot dirs (`name` + `path`) on `odm status` projects and `odm project info` (same definition as doctor/prune; observation only; empty when none / soft-fail); doctor warn + prune remain cleanup (`worktrees.md`)
 - **`odm project worktree prune --all`** — multi-project orphan GC across every configured Project (`worktrees.md`; same empty/`--force` rules as per-project prune)
 
 Still deferred / sketch (not Ship gates unless pulled in deliberately):
@@ -42,7 +43,7 @@ Still deferred / sketch (not Ship gates unless pulled in deliberately):
 - Graph/tags, env productization
 - Generate remote and full `template.toml` depth
 - Agent `start` (prompt is v1 thin — see Phase spine landed)
-- Worktree deferred items (config slots, pin↔slot, auto-prune on doctor, branch templates, status orphan listing, global `--wt` depth — `worktrees.md`; per-project prune, prune `--all`, doctor orphan/dirty warns, and registered slot dirty on list/status/info landed)
+- Worktree deferred items (config slots, pin↔slot, auto-prune on doctor, branch templates, global `--wt` depth — `worktrees.md`; per-project prune, prune `--all`, doctor orphan/dirty warns, registered slot dirty on list/status/info, and status/info `worktree_orphans` observation landed)
 
 ### 1. Design package
 
