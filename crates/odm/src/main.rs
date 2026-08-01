@@ -8,7 +8,7 @@ use clap::Parser;
 use odm::commands::{
     find_notes_dto, format_action_list_human, format_generate_run_human,
     format_generator_list_human, format_pack_install_human, format_pack_link_human,
-    format_pack_list_human, format_progen_add_human, format_progen_info_human,
+    format_pack_list_human, format_pack_rm_human, format_progen_add_human, format_progen_info_human,
     format_progen_list_human, format_project_add_human, format_project_info_human,
     format_project_list_human, format_worktree_add_human, format_worktree_list_human,
     format_worktree_prune_all_human,
@@ -20,10 +20,10 @@ use odm::commands::{
 use odm_actions::{run_action, CwdTarget, RunOptions, StdioMode};
 use odm_core::{
     discover_root, format_doctor_human, format_status_human, generate_local, init_workspace,
-    load_workspace, pack_install, pack_link, pack_list, path_buf_to_rel, pin_apply, pin_status,
-    project_add, project_git, project_rm, run_doctor, sync_managed, worktree_add, worktree_list,
-    worktree_prune, worktree_prune_all, worktree_rm, InitOptions, OdmError, ProgenEntry,
-    ProjectEntry,
+    load_workspace, pack_install, pack_link, pack_list, pack_rm, path_buf_to_rel, pin_apply,
+    pin_status, project_add, project_git, project_rm, run_doctor, sync_managed, worktree_add,
+    worktree_list, worktree_prune, worktree_prune_all, worktree_rm, InitOptions, OdmError,
+    ProgenEntry, ProjectEntry,
 };
 use odm_git::Git;
 use odm_progen::{
@@ -480,6 +480,15 @@ fn run(cli: Cli, out: &GlobalOut) -> Result<i32, OdmError> {
                             print_json(&pack_entry_dto(&entry))?;
                         } else {
                             print!("{}", format_pack_link_human(&entry));
+                        }
+                        Ok(0)
+                    }
+                    PackCmd::Rm { name } => {
+                        let entry = pack_rm(&ws, &name)?;
+                        if out.json {
+                            print_json(&pack_entry_dto(&entry))?;
+                        } else {
+                            print!("{}", format_pack_rm_human(&entry));
                         }
                         Ok(0)
                     }

@@ -11,8 +11,8 @@ mod status;
 mod worktree;
 
 pub use agent_pack::{
-    format_pack_install_human, format_pack_link_human, format_pack_list_human, pack_entry_dto,
-    pack_list_dto, PackEntryDto, PackListDto,
+    format_pack_install_human, format_pack_link_human, format_pack_list_human,
+    format_pack_rm_human, pack_entry_dto, pack_list_dto, PackEntryDto, PackListDto,
 };
 pub use find::{find_notes_dto, FindDto};
 pub use generate::{

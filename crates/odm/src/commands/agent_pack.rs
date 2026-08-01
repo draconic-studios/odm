@@ -1,4 +1,4 @@
-//! `odm agent pack` — list / install / link DTOs and human formatting.
+//! `odm agent pack` — list / install / link / rm DTOs and human formatting.
 
 use odm_core::{PackEntry, PackMode};
 use serde::Serialize;
@@ -66,7 +66,12 @@ pub fn format_pack_link_human(entry: &PackEntry) -> String {
     format!("linked {} -> {}\n", entry.name, entry.path.display())
 }
 
-/// Single-entry JSON for install/link (same fields as list item).
+/// Human success one-liner after rm.
+pub fn format_pack_rm_human(entry: &PackEntry) -> String {
+    format!("removed {} -> {}\n", entry.name, entry.path.display())
+}
+
+/// Single-entry JSON for install/link/rm (same fields as list item).
 pub fn pack_entry_dto(entry: &PackEntry) -> PackEntryDto {
     PackEntryDto::from(entry)
 }
@@ -129,5 +134,14 @@ mod tests {
         assert_eq!(v["mode"], "install");
         assert_eq!(v["path"], "/home/agent/core-desk");
         assert_eq!(v["source"], "packs/core-desk");
+    }
+
+    #[test]
+    fn rm_human() {
+        let e = entry("core-desk", PackMode::Install);
+        assert_eq!(
+            format_pack_rm_human(&e),
+            "removed core-desk -> /home/agent/core-desk\n"
+        );
     }
 }

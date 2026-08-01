@@ -266,7 +266,7 @@ pub enum ProgenCmd {
 
 #[derive(Debug, Subcommand)]
 pub enum AgentCmd {
-    /// Install, link, or list agent packs.
+    /// Install, link, list, or remove agent packs.
     Pack {
         #[command(subcommand)]
         cmd: PackCmd,
@@ -308,5 +308,10 @@ pub enum PackCmd {
         /// Replace existing destination.
         #[arg(long)]
         force: bool,
+    },
+    /// Remove a registered agent pack (registry entry and destination).
+    Rm {
+        /// Pack name as registered (directory basename).
+        name: String,
     },
 }

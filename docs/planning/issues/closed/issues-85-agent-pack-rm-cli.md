@@ -2,7 +2,7 @@
 id: issues-85
 title: "CLI: odm agent pack rm"
 description: "Wire odm agent pack rm <name> over pack_rm with human + JSON output and integration tests."
-status: open
+status: closed
 issue-type: feature-request
 severity: medium
 tags:
@@ -63,11 +63,11 @@ See Agent Brief.
 
 **Acceptance criteria:**
 
-- [ ] `odm agent pack rm <name>` works human + `--json`
-- [ ] Exit codes honest (4 unknown, etc.)
-- [ ] Integration tests cover success + unknown
-- [ ] `cargo test` green
-- [ ] list/install/link behavior unchanged
+- [x] `odm agent pack rm <name>` works human + `--json`
+- [x] Exit codes honest (4 unknown, etc.)
+- [x] Integration tests cover success + unknown
+- [x] `cargo test` green
+- [x] list/install/link behavior unchanged
 
 **Out of scope:**
 
@@ -78,4 +78,13 @@ See Agent Brief.
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met
+
+## Answer
+
+Shipped thin CLI `odm agent pack rm <name>` over core `pack_rm`.
+
+- **Clap:** `PackCmd::Rm { name }`; Agent/Pack about strings mention remove
+- **Dispatch:** mirrors install/link — `pack_rm` → human `removed {name} -> {path}` or `--json` via `pack_entry_dto`
+- **Tests:** install→rm (list empty, dest gone); rm `--json` shape; unknown→exit 4; unix link→rm
+- list/install/link unchanged; docs honesty deferred to issues-87

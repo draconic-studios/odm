@@ -10,13 +10,12 @@ See `docs/agents/issue-tracker.md`.
 
 ## Frontier (open, unblocked)
 
-- [[issues-85-agent-pack-rm-cli]] — pack rm CLI (ready-for-agent; unblocked by 84)
 - [[issues-86-doctor-pack-missing]] — doctor pack_missing warn (ready-for-agent)
+- [[issues-88-core-desk-pack-rm-dogfood]] — core-desk pack rm dogfood (ready-for-agent; unblocked by 85)
 
 ## Blocked
 
-- [[issues-87-pack-lifecycle-docs-honesty]] — blocked by 85+86
-- [[issues-88-core-desk-pack-rm-dogfood]] — blocked by 85
+- [[issues-87-pack-lifecycle-docs-honesty]] — blocked by 86 (85 closed)
 
 ## Architecture deepen (post-0.1.0)
 

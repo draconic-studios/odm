@@ -1,4 +1,4 @@
-//! Integration tests for `odm agent pack` list|install|link.
+//! Integration tests for `odm agent pack` list|install|link|rm.
 
 use std::fs;
 use std::path::Path;
@@ -216,6 +216,136 @@ fn pack_missing_source_not_found() {
         .failure()
         .code(4)
         .stderr(predicate::str::contains("not found"));
+}
+
+#[test]
+fn pack_install_then_rm() {
+    let (_dir, root) = setup_pack_ws();
+    let root_s = root.to_str().unwrap();
+    let home = root.join("rm-home");
+    let home_s = home.to_str().unwrap();
+    let dest = home.join("core-desk");
+
+    odm()
+        .args([
+            "--root",
+            root_s,
+            "agent",
+            "pack",
+            "install",
+            "packs/core-desk",
+            "--home",
+            home_s,
+        ])
+        .assert()
+        .success();
+    assert!(dest.is_dir());
+
+    odm()
+        .args(["--root", root_s, "agent", "pack", "rm", "core-desk"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("removed core-desk ->"));
+
+    assert!(!dest.exists());
+
+    odm()
+        .args(["--root", root_s, "agent", "pack", "list"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("(no agent packs)"));
+}
+
+#[test]
+fn pack_rm_json() {
+    let (_dir, root) = setup_pack_ws();
+    let root_s = root.to_str().unwrap();
+    let home = root.join("rm-json-home");
+    let home_s = home.to_str().unwrap();
+
+    odm()
+        .args([
+            "--root",
+            root_s,
+            "agent",
+            "pack",
+            "install",
+            "packs/core-desk",
+            "--home",
+            home_s,
+        ])
+        .assert()
+        .success();
+
+    let v = json_stdout(odm().args([
+        "--root",
+        root_s,
+        "--json",
+        "agent",
+        "pack",
+        "rm",
+        "core-desk",
+    ]));
+    assert_eq!(v["name"], "core-desk");
+    assert_eq!(v["source"], "packs/core-desk");
+    assert_eq!(v["mode"], "install");
+    assert!(v["path"].as_str().unwrap().contains("core-desk"));
+}
+
+#[test]
+fn pack_rm_unknown_not_found() {
+    let (_dir, root) = setup_pack_ws();
+    let root_s = root.to_str().unwrap();
+
+    odm()
+        .args(["--root", root_s, "agent", "pack", "rm", "nope"])
+        .assert()
+        .failure()
+        .code(4)
+        .stderr(predicate::str::contains("not found"));
+}
+
+#[test]
+#[cfg(unix)]
+fn pack_link_then_rm() {
+    let (_dir, root) = setup_pack_ws();
+    let root_s = root.to_str().unwrap();
+    let home = root.join("link-rm-home");
+    let home_s = home.to_str().unwrap();
+    let dest = home.join("core-desk");
+
+    odm()
+        .args([
+            "--root",
+            root_s,
+            "agent",
+            "pack",
+            "link",
+            "packs/core-desk",
+            "--home",
+            home_s,
+        ])
+        .assert()
+        .success();
+    assert!(dest
+        .symlink_metadata()
+        .unwrap()
+        .file_type()
+        .is_symlink());
+
+    odm()
+        .args(["--root", root_s, "agent", "pack", "rm", "core-desk"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("removed core-desk ->"));
+
+    assert!(dest.symlink_metadata().is_err());
+
+    odm()
+        .args(["--root", root_s, "agent", "pack", "list"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("(no agent packs)"));
 }
 
 #[test]
