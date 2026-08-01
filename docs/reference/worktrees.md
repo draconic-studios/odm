@@ -25,7 +25,7 @@ odm project worktree prune <project> [--force]
 odm project worktree prune --all [--force]
 ```
 
-- **`list <project>`:** slots under `worktrees/<project>/` that are registered git worktrees (from `git worktree list`, filtered to the slot prefix). Human: one slot name per line. `--json`: `{ "project", "slots": [ { "name", "path" } ] }` where `path` is `worktrees/<project>/<slot>`.
+- **`list <project>`:** slots under `worktrees/<project>/` that are registered git worktrees (from `git worktree list`, filtered to the slot prefix). Each slot includes cleanliness (`dirty`: `true` / `false` / `null` if the probe fails — soft, list still succeeds). Human: one slot name per line; dirty slots get a ` dirty` suffix (e.g. `feat dirty`). `--json`: `{ "project", "slots": [ { "name", "path", "dirty" } ] }` where `path` is `worktrees/<project>/<slot>`.
 - **`add <project> <slot> [--branch <b>]`:** create a git worktree at the slot path from the Project primary. Optional `--branch` creates and checks out a new branch (`git worktree add -b`). Prefer `--branch` when the primary already has the default branch checked out (plain `worktree add` without a new branch fails in that case). Fails if slot path exists or primary is not a git repo. `--json`: `{ "project", "slot", "path" }`.
 - **`rm <project> <slot> [--force]`:** `git worktree remove` on the slot; `--force` maps to git force. Best-effort remove of empty `worktrees/<project>/`. `--json`: `{ "project", "slot", "path" }`.
 - **`prune <project> [--force]`:** manual GC for **orphan** slot dirs (same definition as doctor: valid slot-name directory under `worktrees/<project>/` not in the registered worktree set). Default removes **empty** orphans only; non-empty orphans are skipped and the command exits `3` after removing empties (partial OK). `--force` recursively deletes orphan dirs even if non-empty. Never deletes registered worktree paths or Primary. Best-effort remove of empty `worktrees/<project>/`. Human: pruned count/names (and skipped non-empty names when applicable). `--json`: `{ "project", "pruned": [ { "name", "path" } ] }` (`path` is `worktrees/<project>/<slot>`). No orphans → exit `0`, `pruned: []`.
@@ -37,7 +37,7 @@ odm project worktree prune --all [--force]
 - Slot only on a **Project** whose Primary checkout is a **git** repo. Non-git Project → hard error on `worktree add` / list / rm / prune (exit `3` operation).
 - Slot name: non-empty name token (no path separators, no `.` / `..`); names only, not filesystem paths.
 - **Primary checkout is never a slot.** Omit `--wt` → Primary.
-- `project rm` does **not** delete `worktrees/<project>/` by default (same keep-tree spirit as Project trees). Orphan slot dirs are possible; `odm doctor` **warns** on configured-project slot dirs that are not registered git worktrees (`fixable: false` — does **not** delete on `--fix`). Cleanup is **`project worktree prune`** (explicit manual GC). `odm status` lists **registered** slots only (same filter as `project worktree list`); orphans remain doctor-warn + prune.
+- `project rm` does **not** delete `worktrees/<project>/` by default (same keep-tree spirit as Project trees). Orphan slot dirs are possible; `odm doctor` **warns** on configured-project slot dirs that are not registered git worktrees (`fixable: false` — does **not** delete on `--fix`). Cleanup is **`project worktree prune`** (explicit manual GC). `odm status`, `project info`, and `worktree list` report **registered** slots only (same filter), including per-slot `dirty`; orphans remain doctor-warn + prune.
 - `odm doctor` also **warns** on **dirty registered** worktree slots (`worktree_dirty:<project>:<slot>`, `fixable: false` — `--fix` does not clean or stash). Clean registered slots produce no dirty check. Probe errors soft-skip. Primary dirty remains status/entity observation, not this check.
 
 ## Deferred
@@ -47,7 +47,7 @@ odm project worktree prune --all [--force]
 - Auto prune on `doctor --fix` (prune stays an explicit command)
 - Pin file interaction with slots (pin stays Primary-oriented unless later decided)
 - Multi-Project or Workspace-level slots (prune `--all` landed)
-- `status` obligations for orphans or dirty slots (registered slots already in status; doctor dirty-slot **warn** landed)
+- `status` obligations for orphans (registered slot dirty observation landed on list/status/info; doctor dirty-slot **warn** landed)
 - Global `--wt` deep behavior beyond path binding on `project git` / `run`
 
 ## Non-goals

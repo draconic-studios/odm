@@ -188,7 +188,17 @@ pub fn format_project_info_human(dto: &ProjectInfoDto) -> String {
     }
     out.push_str(&format!("pin_state: {:?}\n", dto.pin_state));
     if !dto.worktree_slots.is_empty() {
-        let names: Vec<&str> = dto.worktree_slots.iter().map(|s| s.name.as_str()).collect();
+        let names: Vec<String> = dto
+            .worktree_slots
+            .iter()
+            .map(|s| {
+                if s.dirty == Some(true) {
+                    format!("{} dirty", s.name)
+                } else {
+                    s.name.clone()
+                }
+            })
+            .collect();
         out.push_str(&format!("worktrees: {}\n", names.join(", ")));
     }
     out
@@ -385,17 +395,21 @@ mod tests {
             WorktreeSlotInfo {
                 name: "a".into(),
                 path: "worktrees/alpha/a".into(),
+                dirty: Some(false),
             },
             WorktreeSlotInfo {
                 name: "b".into(),
                 path: "worktrees/alpha/b".into(),
+                dirty: Some(true),
             },
         ];
         let v = serde_json::to_value(&dto).unwrap();
         assert_eq!(v["worktree_slots"][0]["name"], "a");
         assert_eq!(v["worktree_slots"][0]["path"], "worktrees/alpha/a");
+        assert_eq!(v["worktree_slots"][0]["dirty"], false);
         assert_eq!(v["worktree_slots"][1]["name"], "b");
         assert_eq!(v["worktree_slots"][1]["path"], "worktrees/alpha/b");
+        assert_eq!(v["worktree_slots"][1]["dirty"], true);
     }
 
     #[test]
@@ -417,15 +431,17 @@ mod tests {
                 WorktreeSlotInfo {
                     name: "a".into(),
                     path: "worktrees/alpha/a".into(),
+                    dirty: Some(false),
                 },
                 WorktreeSlotInfo {
                     name: "b".into(),
                     path: "worktrees/alpha/b".into(),
+                    dirty: Some(true),
                 },
             ],
         };
         let human = format_project_info_human(&dto);
-        assert!(human.contains("worktrees: a, b"), "{human}");
+        assert!(human.contains("worktrees: a, b dirty"), "{human}");
     }
 
     #[test]

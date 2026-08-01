@@ -179,7 +179,16 @@ fn format_entity_line(e: &EntityStatus) -> String {
     );
     if let Some(slots) = &e.worktree_slots {
         if !slots.is_empty() {
-            let names: Vec<&str> = slots.iter().map(|s| s.name.as_str()).collect();
+            let names: Vec<String> = slots
+                .iter()
+                .map(|s| {
+                    if s.dirty == Some(true) {
+                        format!("{} dirty", s.name)
+                    } else {
+                        s.name.clone()
+                    }
+                })
+                .collect();
             line.push_str(&format!("    worktrees: {}\n", names.join(", ")));
         }
     }
@@ -433,11 +442,15 @@ mod tests {
         assert_eq!(slots.len(), 2);
         assert_eq!(slots[0].name, "a-slot");
         assert_eq!(slots[0].path, "worktrees/alpha/a-slot");
+        // ScriptedRunner empty queue → is_clean ok/empty → dirty false
+        assert_eq!(slots[0].dirty, Some(false));
         assert_eq!(slots[1].name, "b-slot");
         assert_eq!(slots[1].path, "worktrees/alpha/b-slot");
+        assert_eq!(slots[1].dirty, Some(false));
         let v = serde_json::to_value(&snap).unwrap();
         assert!(v["projects"][0]["worktree_slots"].is_array());
         assert_eq!(v["projects"][0]["worktree_slots"][0]["name"], "a-slot");
+        assert_eq!(v["projects"][0]["worktree_slots"][0]["dirty"], false);
         assert!(v["progens"][0].get("worktree_slots").is_none());
     }
 
@@ -529,17 +542,19 @@ mod tests {
                     WorktreeSlotInfo {
                         name: "a".into(),
                         path: "worktrees/alpha/a".into(),
+                        dirty: Some(false),
                     },
                     WorktreeSlotInfo {
                         name: "b".into(),
                         path: "worktrees/alpha/b".into(),
+                        dirty: Some(true),
                     },
                 ]),
             }],
             progens: vec![],
         };
         let human = format_status_human(&snap);
-        assert!(human.contains("worktrees: a, b"), "{human}");
+        assert!(human.contains("worktrees: a, b dirty"), "{human}");
     }
 
     #[test]

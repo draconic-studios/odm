@@ -17,6 +17,8 @@ pub struct WorktreeListDto {
 pub struct WorktreeSlotDto {
     pub name: String,
     pub path: String,
+    /// `true` dirty, `false` clean, `null` if probe failed / unknown (e.g. prune rows).
+    pub dirty: Option<bool>,
 }
 
 /// One slot under `prune --all` JSON (includes project).
@@ -53,14 +55,15 @@ pub struct WorktreePruneAllDto {
 pub fn worktree_list_dto(out: &WorktreeListOutcome) -> WorktreeListDto {
     WorktreeListDto {
         project: out.project.clone(),
-        slots: out
-            .slots
-            .iter()
-            .map(|s| WorktreeSlotDto {
-                name: s.name.clone(),
-                path: s.path.clone(),
-            })
-            .collect(),
+        slots: out.slots.iter().map(slot_dto).collect(),
+    }
+}
+
+fn slot_dto(s: &odm_core::WorktreeSlotInfo) -> WorktreeSlotDto {
+    WorktreeSlotDto {
+        name: s.name.clone(),
+        path: s.path.clone(),
+        dirty: s.dirty,
     }
 }
 
@@ -75,14 +78,7 @@ pub fn worktree_slot_action_dto(out: &WorktreeSlotOutcome) -> WorktreeSlotAction
 pub fn worktree_prune_dto(out: &WorktreePruneOutcome) -> WorktreePruneDto {
     WorktreePruneDto {
         project: out.project.clone(),
-        pruned: out
-            .pruned
-            .iter()
-            .map(|s| WorktreeSlotDto {
-                name: s.name.clone(),
-                path: s.path.clone(),
-            })
-            .collect(),
+        pruned: out.pruned.iter().map(slot_dto).collect(),
     }
 }
 
@@ -110,6 +106,9 @@ pub fn format_worktree_list_human(out: &WorktreeListOutcome) -> String {
     let mut s = String::new();
     for slot in &out.slots {
         s.push_str(&slot.name);
+        if slot.dirty == Some(true) {
+            s.push_str(" dirty");
+        }
         s.push('\n');
     }
     s
@@ -204,10 +203,17 @@ mod tests {
                 WorktreeSlotInfo {
                     name: "a".into(),
                     path: "worktrees/alpha/a".into(),
+                    dirty: Some(false),
                 },
                 WorktreeSlotInfo {
                     name: "b".into(),
                     path: "worktrees/alpha/b".into(),
+                    dirty: Some(true),
+                },
+                WorktreeSlotInfo {
+                    name: "c".into(),
+                    path: "worktrees/alpha/c".into(),
+                    dirty: None,
                 },
             ],
         };
@@ -216,7 +222,10 @@ mod tests {
         assert_eq!(v["project"], "alpha");
         assert_eq!(v["slots"][0]["name"], "a");
         assert_eq!(v["slots"][0]["path"], "worktrees/alpha/a");
+        assert_eq!(v["slots"][0]["dirty"], false);
         assert_eq!(v["slots"][1]["name"], "b");
+        assert_eq!(v["slots"][1]["dirty"], true);
+        assert!(v["slots"][2]["dirty"].is_null());
     }
 
     #[test]
@@ -240,14 +249,21 @@ mod tests {
                 WorktreeSlotInfo {
                     name: "a".into(),
                     path: "worktrees/alpha/a".into(),
+                    dirty: Some(false),
                 },
                 WorktreeSlotInfo {
                     name: "b".into(),
                     path: "worktrees/alpha/b".into(),
+                    dirty: Some(true),
+                },
+                WorktreeSlotInfo {
+                    name: "c".into(),
+                    path: "worktrees/alpha/c".into(),
+                    dirty: None,
                 },
             ],
         };
-        assert_eq!(format_worktree_list_human(&out), "a\nb\n");
+        assert_eq!(format_worktree_list_human(&out), "a\nb dirty\nc\n");
     }
 
     #[test]
@@ -257,6 +273,7 @@ mod tests {
             pruned: vec![WorktreeSlotInfo {
                 name: "stale".into(),
                 path: "worktrees/alpha/stale".into(),
+                dirty: None,
             }],
             skipped_nonempty: vec![],
         };
@@ -264,6 +281,7 @@ mod tests {
         assert_eq!(v["project"], "alpha");
         assert_eq!(v["pruned"][0]["name"], "stale");
         assert_eq!(v["pruned"][0]["path"], "worktrees/alpha/stale");
+        assert!(v["pruned"][0]["dirty"].is_null());
         assert!(v.get("skipped_nonempty").is_none());
     }
 
@@ -284,10 +302,12 @@ mod tests {
             pruned: vec![WorktreeSlotInfo {
                 name: "empty".into(),
                 path: "worktrees/alpha/empty".into(),
+                dirty: None,
             }],
             skipped_nonempty: vec![WorktreeSlotInfo {
                 name: "full".into(),
                 path: "worktrees/alpha/full".into(),
+                dirty: None,
             }],
         };
         let h = format_worktree_prune_human(&partial);

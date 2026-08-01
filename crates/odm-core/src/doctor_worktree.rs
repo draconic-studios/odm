@@ -5,7 +5,7 @@ use odm_git::Git;
 
 use crate::config::Workspace;
 use crate::doctor::{CheckStatus, DoctorCheck};
-use crate::paths::{abs_checkout, worktree_slot_path};
+use crate::paths::abs_checkout;
 use crate::worktree::{validate_slot_name, worktree_list};
 
 /// Warn on `worktrees/<project>/<slot>/` dirs that are not registered git worktrees.
@@ -76,6 +76,8 @@ pub(crate) fn worktree_orphan_checks<R: odm_git::CommandRunner>(
 }
 
 /// Warn on dirty registered worktree slots. Not fixable; soft-skips probe errors.
+///
+/// Uses `dirty` already probed by [`worktree_list`] (no second `is_clean`).
 pub(crate) fn worktree_dirty_checks<R: odm_git::CommandRunner>(
     git: &Git<R>,
     ws: &Workspace,
@@ -86,19 +88,16 @@ pub(crate) fn worktree_dirty_checks<R: odm_git::CommandRunner>(
             continue;
         };
         for slot in list.slots {
-            let abs = worktree_slot_path(&ws.root, project, &slot.name);
-            if !abs.is_dir() {
+            if slot.dirty != Some(true) {
                 continue;
             }
-            if let Ok(false) = git.is_clean(&abs) {
-                let rel = format!("worktrees/{project}/{}", slot.name);
-                checks.push(DoctorCheck {
-                    id: format!("worktree_dirty:{project}:{}", slot.name),
-                    status: CheckStatus::Warn,
-                    message: format!("dirty worktree slot working tree: {rel}"),
-                    fixable: false,
-                });
-            }
+            let rel = format!("worktrees/{project}/{}", slot.name);
+            checks.push(DoctorCheck {
+                id: format!("worktree_dirty:{project}:{}", slot.name),
+                status: CheckStatus::Warn,
+                message: format!("dirty worktree slot working tree: {rel}"),
+                fixable: false,
+            });
         }
     }
     checks
@@ -120,6 +119,7 @@ mod tests {
     use crate::config::{ProjectEntry, WorkspaceConfig};
     use crate::doctor::run_doctor;
     use crate::init::{init_workspace, InitOptions};
+    use crate::paths::worktree_slot_path;
 
     #[cfg(unix)]
     use std::os::unix::process::ExitStatusExt;
@@ -593,8 +593,7 @@ mod tests {
             slot.display(),
         );
         // observe: is_repo + head + origin + dirty(primary);
-        // orphan: is_repo + worktree list;
-        // dirty: is_repo + worktree list + is_clean(slot).
+        // orphan/dirty each: is_repo + worktree list + is_clean(slot) inside list.
         let (runner, _) = ScriptedRunner::new(vec![
             is_repo_true(),
             out_ok_stdout("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"),
@@ -602,9 +601,10 @@ mod tests {
             out_ok_stdout(""), // primary clean
             is_repo_true(),
             out_ok_stdout(&porcelain),
+            out_ok_stdout("?? dirty.txt\n"), // slot dirty (orphan list probe)
             is_repo_true(),
             out_ok_stdout(&porcelain),
-            out_ok_stdout("?? dirty.txt\n"), // slot dirty
+            out_ok_stdout("?? dirty.txt\n"), // slot dirty (dirty list probe)
         ]);
         let g = Git::with_runner(runner);
         let report = run_doctor(&g, &ws, true).unwrap();

@@ -19,12 +19,14 @@ pub struct WorktreeSlotOutcome {
     pub path: String,
 }
 
-/// One slot row for list.
+/// One slot row for list / status / project info.
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub struct WorktreeSlotInfo {
     pub name: String,
     /// Relative to workspace root: `worktrees/<project>/<slot>`.
     pub path: String,
+    /// `Some(true)` dirty, `Some(false)` clean, `None` if cleanliness probe failed.
+    pub dirty: Option<bool>,
 }
 
 /// List outcome for a project.
@@ -93,6 +95,8 @@ pub fn validate_slot_name(name: &str) -> Result<String, OdmError> {
 }
 
 /// List git worktree slots under `worktrees/<project>/` (sorted by name).
+///
+/// Each slot's `dirty` is probed via `git.is_clean` (soft: probe err → `None`).
 pub fn worktree_list<R: odm_git::CommandRunner>(
     git: &Git<R>,
     ws: &Workspace,
@@ -106,6 +110,10 @@ pub fn worktree_list<R: odm_git::CommandRunner>(
         .filter_map(|e| slot_info_under_prefix(&prefix, project, &e.path))
         .collect();
     slots.sort_by(|a, b| a.name.cmp(&b.name));
+    for slot in &mut slots {
+        let abs = worktree_slot_path(&ws.root, project, &slot.name);
+        slot.dirty = git.is_clean(&abs).ok().map(|c| !c);
+    }
     Ok(WorktreeListOutcome {
         project: project.to_string(),
         slots,
@@ -206,6 +214,7 @@ pub fn worktree_prune<R: odm_git::CommandRunner>(
         let info = WorktreeSlotInfo {
             name: slot.clone(),
             path: rel_slot_path(project, &slot),
+            dirty: None,
         };
         if force {
             fs::remove_dir_all(&abs).map_err(|e| {
@@ -352,6 +361,7 @@ fn slot_info_under_prefix(
             Some(WorktreeSlotInfo {
                 name: name.clone(),
                 path: rel_slot_path(project, &name),
+                dirty: None,
             })
         }
         _ => None,
@@ -695,6 +705,48 @@ mod tests {
         let g = Git::with_runner(runner);
         let out = worktree_list(&g, &ws, "alpha").unwrap();
         assert!(out.slots.is_empty());
+    }
+
+    #[test]
+    fn list_sets_dirty_from_is_clean() {
+        let dir = tempdir().unwrap();
+        let root = dir.path();
+        let primary = ensure_primary(root, "projects/alpha");
+        let clean = worktree_slot_path(root, "alpha", "clean");
+        let dirty = worktree_slot_path(root, "alpha", "dirty");
+        let unknown = worktree_slot_path(root, "alpha", "unknown");
+        let ws = ws_with_project(root.to_path_buf(), "alpha", "projects/alpha");
+        let porcelain = format!(
+            "worktree {}\nHEAD abc\nbranch refs/heads/main\n\n\
+             worktree {}\nHEAD def\nbranch refs/heads/c\n\n\
+             worktree {}\nHEAD ghi\nbranch refs/heads/d\n\n\
+             worktree {}\nHEAD jkl\nbranch refs/heads/u\n\n",
+            primary.display(),
+            clean.display(),
+            dirty.display(),
+            unknown.display(),
+        );
+        // sorted: clean, dirty, unknown
+        let (runner, _) = ScriptedRunner::new(vec![
+            is_repo_true(),
+            out_ok_stdout(&porcelain),
+            out_ok_stdout(""),             // clean → dirty false
+            out_ok_stdout(" M x\n"),       // dirty → dirty true
+            out_fail("status failed"),     // unknown → None
+        ]);
+        let g = Git::with_runner(runner);
+        let out = worktree_list(&g, &ws, "alpha").unwrap();
+        assert_eq!(out.slots.len(), 3);
+        assert_eq!(out.slots[0].name, "clean");
+        assert_eq!(out.slots[0].dirty, Some(false));
+        assert_eq!(out.slots[1].name, "dirty");
+        assert_eq!(out.slots[1].dirty, Some(true));
+        assert_eq!(out.slots[2].name, "unknown");
+        assert_eq!(out.slots[2].dirty, None);
+        let v = serde_json::to_value(&out.slots[1]).unwrap();
+        assert_eq!(v["dirty"], true);
+        let v = serde_json::to_value(&out.slots[2]).unwrap();
+        assert!(v["dirty"].is_null(), "{v}");
     }
 
     // --- rm ---

@@ -37,6 +37,7 @@ After honesty/dogfood map [[issues-72-post-v1-honesty-dogfood-map]] closed, pull
 - Child tickets: [[issues-78-worktree-prune-all]], [[issues-79-worktree-slot-dirty-observation]], [[issues-80-worktree-observation-docs-honesty]], [[issues-81-core-desk-worktree-observation-dogfood]].
 - Prefer order: 78 and 79 unblocked in parallel; 80 blocked by 78+79; 81 blocked by 78+79.
 - **78 closed:** `odm project worktree prune --all [--force]` — multi-project orphan GC via `worktree_prune_all`; soft-skip non-git/missing; exit 3 on skipped nonempty; distinct `--all` JSON with `skipped_nonempty`.
+- **79 closed:** registered slots expose `dirty: Option<bool>` on `worktree list` / `status` / `project info` via `is_clean` (soft null on probe err); human ` dirty` suffix; doctor reuses list dirty; orphans still doctor/prune only.
 
 ## Not yet specified
 

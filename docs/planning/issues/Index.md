@@ -10,12 +10,12 @@ See `docs/agents/issue-tracker.md`.
 
 ## Frontier (open, unblocked)
 
-- [[issues-79-worktree-slot-dirty-observation]] — dirty on list/status/info slots (`ready-for-agent`)
+- [[issues-80-worktree-observation-docs-honesty]] — docs honesty prune --all + slot dirty (`ready-for-agent`)
+- [[issues-81-core-desk-worktree-observation-dogfood]] — core-desk dogfood prune --all + dirty status (`ready-for-agent`)
 
 ## Blocked
 
-- [[issues-80-worktree-observation-docs-honesty]] — blocked by 79 (78 closed)
-- [[issues-81-core-desk-worktree-observation-dogfood]] — blocked by 79 (78 closed)
+_(none)_
 
 ## Architecture deepen (post-0.1.0)
 

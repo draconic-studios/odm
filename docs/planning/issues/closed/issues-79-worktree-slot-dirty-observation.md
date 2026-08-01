@@ -2,7 +2,7 @@
 id: issues-79
 title: "worktree slot dirty on list/status/info"
 description: "Expose dirty bool on registered worktree slots in list, status, and project info."
-status: open
+status: closed
 issue-type: feature-request
 severity: medium
 tags:
@@ -91,13 +91,13 @@ None
 
 **Acceptance criteria:**
 
-- [ ] `WorktreeSlotInfo` includes `dirty: Option<bool>` with JSON true/false/null
-- [ ] `worktree list`, `status`, `project info` populate dirty via `is_clean` (soft on probe err)
-- [ ] Human list/status/info mark dirty slots; clean/unknown unmarked as dirty
-- [ ] Orphans still absent from status/list
-- [ ] Existing doctor dirty warn still passes
-- [ ] cli.md + worktrees.md + CHANGELOG touched
-- [ ] `cargo test` green
+- [x] `WorktreeSlotInfo` includes `dirty: Option<bool>` with JSON true/false/null
+- [x] `worktree list`, `status`, `project info` populate dirty via `is_clean` (soft on probe err)
+- [x] Human list/status/info mark dirty slots; clean/unknown unmarked as dirty
+- [x] Orphans still absent from status/list
+- [x] Existing doctor dirty warn still passes
+- [x] cli.md + worktrees.md + CHANGELOG touched
+- [x] `cargo test` green
 
 **Out of scope:**
 
@@ -110,3 +110,14 @@ None
 ## Acceptance
 
 Mirror Agent Brief checklist.
+
+## Answer
+
+Landed slot dirty observation on list/status/project info.
+
+- `WorktreeSlotInfo.dirty: Option<bool>` always serialized (`true`/`false`/`null`).
+- `worktree_list` probes `git.is_clean` per registered slot (soft on err → `None`); prune rows use `dirty: None`.
+- Doctor dirty checks reuse `slot.dirty == Some(true)` (no second probe).
+- Human list/status/info suffix ` dirty` only when `Some(true)`.
+- CLI list DTO includes `dirty`; docs (`cli.md`, `worktrees.md`) + CHANGELOG Unreleased.
+- Full `cargo test` green.

@@ -108,7 +108,7 @@ odm pin status [name…]
 odm status
 ```
 
-Workspace snapshot: configured Projects/Progens, on-disk presence, git/pin drift summary, dirty hints, and **registered** worktree slots per Project. Does not fetch. `--json` for agents: each project includes `worktree_slots: [ { "name", "path" } ]` (`path` is `worktrees/<project>/<slot>`; empty array when none / non-git / list soft-fails). Progens omit `worktree_slots`. Human output lists slot names only when non-empty. Orphan dirs are doctor-only — see `worktrees.md`.
+Workspace snapshot: configured Projects/Progens, on-disk presence, git/pin drift summary, dirty hints, and **registered** worktree slots per Project. Does not fetch. `--json` for agents: each project includes `worktree_slots: [ { "name", "path", "dirty" } ]` (`path` is `worktrees/<project>/<slot>`; `dirty` is `true` / `false` / `null` when the cleanliness probe fails; empty array when none / non-git / list soft-fails). Progens omit `worktree_slots`. Human output lists slot names only when non-empty (dirty slots get a ` dirty` suffix, e.g. `feat dirty`). Orphan dirs are doctor-only — see `worktrees.md`.
 
 ---
 
@@ -139,7 +139,7 @@ odm project worktree prune <project> [--force]
 odm project worktree prune --all [--force]
 ```
 
-- **`list` / `info`**: config + disk/git summary; `--json`. `info` includes registered `worktree_slots: [ { "name", "path" } ]` (`path` is `worktrees/<project>/<slot>`; empty array when none / non-git / list soft-fails). Human lists slot names only when non-empty (`worktrees: a, b`).
+- **`list` / `info`**: config + disk/git summary; `--json`. `info` includes registered `worktree_slots: [ { "name", "path", "dirty" } ]` (`path` is `worktrees/<project>/<slot>`; `dirty` is `true` / `false` / `null` on probe failure; empty array when none / non-git / list soft-fails). Human lists slot names only when non-empty (`worktrees: a, b dirty`).
 - **`add`**: write Project entry; if `url` set, materialize unless `--no-clone` (`multi-git.md`).
 - **`rm`**: un-declare; tree **kept** by default; `--delete` removes tree if clean; dirty → fail unless `--force`. Does **not** delete `worktrees/<project>/`.
 - **`git`**: run `git -C <primary-or-wt> <git-args…>` (argv after `--`, not a shell string). Exit code = git’s. On success, if pin file exists and **HEAD changed** on **Primary**, **auto-maintain** that entity’s pin (not “sync”). `--wt` selects slot working tree (must exist; no auto-create; pin maintain stays Primary-only).
