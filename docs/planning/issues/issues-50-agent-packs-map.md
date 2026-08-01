@@ -44,11 +44,12 @@ Productize **Agent packs** (v1 local only) per `docs/reference/env-gen-packs.md`
 
 - Slice tickets: [[issues-51-agent-pack-core]], [[issues-52-agent-pack-cli]], [[issues-53-agent-pack-integration-and-docs]].
 - Parallel hardening (not on this map): [[issues-54-readme-post-010-docs-drift]].
-- **Core landed (issues-51):** `odm-core` `agent_pack` module — `pack_list` / `pack_install` / `pack_link`, registry `.odm/agent-packs.json`, `agent_packs_path`. No CLI yet (issues-52).
+- **Core landed (issues-51):** `odm-core` `agent_pack` module — `pack_list` / `pack_install` / `pack_link`, registry `.odm/agent-packs.json`, `agent_packs_path`.
+- **CLI landed (issues-52):** `odm agent pack list|install|link` thin adapter; human + `--json`; install/link JSON is a single entry object (same fields as list items); `start`/`prompt` remain stubs.
 
 ## Not yet specified
 
-- Whether list JSON includes `exists` (optional) — core registry omits it; CLI may add at DTO layer.
+- Whether list JSON includes `exists` (optional) — core registry omits it; CLI does not add it.
 - Registry shape locked by core: pretty JSON array of `{ name, source, path, mode }` with `mode` lowercase `install`|`link`.
 
 ## Out of scope

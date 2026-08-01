@@ -116,7 +116,7 @@ pub enum Commands {
         force: bool,
     },
 
-    /// Agent pack / session helpers (not implemented).
+    /// Agent pack / session helpers.
     Agent {
         #[command(subcommand)]
         cmd: AgentCmd,
@@ -251,10 +251,10 @@ pub enum ProgenCmd {
 
 #[derive(Debug, Subcommand)]
 pub enum AgentCmd {
-    /// Install/link an agent pack (not implemented).
+    /// Install, link, or list agent packs.
     Pack {
-        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
-        rest: Vec<String>,
+        #[command(subcommand)]
+        cmd: PackCmd,
     },
     /// Start an agent session (not implemented).
     Start {
@@ -265,5 +265,33 @@ pub enum AgentCmd {
     Prompt {
         #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
         rest: Vec<String>,
+    },
+}
+
+#[derive(Debug, Subcommand)]
+pub enum PackCmd {
+    /// List registered agent packs.
+    List,
+    /// Copy a local pack directory into an agent home.
+    Install {
+        /// Local directory path (relative to Workspace root, or absolute).
+        source: PathBuf,
+        /// Agent-native home directory (pack lands at `<home>/<name>/`).
+        #[arg(long)]
+        home: PathBuf,
+        /// Replace existing destination.
+        #[arg(long)]
+        force: bool,
+    },
+    /// Symlink a local pack directory into an agent home.
+    Link {
+        /// Local directory path (relative to Workspace root, or absolute).
+        source: PathBuf,
+        /// Agent-native home directory (pack lands at `<home>/<name>`).
+        #[arg(long)]
+        home: PathBuf,
+        /// Replace existing destination.
+        #[arg(long)]
+        force: bool,
     },
 }

@@ -36,7 +36,7 @@ See Agent Brief.
 
 ## Blocked by
 
-- [[issues-52-agent-pack-cli]]
+None — [[issues-52-agent-pack-cli]] closed.
 
 ## Agent Brief
 

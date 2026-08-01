@@ -10,12 +10,12 @@ See `docs/agents/issue-tracker.md`.
 
 ## Frontier (open, unblocked)
 
-- [[issues-52-agent-pack-cli]] — CLI list/install/link over core (`ready-for-agent`)
+- [[issues-53-agent-pack-integration-and-docs]] — pack integration tests + docs (`ready-for-agent`)
 - [[issues-54-readme-post-010-docs-drift]] — README + phased-delivery honesty (`ready-for-agent`)
 
 ## Blocked
 
-- [[issues-53-agent-pack-integration-and-docs]] — blocked by [[issues-52-agent-pack-cli]]
+_(none)_
 
 ## Architecture deepen (post-0.1.0)
 

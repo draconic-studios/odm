@@ -7,19 +7,21 @@ use std::process::ExitCode;
 use clap::Parser;
 use odm::commands::{
     find_notes_dto, format_action_list_human, format_generate_run_human,
-    format_generator_list_human, format_progen_add_human, format_progen_info_human,
+    format_generator_list_human, format_pack_install_human, format_pack_link_human,
+    format_pack_list_human, format_progen_add_human, format_progen_info_human,
     format_progen_list_human, format_project_add_human, format_project_info_human,
     format_project_list_human, format_worktree_add_human, format_worktree_list_human,
     format_worktree_rm_human, list_actions_dto, list_generators_dto, list_projects, list_progens,
-    materialize_json, materialize_json_opt, materialize_sync_human, progen_info, project_info,
-    status_snapshot, worktree_list_dto, worktree_slot_action_dto, GenerateRunDto,
+    materialize_json, materialize_json_opt, materialize_sync_human, pack_entry_dto, pack_list_dto,
+    progen_info, project_info, status_snapshot, worktree_list_dto, worktree_slot_action_dto,
+    GenerateRunDto,
 };
 use odm_actions::{run_action, CwdTarget, RunOptions, StdioMode};
 use odm_core::{
     discover_root, format_doctor_human, format_status_human, generate_local, init_workspace,
-    load_workspace, path_buf_to_rel, pin_apply, pin_status, project_add, project_git, project_rm,
-    run_doctor, sync_managed, worktree_add, worktree_list, worktree_rm, InitOptions, OdmError,
-    ProgenEntry, ProjectEntry,
+    load_workspace, pack_install, pack_link, pack_list, path_buf_to_rel, pin_apply, pin_status,
+    project_add, project_git, project_rm, run_doctor, sync_managed, worktree_add, worktree_list,
+    worktree_rm, InitOptions, OdmError, ProgenEntry, ProjectEntry,
 };
 use odm_git::Git;
 use odm_progen::{
@@ -28,7 +30,7 @@ use odm_progen::{
     open_single, reindex_for_cli, rm_progen,
 };
 
-use cli::{AgentCmd, Cli, Commands, PinCmd, ProgenCmd, ProjectCmd, ProjectWorktreeCmd};
+use cli::{AgentCmd, Cli, Commands, PackCmd, PinCmd, ProgenCmd, ProjectCmd, ProjectWorktreeCmd};
 use output::{print_error, print_json, GlobalOut};
 
 fn main() -> ExitCode {
@@ -418,14 +420,44 @@ fn run(cli: Cli, out: &GlobalOut) -> Result<i32, OdmError> {
                 }
             }
         }
-        Commands::Agent { cmd } => {
-            let verb = match cmd {
-                AgentCmd::Pack { .. } => "agent pack",
-                AgentCmd::Start { .. } => "agent start",
-                AgentCmd::Prompt { .. } => "agent prompt",
-            };
-            Err(OdmError::not_implemented(verb))
-        }
+        Commands::Agent { cmd } => match cmd {
+            AgentCmd::Pack { cmd } => {
+                let root = discover_root(cli.root.as_deref(), &std::env::current_dir()?)?;
+                let ws = load_workspace(&root)?;
+                match cmd {
+                    PackCmd::List => {
+                        let entries = pack_list(&ws)?;
+                        let dto = pack_list_dto(&entries);
+                        if out.json {
+                            print_json(&dto)?;
+                        } else {
+                            print!("{}", format_pack_list_human(&dto));
+                        }
+                        Ok(0)
+                    }
+                    PackCmd::Install { source, home, force } => {
+                        let entry = pack_install(&ws, &source, &home, force)?;
+                        if out.json {
+                            print_json(&pack_entry_dto(&entry))?;
+                        } else {
+                            print!("{}", format_pack_install_human(&entry));
+                        }
+                        Ok(0)
+                    }
+                    PackCmd::Link { source, home, force } => {
+                        let entry = pack_link(&ws, &source, &home, force)?;
+                        if out.json {
+                            print_json(&pack_entry_dto(&entry))?;
+                        } else {
+                            print!("{}", format_pack_link_human(&entry));
+                        }
+                        Ok(0)
+                    }
+                }
+            }
+            AgentCmd::Start { .. } => Err(OdmError::not_implemented("agent start")),
+            AgentCmd::Prompt { .. } => Err(OdmError::not_implemented("agent prompt")),
+        },
     }
 }
 

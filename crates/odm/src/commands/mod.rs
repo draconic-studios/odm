@@ -1,5 +1,6 @@
 //! Library command entrypoints returning serializable DTOs.
 
+mod agent_pack;
 mod find;
 mod generate;
 mod materialize;
@@ -9,6 +10,10 @@ mod run;
 mod status;
 mod worktree;
 
+pub use agent_pack::{
+    format_pack_install_human, format_pack_link_human, format_pack_list_human, pack_entry_dto,
+    pack_list_dto, PackEntryDto, PackListDto,
+};
 pub use find::{find_notes_dto, FindDto};
 pub use generate::{
     format_generate_run_human, format_generator_list_human, list_generators_dto, GenerateRunDto,

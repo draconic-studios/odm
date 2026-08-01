@@ -161,11 +161,15 @@ fn generate_lists_empty_and_agent_stubs_exit_1() {
         .code(1)
         .stderr(predicate::str::contains("--dest"));
 
-    for args in [
-        vec!["agent", "pack"],
-        vec!["agent", "start"],
-        vec!["agent", "prompt", "x"],
-    ] {
+    // pack list is implemented (empty registry)
+    odm()
+        .current_dir(&root)
+        .args(["agent", "pack", "list"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("(no agent packs)"));
+
+    for args in [vec!["agent", "start"], vec!["agent", "prompt", "x"]] {
         odm()
             .current_dir(&root)
             .args(&args)

@@ -2,7 +2,7 @@
 id: issues-52
 title: "Agent pack CLI"
 description: "Wire odm agent pack list|install|link over core; keep start/prompt stubs."
-status: open
+status: closed
 issue-type: feature-request
 severity: medium
 tags:
@@ -10,7 +10,6 @@ tags:
   - issue
   - wayfinder
   - wayfinder-task
-  - ready-for-agent
 ---
 
 # Agent pack CLI
@@ -71,12 +70,12 @@ See Agent Brief.
 
 **Acceptance criteria:**
 
-- [ ] `odm agent pack list|install|link` wired to core
-- [ ] `--home` / `--force` flags work
-- [ ] Human + `--json` shapes stable and tested at least lightly (unit or small CLI test)
-- [ ] `agent start` / `agent prompt` still not-implemented exit 1
-- [ ] `cargo test` green
-- [ ] No remote/marketplace; no start/prompt implementation
+- [x] `odm agent pack list|install|link` wired to core
+- [x] `--home` / `--force` flags work
+- [x] Human + `--json` shapes stable and tested at least lightly (unit or small CLI test)
+- [x] `agent start` / `agent prompt` still not-implemented exit 1
+- [x] `cargo test` green
+- [x] No remote/marketplace; no start/prompt implementation
 
 **Out of scope:**
 
@@ -85,8 +84,18 @@ See Agent Brief.
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met
+
+## Answer
+
+Wired thin CLI adapter over core pack APIs:
+
+- **Clap:** `AgentCmd::Pack { cmd: PackCmd::{List,Install,Link} }` with `--home` / `--force` on install/link.
+- **list:** `pack_list` → human names or `(no agent packs)`; JSON `{ "packs": [...] }`.
+- **install/link:** core calls; human `installed|linked <name> -> <path>`; JSON single entry `{ name, source, path, mode }`.
+- **start/prompt:** still not-implemented exit 1.
+- DTOs in `commands/agent_pack.rs`; CLI tests in `tests/cli_agent_pack.rs`; stub test updated.
 
 ## Comments
 
-Seeded with map issues-50.
+Seeded with map issues-50. Closed by swarm iteration 27.
