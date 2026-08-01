@@ -105,6 +105,17 @@ pub fn progen_index_dir(root: &Path, progen_name: &str) -> PathBuf {
     odm_dir(root).join("progen").join(progen_name)
 }
 
+/// Relative path string helper for CLI (rejects absolute; normalizes `\` → `/`).
+pub fn path_buf_to_rel(path: &Path) -> Result<String, OdmError> {
+    let s = path.to_string_lossy();
+    if path.is_absolute() {
+        return Err(OdmError::usage(format!(
+            "path must be relative, got '{s}'"
+        )));
+    }
+    Ok(s.replace('\\', "/"))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -176,5 +187,15 @@ mod tests {
         assert!(parse_path_token("a/b").is_err());
         assert!(parse_path_token("..").is_err());
         assert!(parse_path_token(".").is_err());
+    }
+
+    #[test]
+    fn path_buf_to_rel_rejects_absolute() {
+        let err = path_buf_to_rel(Path::new("/abs")).unwrap_err();
+        assert!(err.to_string().contains("relative"));
+        assert_eq!(
+            path_buf_to_rel(Path::new("vaults/desk")).unwrap(),
+            "vaults/desk"
+        );
     }
 }

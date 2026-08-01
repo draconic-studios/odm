@@ -17,6 +17,7 @@ mod observation;
 mod paths;
 mod pin;
 mod pin_maintain;
+mod project_git;
 mod status;
 mod url_match;
 mod worktree;
@@ -42,15 +43,16 @@ pub use gitignore::{
 };
 pub use init::{init_workspace, InitOptions, InitResult};
 pub use membership::{
-    membership_add, membership_rm, path_buf_to_rel, progen_add, progen_rm, project_add,
-    project_git, project_rm, MembershipEntry, MembershipKind,
+    membership_add, membership_rm, progen_add, progen_rm, project_add, project_rm,
+    MembershipEntry, MembershipKind,
 };
+pub use project_git::project_git;
 pub use observation::{
     observe_entity, observe_workspace, EntityObservation, WorkspaceObservation,
 };
 pub use paths::{
-    abs_checkout, agent_packs_path, config_path, odm_dir, pin_path, progen_index_dir,
-    resolve_under_root, worktree_slot_path,
+    abs_checkout, agent_packs_path, config_path, odm_dir, path_buf_to_rel, pin_path,
+    progen_index_dir, resolve_under_root, worktree_slot_path,
 };
 pub use pin::{
     is_full_sha, load_pin, parse_pin_yaml, prune_pins, save_pin, PinEntry, PinFile,
