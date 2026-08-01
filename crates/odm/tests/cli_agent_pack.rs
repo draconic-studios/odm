@@ -88,6 +88,7 @@ fn pack_install_and_list() {
     assert_eq!(packs[0]["source"], "packs/core-desk");
     assert_eq!(packs[0]["mode"], "install");
     assert!(packs[0]["path"].as_str().unwrap().contains("core-desk"));
+    assert_eq!(packs[0]["missing"].as_bool(), Some(false));
 }
 
 #[test]
@@ -111,6 +112,7 @@ fn pack_install_json_and_force() {
     assert_eq!(v["name"], "core-desk");
     assert_eq!(v["mode"], "install");
     assert_eq!(v["source"], "packs/core-desk");
+    assert_eq!(v["missing"].as_bool(), Some(false));
 
     // second install without force → operation error (exit 3)
     odm()
@@ -359,6 +361,61 @@ fn agent_start_still_stub() {
         .failure()
         .code(1)
         .stderr(predicate::str::contains("not implemented"));
+}
+
+#[test]
+fn pack_list_missing_after_deleted_dest() {
+    let (_dir, root) = setup_pack_ws();
+    let root_s = root.to_str().unwrap();
+    let home = root.join("agent-home");
+    let home_s = home.to_str().unwrap();
+    let dest = home.join("core-desk");
+
+    odm()
+        .args([
+            "--root",
+            root_s,
+            "agent",
+            "pack",
+            "install",
+            "packs/core-desk",
+            "--home",
+            home_s,
+        ])
+        .assert()
+        .success();
+
+    odm()
+        .args(["--root", root_s, "agent", "pack", "list"])
+        .assert()
+        .success()
+        .stdout(predicate::eq("core-desk\n"));
+
+    let v = json_stdout(odm().args(["--root", root_s, "--json", "agent", "pack", "list"]));
+    assert_eq!(v["packs"][0]["missing"].as_bool(), Some(false));
+
+    fs::remove_dir_all(&dest).unwrap();
+    assert!(!dest.exists());
+
+    odm()
+        .args(["--root", root_s, "agent", "pack", "list"])
+        .assert()
+        .success()
+        .stdout(predicate::eq("core-desk missing\n"));
+
+    let v = json_stdout(odm().args(["--root", root_s, "--json", "agent", "pack", "list"]));
+    let packs = v["packs"].as_array().unwrap();
+    assert_eq!(packs.len(), 1);
+    assert_eq!(packs[0]["name"], "core-desk");
+    assert_eq!(packs[0]["missing"].as_bool(), Some(true));
+
+    odm()
+        .args(["--root", root_s, "agent", "pack", "rm", "core-desk"])
+        .assert()
+        .success();
+
+    let v = json_stdout(odm().args(["--root", root_s, "--json", "agent", "pack", "list"]));
+    assert_eq!(v["packs"].as_array().unwrap().len(), 0);
 }
 
 #[test]

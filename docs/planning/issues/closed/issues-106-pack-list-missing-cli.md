@@ -2,13 +2,12 @@
 id: issues-106
 title: "pack list missing CLI integration"
 description: "Bin tests: agent pack list --json missing false/true after install and dest delete."
-status: open
+status: closed
 issue-type: feature-request
 severity: medium
 tags:
   - planning
   - issue
-  - ready-for-agent
   - wayfinder
   - wayfinder-task
 ---
@@ -61,10 +60,10 @@ See Agent Brief.
 
 **Acceptance criteria:**
 
-- [ ] Bin test: present pack → list JSON `missing: false`
-- [ ] Bin test: deleted dest → list JSON `missing: true` + human ` missing`
-- [ ] Install JSON includes `missing: false`
-- [ ] File size within limits; `cargo test` green
+- [x] Bin test: present pack → list JSON `missing: false`
+- [x] Bin test: deleted dest → list JSON `missing: true` + human ` missing`
+- [x] Install JSON includes `missing: false`
+- [x] File size within limits; `cargo test` green
 
 **Out of scope:**
 
@@ -75,4 +74,8 @@ See Agent Brief.
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met
+
+## Answer
+
+Bin coverage in `cli_agent_pack.rs`: list/install JSON `missing` false after install; human bare name; after dest delete `missing: true` + ` missing` suffix; pack rm clears list. 511 LOC; tests green. No product/docs changes.
