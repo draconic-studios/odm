@@ -2,7 +2,7 @@
 id: issues-129
 title: "Clap parse errors exit 1 and honor --json"
 description: "Clap usage failures exit 2 with human stderr; docs say usage exit 1; --json ignored on parse errors."
-status: reviewing
+status: closed
 issue-type: bug
 severity: high
 tags:
@@ -57,13 +57,13 @@ None
 
 **Acceptance criteria:**
 
-- [ ] `odm notacommand` → exit 1
-- [ ] `odm --json project worktree prune` (missing required) → exit 1 + JSON error when applicable
-- [ ] Tests updated; no remaining “clap → 2” lock-in unless documented exception removed
-- [ ] `cargo test -p odm` green
+- [x] `odm notacommand` → exit 1
+- [x] `odm --json project worktree prune` (missing required) → exit 1 + JSON error when applicable
+- [x] Tests updated; no remaining “clap → 2” lock-in unless documented exception removed
+- [x] `cargo test -p odm` green
 
 **Out of scope:** validating unused global flags on every command (YAGNI).
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met

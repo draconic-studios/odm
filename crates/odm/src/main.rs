@@ -4,6 +4,7 @@ mod output;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
+use clap::error::ErrorKind;
 use clap::Parser;
 use odm::commands::{
     find_notes_dto, format_action_list_human, format_generate_run_human,
@@ -36,7 +37,10 @@ use cli::{AgentCmd, Cli, Commands, PackCmd, PinCmd, ProgenCmd, ProjectCmd, Proje
 use output::{print_error, print_json, GlobalOut};
 
 fn main() -> ExitCode {
-    let cli = Cli::parse();
+    let cli = match Cli::try_parse() {
+        Ok(cli) => cli,
+        Err(e) => return exit_clap_error(e),
+    };
     let out = GlobalOut { json: cli.json };
 
     match run(cli, &out) {
@@ -45,6 +49,26 @@ fn main() -> ExitCode {
         Err(e) => {
             let code = print_error(&out, &e);
             ExitCode::from(code as u8)
+        }
+    }
+}
+
+fn exit_clap_error(e: clap::Error) -> ExitCode {
+    match e.kind() {
+        ErrorKind::DisplayHelp | ErrorKind::DisplayVersion => {
+            let _ = e.print();
+            ExitCode::SUCCESS
+        }
+        _ => {
+            let json = std::env::args_os().any(|a| a == "--json");
+            if json {
+                let msg = e.to_string();
+                let msg = msg.trim().to_string();
+                print_error(&GlobalOut { json: true }, &OdmError::usage(msg));
+            } else {
+                let _ = e.print();
+            }
+            ExitCode::from(1)
         }
     }
 }

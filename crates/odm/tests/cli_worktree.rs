@@ -696,7 +696,7 @@ fn worktree_prune_all_mutual_exclusion_and_bare() {
     let root = dir.path().join("ws");
     workspace_with_git_project(&root);
 
-    // clap usage → exit 2 (project convention for missing/conflicting args)
+    // clap usage → exit 1 (same as library OdmError::Usage)
     odm()
         .args([
             "--root",
@@ -707,7 +707,7 @@ fn worktree_prune_all_mutual_exclusion_and_bare() {
         ])
         .assert()
         .failure()
-        .code(2);
+        .code(1);
 
     odm()
         .args([
@@ -721,7 +721,7 @@ fn worktree_prune_all_mutual_exclusion_and_bare() {
         ])
         .assert()
         .failure()
-        .code(2);
+        .code(1);
 }
 
 #[test]

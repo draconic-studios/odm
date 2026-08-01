@@ -33,10 +33,12 @@ Rules:
 ## Exit codes
 
 - **`0`**: success (including `find` with zero hits → empty list).
-- **`1`**: usage / unknown command / bad flags / unknown entity name.
+- **`1`**: usage — clap parse failures (unknown command / bad flags) and library `OdmError::Usage` (unknown entity name, bad option values). Both paths exit `1`.
 - **`2`**: Workspace/config error (not a Workspace, invalid config, missing bundle path).
 - **`3`**: operation failed (git/pin/store error; see `run` for action passthrough).
 - **`4`**: not found (e.g. unknown node id when that is distinct from usage error).
+
+When `--json` is on argv and a parse or library usage error occurs, stdout is one error object `{ "ok": false, "error": { "code": "usage", "message", "detail?" } }` (same envelope as other `--json` errors).
 
 `odm run`: if the Action is found and executed, process exit code is the **action’s exit code**. Pre-exec failures use `1` / `2`. `--json` wrapper may still include `"exitCode"`.
 
@@ -172,9 +174,9 @@ Same add/rm/materialize semantics as Project (`multi-git.md`). Entity summary ve
 
 ODM resolves Progen **name → path** via Workspace config, then runs single-root progen crate ops. Scope flags: `progen.md`.
 
-Federated defaults live at **top level** (`find`, `context`) — not under `odm progen`.
+Top-level query/context live outside `odm progen`: **`odm find`** federates; **`odm context`** is single-root (in-store neighborhood).
 
-**Implemented** store façade (today):
+**Implemented** store façade (today; single-root):
 
 ```text
 odm progen get <id>
@@ -183,8 +185,6 @@ odm progen ls | tree
 odm progen backlinks …
 odm progen reindex | doctor
 ```
-
-Federated query/context live at **top level** (`odm find`, `odm context`) — not under `odm progen`.
 
 **Reserved / deferred** (not in CLI today; do not treat as shipped):
 

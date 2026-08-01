@@ -271,4 +271,49 @@ fn project_add_sync_pin_flow() {
         .success();
 }
 
+#[test]
+fn clap_unknown_command_exit_1() {
+    odm()
+        .arg("notacommand")
+        .assert()
+        .failure()
+        .code(1)
+        .stderr(predicate::str::contains("unrecognized subcommand").or(
+            predicate::str::contains("notacommand"),
+        ));
+}
+
+#[test]
+fn clap_parse_error_json_envelope() {
+    let dir = tempdir().unwrap();
+    let root = dir.path().join("ws");
+    odm()
+        .args(["init", root.to_str().unwrap(), "--no-git"])
+        .assert()
+        .success();
+
+    let stdout = String::from_utf8(
+        odm()
+            .args([
+                "--json",
+                "--root",
+                root.to_str().unwrap(),
+                "project",
+                "worktree",
+                "prune",
+            ])
+            .assert()
+            .failure()
+            .code(1)
+            .get_output()
+            .stdout
+            .clone(),
+    )
+    .unwrap();
+    let v: serde_json::Value = serde_json::from_str(&stdout).unwrap();
+    assert_eq!(v["ok"], false);
+    assert_eq!(v["error"]["code"], "usage");
+    assert!(v["error"]["message"].as_str().unwrap().len() > 0);
+}
+
 
