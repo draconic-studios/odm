@@ -1,0 +1,10 @@
+hello:
+  tasks:
+    - run: echo hello-desk
+fail:
+  tasks:
+    - run: "sh -c 'exit 7'"
+chain:
+  tasks:
+    - run: echo step1
+    - run: echo step2

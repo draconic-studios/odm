@@ -11,3 +11,5 @@ projects:
 progens:
   notes:
     path: progens/notes
+actions:
+  core: actions/core.yaml

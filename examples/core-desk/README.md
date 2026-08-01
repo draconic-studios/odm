@@ -1,6 +1,6 @@
 # core-desk
 
-Offline dogfood Workspace for ODM **core** + a path-only **Progen** vault (Obsidian-compatible). No actions or generators.
+Offline dogfood Workspace for ODM **core**, path-only **Progen** vault, and shell **Actions**. No generators.
 
 ## Layout
 
@@ -13,6 +13,8 @@ examples/core-desk/
     beta.git/     # bare fixture
   progens/
     notes/        # path-only Progen = Obsidian vault (plain Markdown)
+  actions/
+    core.yaml     # hello / fail / chain
   .odm/
     odm.config.yaml
 ```
@@ -57,6 +59,13 @@ odm progen reindex
 odm find DeskUniqueToken
 odm context welcome
 # Open progens/notes in Obsidian or: obsidian-cli … against that folder
+
+# Actions
+odm run                 # list: hello, fail, chain
+odm run hello           # prints hello-desk
+odm run chain           # step1 then step2
+odm run fail            # exit 7
+odm --json run hello    # {"action":"hello","exitCode":0}
 ```
 
 ## Fixtures
