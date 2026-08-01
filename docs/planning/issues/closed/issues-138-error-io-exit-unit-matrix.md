@@ -2,7 +2,7 @@
 id: issues-138
 title: "Unit tests: error, io, exit_code matrix"
 description: "odm-core error.rs and io.rs have zero direct unit tests; foundation for CLI exit honesty."
-status: reviewing
+status: closed
 issue-type: feature-request
 severity: medium
 tags:
@@ -50,12 +50,12 @@ None
 
 **Acceptance criteria:**
 
-- [ ] Direct unit coverage for exit_code/code/detail
-- [ ] atomic_write round-trip + failure hygiene
-- [ ] `cargo test -p odm-core` green
+- [x] Direct unit coverage for exit_code/code/detail
+- [x] atomic_write round-trip + failure hygiene
+- [x] `cargo test -p odm-core` green
 
 **Out of scope:** CLI integration envelope (140); clap (129).
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met

@@ -129,3 +129,98 @@ pub fn exit_code(err: &OdmError) -> i32 {
         OdmError::NotFound(_) => 4,
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::path::PathBuf;
+
+    #[test]
+    fn exit_code_matrix() {
+        let cases: &[(OdmError, i32)] = &[
+            (OdmError::usage("bad flag"), 1),
+            (OdmError::workspace("no root"), 2),
+            (OdmError::operation("git failed"), 3),
+            (OdmError::not_found("missing"), 4),
+        ];
+        for (err, want) in cases {
+            assert_eq!(exit_code(err), *want, "exit_code for {:?}", err.code());
+        }
+    }
+
+    #[test]
+    fn code_stable_strings() {
+        let cases: &[(OdmError, &str)] = &[
+            (OdmError::usage("x"), "usage"),
+            (OdmError::workspace("x"), "workspace"),
+            (OdmError::operation("x"), "operation"),
+            (OdmError::not_found("x"), "not_found"),
+        ];
+        for (err, want) in cases {
+            assert_eq!(err.code(), *want);
+        }
+    }
+
+    #[test]
+    fn detail_multiline_operation_only() {
+        let cases: &[(OdmError, Option<&str>)] = &[
+            (OdmError::operation("single line"), None),
+            (OdmError::operation("first\n"), None),
+            (
+                OdmError::operation("git fetch failed (exit 1)\nfatal: remote gone\nretry later"),
+                Some("fatal: remote gone\nretry later"),
+            ),
+            (OdmError::usage("a\nb"), None),
+            (OdmError::workspace("a\nb"), None),
+            (OdmError::not_found("a\nb"), None),
+        ];
+        for (err, want) in cases {
+            assert_eq!(err.detail().as_deref(), *want, "detail for {}", err.message());
+        }
+    }
+
+    #[test]
+    fn message_matches_display() {
+        let err = OdmError::not_found("nope");
+        assert_eq!(err.message(), err.to_string());
+        assert_eq!(err.message(), "nope");
+    }
+
+    #[test]
+    fn not_implemented_is_usage() {
+        let err = OdmError::not_implemented("agent start");
+        assert_eq!(err.code(), "usage");
+        assert_eq!(exit_code(&err), 1);
+        assert!(err.message().contains("agent start"));
+    }
+
+    #[test]
+    fn from_git_error_failed_carries_multiline_detail() {
+        let ge = GitError::Failed {
+            operation: "fetch",
+            path: Some(PathBuf::from("/ws/p")),
+            code: Some(128),
+            stderr: "fatal: remote error\nplease check".into(),
+        };
+        let err: OdmError = ge.into();
+        assert_eq!(err.code(), "operation");
+        assert_eq!(exit_code(&err), 3);
+        assert_eq!(err.detail().as_deref(), Some("fatal: remote error\nplease check"));
+        assert!(err.message().contains("git fetch failed"));
+    }
+
+    #[test]
+    fn from_git_error_empty_args_is_usage() {
+        let err: OdmError = GitError::EmptyArgs.into();
+        assert_eq!(err.code(), "usage");
+        assert_eq!(exit_code(&err), 1);
+    }
+
+    #[test]
+    fn from_io_error_is_operation() {
+        let err: OdmError = std::io::Error::other("disk full").into();
+        assert_eq!(err.code(), "operation");
+        assert_eq!(exit_code(&err), 3);
+        assert!(err.message().contains("disk full"));
+    }
+}

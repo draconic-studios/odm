@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **odm-core error/io unit matrix** — table-driven tests for `exit_code` 1–4, `code()`/`detail()`, and `atomic_write` create/replace plus failure hygiene (untorn final, temp cleanup).
 - **`find --progen-group` CLI integration tests** — multi-progen fixture: group narrows hits, unknown group exit `1`, `--progen` ∪ `--progen-group`, JSON `progen` field (`crates/odm/tests/cli_progen_group.rs`).
 - **odm-progen unit edges** — direct tests for `format_find_human` / `format_context_human`, `doctor_progens` (missing vault / index present), vault walk nested + dot-dir skip, note title/wikilink edges.
 - **odm-git worktree real-git test** — tempfile round-trip (`worktree_add` / `worktree_list` / `worktree_remove`) against real git at the crate seam; mock argv tests unchanged.
