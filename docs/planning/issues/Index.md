@@ -10,7 +10,6 @@ See `docs/agents/issue-tracker.md`.
 
 ## Frontier (open, unblocked)
 
-- [[issues-92-status-packs-docs-honesty]] — status packs docs honesty (unblocked after 90)
 - [[issues-93-core-desk-status-packs-dogfood]] — core-desk status packs + pack_missing dogfood (unblocked after 90+91)
 
 ## Blocked

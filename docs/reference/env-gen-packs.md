@@ -77,6 +77,7 @@ odm agent pack rm <name>
 - **`list`:** human one name per line (empty → `(no agent packs)`); JSON shapes in `cli.md`.
 - **`rm`:** drop registry entry and best-effort delete dest; missing dest still OK; unknown name → exit `4`. Human/JSON shapes in `cli.md`.
 - **Doctor:** missing-path **warn** `pack_missing:<name>` when a registry path has no path/symlink entry (`fixable: false`; `--fix` does not edit registry or delete pack paths). Dangling symlink present is not missing. Details: `cli.md`.
+- **Status:** top-level `agent_packs` inventory on `odm status` (`name` / `source` / `path` / `mode` / `missing`); human **Agent packs:** section when non-empty. `missing` matches the doctor path rule; doctor still owns the warn. Details: `cli.md`.
 
 **Deferred (still explicit):**
 
@@ -85,7 +86,6 @@ odm agent pack rm <name>
 - Marketplace protocol / remote fetch
 - First-class agent matrix (Cursor, Claude, etc.)
 - Pack declarations in Workspace config spine
-- `status` pack reports (doctor missing-path warn landed)
 
 ---
 
@@ -122,7 +122,7 @@ odm agent start [--project …] [--wt …] …
 - **Plugin host** (legacy Go go-plugin / npm installers) — dead path.
 - **No** top-level `pack` or `env` commands — agent UX under `odm agent …` only.
 - **No** cross-store graph API (see `graph.md`, `progen.md`).
-- **`status` / env / generator cache:** no obligation to report packs, env, or generator cache on `status` in this package; doctor missing-path pack warn is landed (`pack_missing:<name>`). Core remains correct when sketch features are absent.
+- **Env / generator cache on status:** no obligation to report env or generator cache on `status`; registered agent packs are inventoried on `odm status` (`agent_packs`) and doctor missing-path pack warn is landed (`pack_missing:<name>`). Core remains correct when sketch features are absent.
 
 ---
 

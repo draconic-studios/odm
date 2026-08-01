@@ -38,10 +38,11 @@ After pack lifecycle map [[issues-82-post-v1-pack-lifecycle-hardening-map]] clos
 - Prefer order: 90 and 91 unblocked in parallel; 92 blocked by 90; 93 blocked by 90+91.
 - **90 closed:** `StatusSnapshot.agent_packs` always present; each row name/source/path/mode/missing via `pack_list` + `symlink_metadata` (doctor-aligned); soft-fail `[]`; human `Agent packs:` section; packs-only not swallowed.
 - **91 closed:** bin integration `doctor_pack_missing_after_deleted_dest` in `cli_agent_pack.rs` — install→no pack_missing→delete dest→`pack_missing:core-desk` warn fixable false; `--fix` leaves registry; pack rm clears.
+- **92 closed:** docs honesty — cli/env-gen-packs/phased-delivery/CHANGELOG/README document status `agent_packs`; deferred lists no longer claim status pack reports unimplemented; marketplace/manifest/config/`agent start` still deferred.
 
 ## Not yet specified
 
-- Docs honesty wording (92); core-desk dogfood steps (93).
+- core-desk dogfood steps (93).
 
 ## Out of scope
 

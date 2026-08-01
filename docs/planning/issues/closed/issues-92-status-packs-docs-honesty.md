@@ -2,7 +2,7 @@
 id: issues-92
 title: "Docs honesty: status agent_packs + deferred lists"
 description: "Update cli/env-gen-packs/phased-delivery/CHANGELOG/README so status pack reports are landed truth."
-status: open
+status: closed
 issue-type: feature-request
 severity: medium
 tags:
@@ -63,11 +63,11 @@ See Agent Brief.
 
 **Acceptance criteria:**
 
-- [ ] cli.md status documents agent_packs JSON + human
-- [ ] env-gen-packs / cli deferred lists no longer claim status pack reports unimplemented
-- [ ] CHANGELOG Unreleased mentions status agent_packs
-- [ ] Remaining deferred (marketplace, manifest, config packs, agent start) still explicit
-- [ ] No product code in this ticket
+- [x] cli.md status documents agent_packs JSON + human
+- [x] env-gen-packs / cli deferred lists no longer claim status pack reports unimplemented
+- [x] CHANGELOG Unreleased mentions status agent_packs
+- [x] Remaining deferred (marketplace, manifest, config packs, agent start) still explicit
+- [x] No product code in this ticket
 
 **Out of scope:**
 
@@ -77,4 +77,16 @@ See Agent Brief.
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met
+
+## Answer
+
+Docs-only honesty after 90:
+
+- **cli.md:** status documents top-level `agent_packs` JSON + human Agent packs section; deferred/sketch matrix marks status inventory landed (marketplace/manifest/config still deferred).
+- **env-gen-packs.md:** Status bullet for `agent_packs`; struck deferred “status pack reports”; shared absences no longer deny pack status inventory.
+- **phased-delivery.md:** Phase spine bullet for Status `agent_packs`.
+- **CHANGELOG [Unreleased]:** status agent packs bullet (name/source/path/mode/missing).
+- **README:** status line + one-phrase note that status lists registered agent packs.
+- **architecture.md:** untouched.
+- No Rust changes; `cargo test` green.

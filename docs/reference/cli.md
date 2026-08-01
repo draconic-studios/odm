@@ -108,7 +108,12 @@ odm pin status [name…]
 odm status
 ```
 
-Workspace snapshot: configured Projects/Progens, on-disk presence, git/pin drift summary, dirty hints, and **registered** worktree slots per Project. Does not fetch. `--json` for agents: each project includes `worktree_slots: [ { "name", "path", "dirty" } ]` (`path` is `worktrees/<project>/<slot>`; `dirty` is `true` / `false` / `null` when the cleanliness probe fails; empty array when none / non-git / list soft-fails). Progens omit `worktree_slots`. Human output lists slot names only when non-empty (dirty slots get a ` dirty` suffix, e.g. `feat dirty`). Orphan dirs are doctor-only — see `worktrees.md`.
+Workspace snapshot: configured Projects/Progens, on-disk presence, git/pin drift summary, dirty hints, **registered** worktree slots per Project, and **registered** agent packs. Does not fetch. `--json` for agents:
+
+- Each project includes `worktree_slots: [ { "name", "path", "dirty" } ]` (`path` is `worktrees/<project>/<slot>`; `dirty` is `true` / `false` / `null` when the cleanliness probe fails; empty array when none / non-git / list soft-fails). Progens omit `worktree_slots`.
+- Top-level `agent_packs: [ { "name", "source", "path", "mode", "missing" } ]` from `.odm/agent-packs.json` (always present; empty array when none / missing registry / list soft-fails). `missing` is `true` when the pack path has no path/symlink entry (same rule as doctor `pack_missing`); doctor still owns the warn check.
+
+Human output lists slot names only when non-empty (dirty slots get a ` dirty` suffix, e.g. `feat dirty`). When packs are registered, an **Agent packs:** section lists each pack name, mode (`install` / `link`), and a ` missing` suffix when `missing`. Orphan worktree dirs are doctor-only — see `worktrees.md`.
 
 ---
 
@@ -280,7 +285,7 @@ odm agent pack rm <name>
 - **`rm`:** drop registry entry and best-effort delete destination (install tree or link symlink). Missing dest still succeeds (stale-registry cleanup). Unknown name → exit `4`. Human: `removed <name> -> <path>`. `--json`: single entry object (same fields as list items) for the removed pack.
 - **install/link/rm `--json`:** single entry object (same fields as list items), not wrapped.
 - Human success: `installed <name> -> <path>` / `linked <name> -> <path>` / `removed <name> -> <path>`.
-- Deferred: pack manifest, marketplace, config-declared packs, status pack reports (doctor missing-path warn landed — see doctor); `agent start` runtime — `env-gen-packs.md`.
+- Deferred: pack manifest, marketplace, config-declared packs (`env-gen-packs.md`); status pack inventory landed on `odm status` (`agent_packs`; doctor `pack_missing` warn separate — see doctor); `agent start` runtime.
 
 ### `odm agent prompt` — **v1 thin** (context work-package)
 
@@ -309,7 +314,7 @@ odm agent start [--project] [--wt] …
 ## Full vs sketch matrix
 
 - **Full**: global flags (including `--wt` path binding); `init` (headless; `--interactive` not implemented); `sync`; `pin apply|status`; `status`; `doctor` (includes pack_missing warn); `project list|add|rm|info|git|worktree` (v1); `progen` lifecycle + **partial** store façade (implemented verbs above); `find`; `context`; `run`; `generate` (v1 local template only); `agent pack` (v1 local install/link/list/rm); `agent prompt` (v1 thin context work-package).
-- **Sketch / deferred**: `init --interactive`; reserved progen store verbs; `agent start`; deferred worktree features (config slots, pin↔slot, auto-prune on doctor, status orphan listing, global `--wt` depth — `worktrees.md`; doctor orphan/dirty **warn**, explicit `worktree prune` / `prune --all`, and registered slot `dirty` on list/status/info landed); generate remote/templating; pack marketplace/manifest/config declarations and status pack reports (`env-gen-packs.md`; doctor `pack_missing` warn landed).
+- **Sketch / deferred**: `init --interactive`; reserved progen store verbs; `agent start`; deferred worktree features (config slots, pin↔slot, auto-prune on doctor, status orphan listing, global `--wt` depth — `worktrees.md`; doctor orphan/dirty **warn**, explicit `worktree prune` / `prune --all`, and registered slot `dirty` on list/status/info landed); generate remote/templating; pack marketplace/manifest/config declarations (`env-gen-packs.md`; status `agent_packs` inventory + doctor `pack_missing` warn landed).
 - **Absent**: `serve`, MCP, top-level action verbs, `ops` namespace, path-valued scope flags.
 
 ## Related

@@ -32,6 +32,7 @@ Post-0.1.0 **landed outside the original Ship spine** (not required before v0.1.
 - **Doctor worktree orphan warn** — configured-project slot dirs that are not registered git worktrees (`worktrees.md`; not fixable)
 - **Doctor worktree dirty-slot warn** — registered dirty slots `worktree_dirty:<project>:<slot>` (`worktrees.md`; not fixable)
 - **Doctor pack missing-path warn** — registry packs whose path is absent on disk `pack_missing:<name>` (`env-gen-packs.md` / `cli.md`; not fixable; `--fix` does not edit registry)
+- **Status `agent_packs`** — top-level registry inventory on `odm status` (`name` + `source` + `path` + `mode` + `missing`); empty array when none / soft-fail; doctor still owns `pack_missing` warn (`env-gen-packs.md` / `cli.md`)
 - **`odm find --limit`** — max hits per Progen store (default 200)
 - **Status + project info `worktree_slots`** — registered slots (`name` + `path` + `dirty`) on `odm status` projects and `odm project info` (same shape on `worktree list`); empty when none / non-git / soft-fail
 - **`odm project worktree prune --all`** — multi-project orphan GC across every configured Project (`worktrees.md`; same empty/`--force` rules as per-project prune)
