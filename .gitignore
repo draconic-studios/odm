@@ -1,6 +1,8 @@
 # Build / release artifacts
 /bin/
 /target/
+/dist/
+dist/
 *.exe
 *.dll
 *.so
