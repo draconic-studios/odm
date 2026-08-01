@@ -2,7 +2,7 @@
 id: issues-59
 title: "Agent prompt integration tests and docs"
 description: "CLI integration coverage for agent prompt; promote docs from sketch; CHANGELOG; keep start stub."
-status: open
+status: closed
 issue-type: feature-request
 severity: low
 tags:
@@ -71,11 +71,11 @@ See Agent Brief.
 
 **Acceptance criteria:**
 
-- [ ] Integration tests cover success, json, missing id, start stub
-- [ ] cli.md + env-gen-packs.md honest about prompt v1 vs start stub
-- [ ] CHANGELOG Unreleased mentions agent prompt
-- [ ] `cargo test` green
-- [ ] Map [[issues-55-post-v1-hardening-map]] updated when destination met (if 56–58 already closed)
+- [x] Integration tests cover success, json, missing id, start stub
+- [x] cli.md + env-gen-packs.md honest about prompt v1 vs start stub
+- [x] CHANGELOG Unreleased mentions agent prompt
+- [x] `cargo test` green
+- [x] Map [[issues-55-post-v1-hardening-map]] updated when destination met (if 56–58 already closed)
 
 **Out of scope:**
 
@@ -85,4 +85,13 @@ See Agent Brief.
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met
+
+## Answer
+
+Docs honesty + proof for `odm agent prompt` v1 thin.
+
+- **Tests:** existing `agent_prompt_is_thin_context_alias` in `crates/odm/tests/progen_vault.rs` covers human success (id), `--json` `ContextHit`/`anchor.id`, unknown id exit 4, `agent start` exit 1 not-implemented; `agent_start_still_stub` in `cli_agent_pack.rs`.
+- **Docs:** `cli.md` / `env-gen-packs.md` promote prompt to v1 thin; start remains sketch; Full vs sketch matrix; `architecture.md` split stub wording; `worktrees.md` related link; root README status; core-desk dogfood `odm agent prompt welcome`.
+- **CHANGELOG** [Unreleased] Added bullet for `odm agent prompt`; pack bullet no longer claims prompt stub.
+- Parent map [[issues-55-post-v1-hardening-map]] destination met (all children 56–59 closed).

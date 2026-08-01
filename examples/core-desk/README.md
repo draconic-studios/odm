@@ -64,6 +64,7 @@ odm progen list
 odm progen reindex
 odm find DeskUniqueToken
 odm context welcome
+odm agent prompt welcome
 # Open progens/notes in Obsidian or: obsidian-cli … against that folder
 
 # Actions

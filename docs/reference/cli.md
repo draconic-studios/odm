@@ -51,7 +51,8 @@ odm find | context
 odm run
 odm generate …          # v1 local template
 odm agent pack …        # v1 local install/link/list
-odm agent start|prompt  # sketch
+odm agent prompt …      # v1 thin (context work-package)
+odm agent start         # sketch
 ```
 
 ---
@@ -186,7 +187,7 @@ Federated query/context live at **top level** (`odm find`, `odm context`) — no
 - Writes: exactly one Progen (`--progen` or sole configured).
 - Reads under `odm progen`: single-root (pass `--progen` when multiple configured), except where a command doc explicitly federates.
 - **`serve`**: absent (non-goal).
-- **`prompt`**: primary home is `odm agent prompt` (sketch); not duplicated as a second full surface under `progen` in this doc.
+- **`prompt`**: primary home is `odm agent prompt` (v1 thin context work-package); not duplicated as a second full surface under `progen` in this doc.
 
 Flag parity with upstream: pass through where it does not fight ODM globals; do not require duplicating every upstream flag table here — implement against progenitor surface + ODM scope rules.
 
@@ -273,25 +274,36 @@ odm agent pack link <source> --home <path> [--force]
 - **`list`:** registry-backed (`.odm/agent-packs.json`). Human: one name per line sorted; empty → `(no agent packs)`. `--json`: `{ "packs": [ { "name", "source", "path", "mode" } ] }` (`mode` = `"install"` | `"link"`).
 - **install/link `--json`:** single entry object (same fields as list items), not wrapped.
 - Human success: `installed <name> -> <path>` / `linked <name> -> <path>`.
-- Deferred: start/prompt productization, pack manifest, marketplace, config-declared packs, status/doctor pack reports — `env-gen-packs.md`.
+- Deferred: pack manifest, marketplace, config-declared packs, status/doctor pack reports; `agent start` runtime — `env-gen-packs.md`.
 
-### `odm agent start` / `odm agent prompt` — **sketch**
+### `odm agent prompt` — **v1 thin** (context work-package)
+
+```text
+odm agent prompt <id> [--progen <name>] [--json]
+odm agent prompt <progen-name>:<id> …
+```
+
+- Thin alias of `odm context`: same Progen scope rules, same human markdown neighborhood, same `--json` shape (`ContextHit` with `anchor` / `outgoing` / `incoming`).
+- Packages one note’s in-store context to stdout for agents — **not** a second prompt engine, task planner, or graph walk.
+- Disambiguation: require `--progen` (global) when more than one Progen is in play, **or** accept `name:id`. Sole configured Progen → bare `id` OK. At most one `--progen`.
+- Unknown id → exit `4`. Success → exit `0`.
+- Details / deferred depth: `env-gen-packs.md`.
+
+### `odm agent start` — **sketch**
 
 ```text
 odm agent start [--project] [--wt] …
-odm agent prompt <id> --progen …     # thin wrap of progen prompt when specified
 ```
 
 - Still **not implemented** (exit `1`).
-- Honors `--project`, `--wt`, `--progen`, `--json` where relevant when implemented.
-- Intent: `worktrees.md`, `env-gen-packs.md`. Not MCP/`serve`.
+- Intent: shell-out to an agent runtime against a Project Primary or `--wt` slot — `worktrees.md`, `env-gen-packs.md`. Not MCP/`serve`.
 
 ---
 
 ## Full vs sketch matrix
 
-- **Full**: global flags (including `--wt` path binding); `init` (headless; `--interactive` not implemented); `sync`; `pin apply|status`; `status`; `doctor`; `project list|add|rm|info|git|worktree` (v1); `progen` lifecycle + **partial** store façade (implemented verbs above); `find`; `context`; `run`; `generate` (v1 local template only); `agent pack` (v1 local install/link/list only).
-- **Sketch / deferred**: `init --interactive`; reserved progen store verbs; `agent start` / `agent prompt`; deferred worktree features (config slots, GC, pin↔slot — `worktrees.md`; doctor orphan **warn** landed); generate remote/templating; pack marketplace/manifest/config declarations (`env-gen-packs.md`).
+- **Full**: global flags (including `--wt` path binding); `init` (headless; `--interactive` not implemented); `sync`; `pin apply|status`; `status`; `doctor`; `project list|add|rm|info|git|worktree` (v1); `progen` lifecycle + **partial** store façade (implemented verbs above); `find`; `context`; `run`; `generate` (v1 local template only); `agent pack` (v1 local install/link/list only); `agent prompt` (v1 thin context work-package).
+- **Sketch / deferred**: `init --interactive`; reserved progen store verbs; `agent start`; deferred worktree features (config slots, GC, pin↔slot — `worktrees.md`; doctor orphan **warn** landed); generate remote/templating; pack marketplace/manifest/config declarations (`env-gen-packs.md`).
 - **Absent**: `serve`, MCP, top-level action verbs, `ops` namespace, path-valued scope flags.
 
 ## Related

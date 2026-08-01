@@ -6,11 +6,11 @@ See `docs/agents/issue-tracker.md`.
 
 ## Maps
 
-- [[issues-55-post-v1-hardening-map]] — Post-v1 hardening + agent prompt thin
+_(none open)_
 
 ## Frontier (open, unblocked)
 
-- [[issues-59-agent-prompt-integration-docs]] — Agent prompt integration tests and docs
+_(none)_
 
 ## Blocked
 
@@ -32,3 +32,4 @@ _(none remaining)_
 - [[issues-40-worktree-slots-map]] — Worktree slots (post-0.1.0)
 - [[issues-45-generators-map]] — Generators local template v1 (post-0.1.0)
 - [[issues-50-agent-packs-map]] — Agent packs local install/link/list (post-0.1.0)
+- [[issues-55-post-v1-hardening-map]] — Post-v1 hardening + agent prompt thin

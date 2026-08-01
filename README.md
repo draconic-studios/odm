@@ -2,7 +2,7 @@
 
 Poly-repo workspace OS for humans and AI agents: one config, one CLI, and orchestrated Projects + Progens without submodules or a second brain product.
 
-**Status:** v0.1.0 spine (multi-git, Progen, Actions) plus post-0.1.0 **worktree slots** and local **`odm generate`**. Agent pack install/link/list is local v1; `agent start` / `agent prompt` remain sketch.
+**Status:** v0.1.0 spine (multi-git, Progen, Actions) plus post-0.1.0 **worktree slots** and local **`odm generate`**. Agent pack install/link/list is local v1; **`odm agent prompt`** is v1 thin (context work-package); `agent start` remains sketch.
 
 ## Install
 

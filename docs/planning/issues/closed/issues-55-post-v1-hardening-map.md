@@ -2,7 +2,7 @@
 id: issues-55
 title: "Post-v1 hardening + agent prompt thin map"
 description: "Wayfinder map: docs honesty after packs/worktree/generate, doctor worktree orphans, thin agent prompt."
-status: open
+status: closed
 issue-type: feature-request
 tags:
   - planning
@@ -19,6 +19,8 @@ After worktree/generate/pack v1 landed, close the next AFK-ready slice:
 1. **Docs honesty** — reference docs no longer call landed v1 surfaces “sketch” or list unimplemented progen verbs as if shipped.
 2. **Doctor worktree orphans** — warn (not fail) when `worktrees/<project>/<slot>/` dirs exist but are not registered git worktrees (or project folder has stray dirs).
 3. **`odm agent prompt` thin v1** — single-note agent work-package markdown from existing Progen context (not a second engine); `agent start` stays stub.
+
+**Status:** destination met (2026-08-01). All child tickets closed.
 
 ## Notes
 
@@ -40,10 +42,11 @@ After worktree/generate/pack v1 landed, close the next AFK-ready slice:
 - Orphan scan lock: configured Projects only (ignore unknown names under `worktrees/`).
 - [[issues-58-agent-prompt-thin]] closed — `odm agent prompt <id>` thin alias of context via shared `run_context_prompt`; typed `id`; JSON = `ContextHit`; human reuses `format_context_human`; `agent start` still stub.
 - Human header lock: reuse `# context <id>` (no separate agent-prompt header).
+- [[issues-59-agent-prompt-integration-docs]] closed — integration proof (`agent_prompt_is_thin_context_alias`) + docs/CHANGELOG honesty for prompt v1 thin; start remains sketch; destination complete.
 
 ## Not yet specified
 
-- _(none for remaining child [[issues-59-agent-prompt-integration-docs]] beyond its brief)_
+- _(none — map complete)_
 
 ## Out of scope
 
@@ -57,3 +60,7 @@ After worktree/generate/pack v1 landed, close the next AFK-ready slice:
 ## Blocked by
 
 None
+
+## Answer
+
+Map destination met. Docs honesty (56), doctor worktree orphans warn (57), thin `odm agent prompt` (58), and integration tests + docs lock (59) all closed. `agent start` remains intentionally stubbed.

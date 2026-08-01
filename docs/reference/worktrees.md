@@ -56,5 +56,5 @@ odm project worktree rm <project> <slot> [--force]
 - Architecture layout: `architecture.md`
 - CLI matrix: `cli.md`
 - Multi-git Primary: `multi-git.md`
-- Agent packs (v1 local) + start/prompt (sketch): `env-gen-packs.md`
+- Agent packs (v1 local) + prompt (v1 thin) + start (sketch): `env-gen-packs.md`
 - Phased delivery: `phased-delivery.md`

@@ -1,6 +1,6 @@
 # Env, generators, and agent packs
 
-**Mixed depth** — generators and agent packs have **v1 local** CLI; env and agent start/prompt remain sketch. Not a Ship gate for deferred items. Domain terms: root `CONTEXT.md`. Config pointers: `config.md`. CLI: `cli.md`. Worktrees: `worktrees.md`.
+**Mixed depth** — generators and agent packs have **v1 local** CLI; `agent prompt` is **v1 thin** (context work-package); env and `agent start` remain sketch. Not a Ship gate for deferred items. Domain terms: root `CONTEXT.md`. Config pointers: `config.md`. CLI: `cli.md`. Worktrees: `worktrees.md`.
 
 ## Env
 
@@ -88,19 +88,28 @@ odm agent pack link <source> --home <path> [--force]
 
 ## Agent start and prompt
 
-**CLI names reserved (still sketch / not implemented):**
+### `odm agent prompt` — **v1 thin** (landed)
+
+```text
+odm agent prompt <id> [--progen <name>] [--json]
+odm agent prompt <progen-name>:<id> …
+```
+
+- Packages one note’s Progen **context** (anchor + outgoing + incoming) to stdout as an agent work-package.
+- Thin alias of `odm context` — same scope rules and JSON (`ContextHit`); **not** a second prompt engine or graph walk.
+- Primary home is `odm agent prompt`, not a duplicate full surface under `odm progen`.
+- CLI details: `cli.md`.
+
+### `odm agent start` — **sketch** (still reserved)
 
 ```text
 odm agent start [--project …] [--wt …] …
-odm agent prompt <id> --progen … 
 ```
 
-- **`start`:** launch an agent **runtime** against a Project Primary or `--wt` slot via **shell-out**. No runtime matrix in the design package.
-- **`prompt`:** thin wrap of progen prompt with ODM Progen scope — not a second prompt engine. Primary home is `odm agent prompt`, not a duplicate full surface under `odm progen`.
+- Launch an agent **runtime** against a Project Primary or `--wt` slot via **shell-out**. Not implemented (exit `1`).
+- No runtime matrix in the design package.
 
-Honors `--project`, `--wt`, `--progen`, `--json` where relevant when implemented (`cli.md`).
-
-**Deferred:** full start flags, runtime detection, session lifecycle, prompt flag parity tables.
+**Deferred:** full start flags, runtime detection, session lifecycle; deeper prompt flag parity beyond context packaging.
 
 ---
 

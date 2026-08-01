@@ -11,12 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **`odm generate`** — v1 local template materialize: list Generators from bundles; `generate <name> --dest <path> [--force]` copies a local template tree under the Workspace (remote/url-only run deferred with a clear error).
 - **`odm project worktree`** — Worktree slot add/list/rm and `--wt` path binding (no longer a not-implemented stub).
-- **`odm agent pack`** — v1 local install/link/list into an agent home (`--home`); Workspace registry `.odm/agent-packs.json`; `agent start` / `agent prompt` remain not-implemented stubs.
+- **`odm agent pack`** — v1 local install/link/list into an agent home (`--home`); Workspace registry `.odm/agent-packs.json`; `agent start` remains a not-implemented stub.
+- **`odm agent prompt`** — v1 thin context work-package: packages one note’s Progen neighborhood to stdout (same path/JSON as `odm context`); `agent start` still stubbed.
 
 ### Changed
 
 - `examples/core-desk` includes a sample Generator (`hello` → `templates/hello`) and a tiny demo agent pack (`agent-packs/demo`).
-- Reference docs: `generate` and `agent pack` documented as v1 local (not pure sketch); remote/marketplace/start/prompt still deferred in `env-gen-packs.md`.
+- Reference docs: `generate`, `agent pack`, and `agent prompt` documented as landed v1 (local / thin); remote/marketplace and `agent start` still deferred in `env-gen-packs.md`.
 
 ## [0.1.0] - 2026-08-01
 
