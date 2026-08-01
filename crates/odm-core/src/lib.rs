@@ -60,7 +60,7 @@ pub use pin_maintain::{
 };
 pub use status::{
     build_status, compute_pin_state, format_status_human, status_from_observation, EntityStatus,
-    PinState, StatusSnapshot,
+    PinState, StatusPackInfo, StatusSnapshot,
 };
 pub use url_match::{normalize_git_url, urls_match, urls_match_with_root};
 pub use worktree::{

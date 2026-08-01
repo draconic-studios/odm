@@ -6,15 +6,16 @@ See `docs/agents/issue-tracker.md`.
 
 ## Maps
 
-_(none open)_
+- [[issues-89-post-v1-status-packs-map]] — Post-v1 status packs + pack observation dogfood
 
 ## Frontier (open, unblocked)
 
-_(none)_
+- [[issues-91-doctor-pack-missing-cli]] — CLI integration: doctor pack_missing warn
+- [[issues-92-status-packs-docs-honesty]] — status packs docs honesty (unblocked after 90)
 
 ## Blocked
 
-_(none)_
+- [[issues-93-core-desk-status-packs-dogfood]] — blocked by 91
 
 ## Architecture deepen (post-0.1.0)
 

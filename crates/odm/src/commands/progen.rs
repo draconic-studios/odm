@@ -169,6 +169,7 @@ mod tests {
                 dirty: None,
                 worktree_slots: None,
             }],
+            agent_packs: vec![],
         };
         let dto = progen_list_from(&ws, &snap);
         let v = serde_json::to_value(&dto).unwrap();
