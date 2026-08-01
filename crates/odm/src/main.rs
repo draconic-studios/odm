@@ -11,7 +11,7 @@ use odm::commands::{
     format_project_list_human, list_actions_dto, list_projects, list_progens, materialize_json,
     materialize_json_opt, materialize_sync_human, progen_info, project_info, status_snapshot,
 };
-use odm_actions::{run_action, RunOptions};
+use odm_actions::{run_action, CwdTarget, RunOptions, StdioMode};
 use odm_core::{
     discover_root, format_doctor_human, format_status_human, init_workspace, load_workspace,
     path_buf_to_rel, pin_apply, pin_status, project_add, project_git, project_rm, run_doctor,
@@ -318,22 +318,29 @@ fn run(cli: Cli, out: &GlobalOut) -> Result<i32, OdmError> {
                     Ok(0)
                 }
                 Some(name) => {
-                    let code = run_action(
+                    let cwd =
+                        CwdTarget::from_flags(global_project.as_deref(), global_wt.as_deref())?;
+                    let stdio = if out.json {
+                        StdioMode::Capture
+                    } else {
+                        StdioMode::Inherit
+                    };
+                    let result = run_action(
                         &ws,
                         &name,
                         RunOptions {
-                            project: global_project.as_deref(),
-                            wt: global_wt.as_deref(),
+                            cwd,
                             extra_args: &extra,
+                            stdio,
                         },
                     )?;
                     if out.json {
                         print_json(&serde_json::json!({
                             "action": name,
-                            "exitCode": code,
+                            "exitCode": result.exit_code,
                         }))?;
                     }
-                    Ok(code)
+                    Ok(result.exit_code)
                 }
             }
         }

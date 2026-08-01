@@ -46,14 +46,6 @@ fn json_stdout(cmd: &mut assert_cmd::Command) -> Value {
     serde_json::from_slice(&out).expect("stdout JSON")
 }
 
-/// Action stdio inherits, so run --json may prefix action output; parse trailing JSON object.
-fn json_from_stdout_mixed(cmd: &mut assert_cmd::Command) -> Value {
-    let out = cmd.assert().success().get_output().stdout.clone();
-    let text = String::from_utf8_lossy(&out);
-    let start = text.rfind('{').expect("JSON object in stdout");
-    serde_json::from_str(&text[start..]).expect("stdout JSON")
-}
-
 #[test]
 fn run_lists_hello() {
     let (_dir, root) = setup_temp_core_desk();
@@ -100,7 +92,7 @@ fn run_unknown_exit_1() {
 #[test]
 fn run_json_hello() {
     let (_dir, root) = setup_temp_core_desk();
-    let v = json_from_stdout_mixed(odm().args([
+    let v = json_stdout(odm().args([
         "--root",
         root.to_str().unwrap(),
         "--json",

@@ -2,13 +2,12 @@
 id: issues-39
 title: "Action run result and stdio modes"
 description: "Structured Action RunResult with capture vs inherit so run --json is honest; cwd already from core paths."
-status: open
+status: closed
 issue-type: feature-request
 severity: low
 tags:
   - planning
   - issue
-  - ready-for-agent
   - architecture
   - deepen
 ---
@@ -83,6 +82,17 @@ See Agent Brief.
 - Replacing shell-out with an in-process runner
 - Expanding action bundle schema beyond what's needed for stdio/result
 - Generator runtime
+
+## Answer
+
+Shipped structured Action run API:
+
+- **`StdioMode`**: `Inherit` (human) vs `Capture` (machine)
+- **`CwdTarget`**: `Root` | `Project { name }` | `Worktree { project, slot }` via `from_flags` — no overloaded name-vs-path param
+- **`RunResult` / `TaskResult`**: overall + per-task exit codes; stdout/stderr only under Capture (UTF-8 lossy)
+- **CLI**: `odm run --json` uses Capture and prints only `{ action, exitCode }`; human run inherits terminal stdio
+- **Cwd**: still task dir > worktree slot > project primary > root via core `abs_checkout` / `worktree_slot_path`
+- Integration scrape helper removed; unit tests cover capture/inherit shape and cwd target clarity
 
 ## Comments
 

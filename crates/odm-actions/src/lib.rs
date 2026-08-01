@@ -3,30 +3,77 @@
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use odm_core::{abs_checkout, worktree_slot_path, ActionDef, ActionTask, OdmError, Workspace};
+use odm_core::{abs_checkout, worktree_slot_path, ActionTask, OdmError, Workspace};
+
+/// How task stdio is handled during Action execution.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum StdioMode {
+    /// Stream task stdout/stderr to the terminal (human `odm run`).
+    Inherit,
+    /// Capture per-task streams into [`TaskResult`] (machine `odm run --json`).
+    Capture,
+}
+
+/// Where Action tasks run when no task `dir` is set.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CwdTarget<'a> {
+    Root,
+    Project { name: &'a str },
+    Worktree { project: &'a str, slot: &'a str },
+}
+
+impl<'a> CwdTarget<'a> {
+    /// Build a cwd target from CLI `--project` / `--wt` flags.
+    pub fn from_flags(project: Option<&'a str>, wt: Option<&'a str>) -> Result<Self, OdmError> {
+        match (project, wt) {
+            (None, Some(_)) => Err(OdmError::usage("--wt requires --project")),
+            (Some(p), Some(s)) => Ok(CwdTarget::Worktree {
+                project: p,
+                slot: s,
+            }),
+            (Some(p), None) => Ok(CwdTarget::Project { name: p }),
+            (None, None) => Ok(CwdTarget::Root),
+        }
+    }
+}
 
 #[derive(Debug, Clone, Copy)]
 pub struct RunOptions<'a> {
-    pub project: Option<&'a str>,
-    pub wt: Option<&'a str>,
+    pub cwd: CwdTarget<'a>,
     pub extra_args: &'a [String],
+    pub stdio: StdioMode,
 }
 
-pub fn list_actions(ws: &Workspace) -> Vec<(&str, &ActionDef)> {
+/// One task's outcome. Streams are `Some` only under [`StdioMode::Capture`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TaskResult {
+    pub exit_code: i32,
+    pub stdout: Option<String>,
+    pub stderr: Option<String>,
+}
+
+/// Full Action run outcome (stop-on-first-failure; may be a prefix of tasks).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RunResult {
+    pub exit_code: i32,
+    pub tasks: Vec<TaskResult>,
+}
+
+pub fn list_actions(ws: &Workspace) -> Vec<(&str, &odm_core::ActionDef)> {
     ws.actions
         .iter()
         .map(|(n, d)| (n.as_str(), d))
         .collect()
 }
 
+/// Resolve task cwd: task dir > worktree slot > project primary > workspace root.
 pub fn resolve_cwd(
-    ws_root: &Path,
-    project_path: Option<&str>,
-    wt_slot: Option<&str>,
+    ws: &Workspace,
+    target: CwdTarget<'_>,
     task_dir: Option<&str>,
 ) -> Result<PathBuf, OdmError> {
     if let Some(dir) = task_dir {
-        let cwd = ws_root.join(dir);
+        let cwd = ws.root.join(dir);
         if !cwd.is_dir() {
             return Err(OdmError::usage(format!(
                 "action task dir does not exist: {dir}"
@@ -34,79 +81,73 @@ pub fn resolve_cwd(
         }
         return Ok(cwd);
     }
-    if let Some(slot) = wt_slot {
-        let project = project_path.ok_or_else(|| {
-            OdmError::usage("--wt requires --project")
-        })?;
-        let cwd = worktree_slot_path(ws_root, project, slot);
-        if !cwd.is_dir() {
-            return Err(OdmError::usage(format!(
-                "worktree path does not exist: worktrees/{project}/{slot}"
-            )));
+    match target {
+        CwdTarget::Root => Ok(ws.root.clone()),
+        CwdTarget::Project { name } => {
+            let entry = ws.config.projects.get(name).ok_or_else(|| {
+                OdmError::usage(format!("unknown project '{name}'"))
+            })?;
+            let cwd = abs_checkout(ws.root.as_path(), &entry.path)?;
+            if !cwd.is_dir() {
+                return Err(OdmError::usage(format!(
+                    "project path does not exist: {}",
+                    entry.path
+                )));
+            }
+            Ok(cwd)
         }
-        return Ok(cwd);
-    }
-    if let Some(rel) = project_path {
-        let cwd = abs_checkout(ws_root, rel)?;
-        if !cwd.is_dir() {
-            return Err(OdmError::usage(format!(
-                "project path does not exist: {rel}"
-            )));
+        CwdTarget::Worktree { project, slot } => {
+            if !ws.config.projects.contains_key(project) {
+                return Err(OdmError::usage(format!("unknown project '{project}'")));
+            }
+            let cwd = worktree_slot_path(ws.root.as_path(), project, slot);
+            if !cwd.is_dir() {
+                return Err(OdmError::usage(format!(
+                    "worktree path does not exist: worktrees/{project}/{slot}"
+                )));
+            }
+            Ok(cwd)
         }
-        return Ok(cwd);
     }
-    Ok(ws_root.to_path_buf())
 }
 
 pub fn run_action(
     ws: &Workspace,
     action_name: &str,
     opts: RunOptions<'_>,
-) -> Result<i32, OdmError> {
+) -> Result<RunResult, OdmError> {
     let def = ws.actions.get(action_name).ok_or_else(|| {
         OdmError::usage(format!("unknown action '{action_name}'"))
     })?;
 
-    if opts.wt.is_some() && opts.project.is_none() {
-        return Err(OdmError::usage("--wt requires --project"));
-    }
-
-    let project_rel = if let Some(name) = opts.project {
-        let entry = ws.config.projects.get(name).ok_or_else(|| {
-            OdmError::usage(format!("unknown project '{name}'"))
-        })?;
-        Some(entry.path.as_str())
-    } else {
-        None
-    };
-
-    // resolve_cwd: with --wt, project_path arg is the project *name* (worktrees/<name>/<slot>).
-    // without --wt, it is the project primary relative path.
-    let cwd_project = if opts.wt.is_some() {
-        opts.project
-    } else {
-        project_rel
-    };
-
+    let mut tasks = Vec::new();
     let n = def.tasks.len();
     for (i, task) in def.tasks.iter().enumerate() {
-        let cwd = resolve_cwd(
-            ws.root.as_path(),
-            cwd_project,
-            opts.wt,
-            task.dir.as_deref(),
-        )?;
+        let cwd = resolve_cwd(ws, opts.cwd, task.dir.as_deref())?;
         let is_last = i + 1 == n;
         let extra = if is_last { opts.extra_args } else { &[] };
-        let code = run_task(task, &cwd, extra)?;
+        let tr = run_task(task, &cwd, extra, opts.stdio)?;
+        let code = tr.exit_code;
+        tasks.push(tr);
         if code != 0 {
-            return Ok(code);
+            return Ok(RunResult {
+                exit_code: code,
+                tasks,
+            });
         }
     }
-    Ok(0)
+    Ok(RunResult {
+        exit_code: 0,
+        tasks,
+    })
 }
 
-fn run_task(task: &ActionTask, cwd: &Path, extra_args: &[String]) -> Result<i32, OdmError> {
+fn run_task(
+    task: &ActionTask,
+    cwd: &Path,
+    extra_args: &[String],
+    stdio: StdioMode,
+) -> Result<TaskResult, OdmError> {
     let mut cmd = Command::new("sh");
     cmd.current_dir(cwd);
     if extra_args.is_empty() {
@@ -118,10 +159,28 @@ fn run_task(task: &ActionTask, cwd: &Path, extra_args: &[String]) -> Result<i32,
             cmd.arg(a);
         }
     }
-    let status = cmd.status().map_err(|e| {
-        OdmError::operation(format!("failed to spawn shell for action: {e}"))
-    })?;
-    Ok(status.code().unwrap_or(1))
+    match stdio {
+        StdioMode::Inherit => {
+            let status = cmd.status().map_err(|e| {
+                OdmError::operation(format!("failed to spawn shell for action: {e}"))
+            })?;
+            Ok(TaskResult {
+                exit_code: status.code().unwrap_or(1),
+                stdout: None,
+                stderr: None,
+            })
+        }
+        StdioMode::Capture => {
+            let output = cmd.output().map_err(|e| {
+                OdmError::operation(format!("failed to spawn shell for action: {e}"))
+            })?;
+            Ok(TaskResult {
+                exit_code: output.status.code().unwrap_or(1),
+                stdout: Some(String::from_utf8_lossy(&output.stdout).into_owned()),
+                stderr: Some(String::from_utf8_lossy(&output.stderr).into_owned()),
+            })
+        }
+    }
 }
 
 #[cfg(test)]
@@ -161,23 +220,76 @@ mod tests {
         }
     }
 
+    fn inherit_root(extra: &[String]) -> RunOptions<'_> {
+        RunOptions {
+            cwd: CwdTarget::Root,
+            extra_args: extra,
+            stdio: StdioMode::Inherit,
+        }
+    }
+
+    #[test]
+    fn capture_collects_stdout() {
+        let dir = tempdir().unwrap();
+        let mut actions = BTreeMap::new();
+        actions.insert("hello".into(), single("echo hello-desk", None));
+        let ws = ws_with_actions(dir.path().to_path_buf(), actions);
+        let result = run_action(
+            &ws,
+            "hello",
+            RunOptions {
+                cwd: CwdTarget::Root,
+                extra_args: &[],
+                stdio: StdioMode::Capture,
+            },
+        )
+        .unwrap();
+        assert_eq!(result.exit_code, 0);
+        assert_eq!(result.tasks.len(), 1);
+        assert_eq!(result.tasks[0].exit_code, 0);
+        let stdout = result.tasks[0].stdout.as_deref().unwrap();
+        assert!(stdout.contains("hello-desk"), "got: {stdout}");
+        assert!(result.tasks[0].stderr.is_some());
+    }
+
+    #[test]
+    fn inherit_has_no_captured_streams() {
+        let dir = tempdir().unwrap();
+        let mut actions = BTreeMap::new();
+        actions.insert("hello".into(), single("true", None));
+        let ws = ws_with_actions(dir.path().to_path_buf(), actions);
+        let result = run_action(&ws, "hello", inherit_root(&[])).unwrap();
+        assert_eq!(result.exit_code, 0);
+        assert!(result.tasks[0].stdout.is_none());
+        assert!(result.tasks[0].stderr.is_none());
+    }
+
+    #[test]
+    fn cwd_target_from_flags() {
+        assert_eq!(CwdTarget::from_flags(None, None).unwrap(), CwdTarget::Root);
+        assert_eq!(
+            CwdTarget::from_flags(Some("alpha"), None).unwrap(),
+            CwdTarget::Project { name: "alpha" }
+        );
+        assert_eq!(
+            CwdTarget::from_flags(Some("alpha"), Some("slot1")).unwrap(),
+            CwdTarget::Worktree {
+                project: "alpha",
+                slot: "slot1"
+            }
+        );
+        let err = CwdTarget::from_flags(None, Some("slot1")).unwrap_err();
+        assert!(err.to_string().contains("--wt requires --project"));
+    }
+
     #[test]
     fn echo_success() {
         let dir = tempdir().unwrap();
         let mut actions = BTreeMap::new();
         actions.insert("hello".into(), single("echo hello-desk", None));
         let ws = ws_with_actions(dir.path().to_path_buf(), actions);
-        let code = run_action(
-            &ws,
-            "hello",
-            RunOptions {
-                project: None,
-                wt: None,
-                extra_args: &[],
-            },
-        )
-        .unwrap();
-        assert_eq!(code, 0);
+        let result = run_action(&ws, "hello", inherit_root(&[])).unwrap();
+        assert_eq!(result.exit_code, 0);
     }
 
     #[test]
@@ -186,17 +298,8 @@ mod tests {
         let mut actions = BTreeMap::new();
         actions.insert("fail".into(), single("exit 7", None));
         let ws = ws_with_actions(dir.path().to_path_buf(), actions);
-        let code = run_action(
-            &ws,
-            "fail",
-            RunOptions {
-                project: None,
-                wt: None,
-                extra_args: &[],
-            },
-        )
-        .unwrap();
-        assert_eq!(code, 7);
+        let result = run_action(&ws, "fail", inherit_root(&[])).unwrap();
+        assert_eq!(result.exit_code, 7);
     }
 
     #[test]
@@ -220,17 +323,9 @@ mod tests {
             },
         );
         let ws = ws_with_actions(dir.path().to_path_buf(), actions);
-        let code = run_action(
-            &ws,
-            "chain",
-            RunOptions {
-                project: None,
-                wt: None,
-                extra_args: &[],
-            },
-        )
-        .unwrap();
-        assert_eq!(code, 3);
+        let result = run_action(&ws, "chain", inherit_root(&[])).unwrap();
+        assert_eq!(result.exit_code, 3);
+        assert_eq!(result.tasks.len(), 1);
         assert!(!marker.exists());
     }
 
@@ -246,17 +341,8 @@ mod tests {
             single(&format!("pwd > {}", out.display()), Some("sub")),
         );
         let ws = ws_with_actions(dir.path().to_path_buf(), actions);
-        let code = run_action(
-            &ws,
-            "pwd",
-            RunOptions {
-                project: None,
-                wt: None,
-                extra_args: &[],
-            },
-        )
-        .unwrap();
-        assert_eq!(code, 0);
+        let result = run_action(&ws, "pwd", inherit_root(&[])).unwrap();
+        assert_eq!(result.exit_code, 0);
         let text = fs::read_to_string(&out).unwrap();
         assert!(text.contains("sub"), "got: {text}");
     }
@@ -283,17 +369,8 @@ mod tests {
         );
         let ws = ws_with_actions(dir.path().to_path_buf(), actions);
         let extras = vec!["one".into(), "two".into()];
-        let code = run_action(
-            &ws,
-            "args",
-            RunOptions {
-                project: None,
-                wt: None,
-                extra_args: &extras,
-            },
-        )
-        .unwrap();
-        assert_eq!(code, 0);
+        let result = run_action(&ws, "args", inherit_root(&extras)).unwrap();
+        assert_eq!(result.exit_code, 0);
         let text = fs::read_to_string(&out).unwrap();
         assert_eq!(text, "one\ntwo\n");
     }
@@ -302,16 +379,7 @@ mod tests {
     fn unknown_action() {
         let dir = tempdir().unwrap();
         let ws = ws_with_actions(dir.path().to_path_buf(), BTreeMap::new());
-        let err = run_action(
-            &ws,
-            "nope",
-            RunOptions {
-                project: None,
-                wt: None,
-                extra_args: &[],
-            },
-        )
-        .unwrap_err();
+        let err = run_action(&ws, "nope", inherit_root(&[])).unwrap_err();
         assert!(err.to_string().contains("unknown action"));
     }
 
@@ -321,16 +389,7 @@ mod tests {
         let mut actions = BTreeMap::new();
         actions.insert("x".into(), single("true", Some("missing")));
         let ws = ws_with_actions(dir.path().to_path_buf(), actions);
-        let err = run_action(
-            &ws,
-            "x",
-            RunOptions {
-                project: None,
-                wt: None,
-                extra_args: &[],
-            },
-        )
-        .unwrap_err();
+        let err = run_action(&ws, "x", inherit_root(&[])).unwrap_err();
         assert!(err.to_string().contains("does not exist"));
     }
 
@@ -341,17 +400,34 @@ mod tests {
         fs::create_dir_all(root.join("projects/alpha")).unwrap();
         fs::create_dir_all(root.join("worktrees/alpha/slot1")).unwrap();
         fs::create_dir_all(root.join("taskdir")).unwrap();
+        let ws = ws_with_actions(root.to_path_buf(), BTreeMap::new());
 
-        let task = resolve_cwd(root, Some("projects/alpha"), Some("slot1"), Some("taskdir")).unwrap();
+        let task = resolve_cwd(
+            &ws,
+            CwdTarget::Worktree {
+                project: "alpha",
+                slot: "slot1",
+            },
+            Some("taskdir"),
+        )
+        .unwrap();
         assert_eq!(task, root.join("taskdir"));
 
-        let wt = resolve_cwd(root, Some("alpha"), Some("slot1"), None).unwrap();
+        let wt = resolve_cwd(
+            &ws,
+            CwdTarget::Worktree {
+                project: "alpha",
+                slot: "slot1",
+            },
+            None,
+        )
+        .unwrap();
         assert_eq!(wt, root.join("worktrees/alpha/slot1"));
 
-        let proj = resolve_cwd(root, Some("projects/alpha"), None, None).unwrap();
+        let proj = resolve_cwd(&ws, CwdTarget::Project { name: "alpha" }, None).unwrap();
         assert_eq!(proj, root.join("projects/alpha"));
 
-        let base = resolve_cwd(root, None, None, None).unwrap();
+        let base = resolve_cwd(&ws, CwdTarget::Root, None).unwrap();
         assert_eq!(base, root);
     }
 
@@ -368,17 +444,17 @@ mod tests {
             single(&format!("cat marker > {}", out.display()), None),
         );
         let ws = ws_with_actions(root.to_path_buf(), actions);
-        let code = run_action(
+        let result = run_action(
             &ws,
             "cat",
             RunOptions {
-                project: Some("alpha"),
-                wt: None,
+                cwd: CwdTarget::Project { name: "alpha" },
                 extra_args: &[],
+                stdio: StdioMode::Inherit,
             },
         )
         .unwrap();
-        assert_eq!(code, 0);
+        assert_eq!(result.exit_code, 0);
         assert_eq!(fs::read_to_string(&out).unwrap(), "proj\n");
     }
 
@@ -396,36 +472,26 @@ mod tests {
             single(&format!("cat marker > {}", out.display()), None),
         );
         let ws = ws_with_actions(root.to_path_buf(), actions);
-        let code = run_action(
+        let result = run_action(
             &ws,
             "cat",
             RunOptions {
-                project: Some("alpha"),
-                wt: Some("slot1"),
+                cwd: CwdTarget::Worktree {
+                    project: "alpha",
+                    slot: "slot1",
+                },
                 extra_args: &[],
+                stdio: StdioMode::Inherit,
             },
         )
         .unwrap();
-        assert_eq!(code, 0);
+        assert_eq!(result.exit_code, 0);
         assert_eq!(fs::read_to_string(&out).unwrap(), "wt\n");
     }
 
     #[test]
     fn run_action_wt_requires_project() {
-        let dir = tempdir().unwrap();
-        let mut actions = BTreeMap::new();
-        actions.insert("x".into(), single("true", None));
-        let ws = ws_with_actions(dir.path().to_path_buf(), actions);
-        let err = run_action(
-            &ws,
-            "x",
-            RunOptions {
-                project: None,
-                wt: Some("slot1"),
-                extra_args: &[],
-            },
-        )
-        .unwrap_err();
+        let err = CwdTarget::from_flags(None, Some("slot1")).unwrap_err();
         assert!(err.to_string().contains("--wt requires --project"));
     }
 }

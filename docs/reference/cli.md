@@ -226,7 +226,7 @@ odm run <action-name> [--project <name>] [--wt <slot>] [--json] [--] [extra-args
 - Actions are **only** invoked via `run` — never installed as top-level commands.
 - Action names may coincide with builtin verbs (`run sync` is fine); no reserved ban list beyond empty/invalid tokens.
 - Exit codes: see above (passthrough when executed).
-- `--json` wrapper minimum: `{ "action", "exitCode" }` (stdout of the action remains the action’s problem unless a later rule captures it).
+- `--json` wrapper minimum: `{ "action", "exitCode" }`. With `--json`, task stdio is captured (not interleaved on stdout) so the envelope is a single well-formed JSON object. Without `--json`, task stdio inherits the terminal.
 
 ---
 

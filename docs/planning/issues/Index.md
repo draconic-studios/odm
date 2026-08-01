@@ -10,7 +10,7 @@ _(none open — phases 1–5 closed)_
 
 ## Frontier (open, unblocked)
 
-- [[issues-39-action-run-result-stdio]] — Action RunResult / stdio (`ready-for-agent`)
+_(empty)_
 
 ## Blocked
 
@@ -20,7 +20,7 @@ _(none)_
 
 Remaining from architecture review 2026-08-01; tagged `ready-for-agent` with Agent Briefs. Work frontier first.
 
-- [[issues-39-action-run-result-stdio]]
+_(none remaining)_
 
 ## Closed maps (delivery spine)
 
