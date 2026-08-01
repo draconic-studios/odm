@@ -541,14 +541,11 @@ pub fn project_rm<R: odm_git::CommandRunner>(
     if delete {
         let path = abs_checkout(root, &entry.path);
         if path.exists() {
-            if git.is_repo(&path)? {
-                if !force && !git.is_clean(&path)? {
-                    // restore config entry before failing
-                    config.projects.insert(name.to_string(), entry);
-                    return Err(OdmError::operation(format!(
-                        "working tree dirty for '{name}' (use --force with --delete)"
-                    )));
-                }
+            if git.is_repo(&path)? && !force && !git.is_clean(&path)? {
+                config.projects.insert(name.to_string(), entry);
+                return Err(OdmError::operation(format!(
+                    "working tree dirty for '{name}' (use --force with --delete)"
+                )));
             }
             remove_path(&path)?;
         }

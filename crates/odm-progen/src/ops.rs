@@ -225,7 +225,7 @@ fn snippet(body: &str, query: &str) -> Option<String> {
     let end = (idx + q.len() + 40).min(body.len());
     let mut s = body[start..end].replace('\n', " ");
     if start > 0 {
-        s.insert_str(0, "…");
+        s.insert(0, '…');
     }
     if end < body.len() {
         s.push('…');

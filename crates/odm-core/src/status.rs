@@ -82,6 +82,7 @@ pub fn build_status(ws: &Workspace) -> Result<StatusSnapshot, OdmError> {
     })
 }
 
+#[allow(clippy::too_many_arguments)]
 fn entity_status(
     root: &Path,
     name: &str,

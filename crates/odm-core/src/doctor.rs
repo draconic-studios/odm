@@ -137,6 +137,7 @@ fn odm_layout_check(root: &Path) -> DoctorCheck {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn push_entity_path_checks(
     checks: &mut Vec<DoctorCheck>,
     root: &Path,
@@ -149,7 +150,8 @@ fn push_entity_path_checks(
 ) {
     let id_base = format!("{kind}:{name}");
 
-    match resolve_under_root(root, rel) {
+let abs = match resolve_under_root(root, rel) {
+        Ok(p) => p,
         Err(e) => {
             checks.push(DoctorCheck {
                 id: format!("path_declared:{id_base}"),
@@ -159,87 +161,85 @@ fn push_entity_path_checks(
             });
             return;
         }
-        Ok(abs) => {
-            checks.push(DoctorCheck {
-                id: format!("path_declared:{id_base}"),
-                status: CheckStatus::Pass,
-                message: format!("{kind} '{name}' path under Workspace root"),
-                fixable: false,
-            });
+    };
 
-            if !abs.exists() {
+    checks.push(DoctorCheck {
+        id: format!("path_declared:{id_base}"),
+        status: CheckStatus::Pass,
+        message: format!("{kind} '{name}' path under Workspace root"),
+        fixable: false,
+    });
+
+    if !abs.exists() {
+        checks.push(DoctorCheck {
+            id: format!("path_exists:{id_base}"),
+            status: CheckStatus::Warn,
+            message: format!("{kind} '{name}' path missing on disk: {rel}"),
+            fixable: false,
+        });
+        return;
+    }
+
+    checks.push(DoctorCheck {
+        id: format!("path_exists:{id_base}"),
+        status: CheckStatus::Pass,
+        message: format!("{kind} '{name}' path exists"),
+        fixable: false,
+    });
+
+    if !managed {
+        return;
+    }
+
+    let is_git = git.is_repo(&abs).unwrap_or(false);
+    if !is_git {
+        checks.push(DoctorCheck {
+            id: format!("managed_git:{id_base}"),
+            status: CheckStatus::Fail,
+            message: format!("managed {kind} '{name}' exists but is not a git repo"),
+            fixable: false,
+        });
+        return;
+    }
+
+    checks.push(DoctorCheck {
+        id: format!("managed_git:{id_base}"),
+        status: CheckStatus::Pass,
+        message: format!("managed {kind} '{name}' is a git repo"),
+        fixable: false,
+    });
+
+    let Some(cfg_url) = url else {
+        return;
+    };
+
+    match git.origin_url(&abs) {
+        Ok(origin) => {
+            if urls_match_with_root(cfg_url, &origin, Some(root)) {
                 checks.push(DoctorCheck {
-                    id: format!("path_exists:{id_base}"),
-                    status: CheckStatus::Warn,
-                    message: format!("{kind} '{name}' path missing on disk: {rel}"),
+                    id: format!("origin_match:{id_base}"),
+                    status: CheckStatus::Pass,
+                    message: format!("{kind} '{name}' origin matches config url"),
                     fixable: false,
                 });
-                return;
-            }
-
-            checks.push(DoctorCheck {
-                id: format!("path_exists:{id_base}"),
-                status: CheckStatus::Pass,
-                message: format!("{kind} '{name}' path exists"),
-                fixable: false,
-            });
-
-            if !managed {
-                return;
-            }
-
-            let is_git = git.is_repo(&abs).unwrap_or(false);
-            if !is_git {
+            } else {
                 checks.push(DoctorCheck {
-                    id: format!("managed_git:{id_base}"),
+                    id: format!("origin_match:{id_base}"),
                     status: CheckStatus::Fail,
-                    message: format!("managed {kind} '{name}' exists but is not a git repo"),
+                    message: format!(
+                        "{kind} '{name}' origin '{origin}' does not match config url '{cfg_url}'"
+                    ),
                     fixable: false,
                 });
-                return;
             }
-
+        }
+        Err(_) => {
             checks.push(DoctorCheck {
-                id: format!("managed_git:{id_base}"),
-                status: CheckStatus::Pass,
-                message: format!("managed {kind} '{name}' is a git repo"),
+                id: format!("origin_match:{id_base}"),
+                status: CheckStatus::Fail,
+                message: format!("{kind} '{name}' origin missing or unreadable"),
                 fixable: false,
             });
-
-            let cfg_url = match url {
-                Some(u) => u,
-                None => return,
-            };
-
-            match git.origin_url(&abs) {
-                Ok(origin) => {
-                    if urls_match_with_root(cfg_url, &origin, Some(root)) {
-                        checks.push(DoctorCheck {
-                            id: format!("origin_match:{id_base}"),
-                            status: CheckStatus::Pass,
-                            message: format!("{kind} '{name}' origin matches config url"),
-                            fixable: false,
-                        });
-                    } else {
-                        checks.push(DoctorCheck {
-                            id: format!("origin_match:{id_base}"),
-                            status: CheckStatus::Fail,
-                            message: format!(
-                                "{kind} '{name}' origin '{origin}' does not match config url '{cfg_url}'"
-                            ),
-                            fixable: false,
-                        });
-                    }
-                }
-                Err(_) => {
-                    checks.push(DoctorCheck {
-                        id: format!("origin_match:{id_base}"),
-                        status: CheckStatus::Fail,
-                        message: format!("{kind} '{name}' origin missing or unreadable"),
-                        fixable: false,
-                    });
-                }
-            }
         }
     }
 }

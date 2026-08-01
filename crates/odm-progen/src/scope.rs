@@ -42,10 +42,10 @@ pub fn resolve_read_scope(
         set.into_iter().collect()
     };
 
-    Ok(names
+    names
         .into_iter()
         .map(|name| scoped_from_config(&ws.root, &ws.config, &name))
-        .collect::<Result<Vec<_>, _>>()?)
+        .collect()
 }
 
 /// Resolve exactly one Progen for writes (or sole configured).
