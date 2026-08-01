@@ -28,14 +28,15 @@
 
 ```text
 odm generate                                    # list
-odm generate <generator-name> --dest <rel-path> [--force]
+odm generate <generator-name> --dest <rel-path> [--force] [--dry-run]
 ```
 
 - Resolve `<generator-name>` from merged bundles; unknown → exit `1`.
 - **v1 behavior:** recursive copy of a local `template` directory (relative to Workspace root) into `--dest` under the Workspace. No variable substitution, no interactive wizard.
 - **`--force`:** overwrite when dest is non-empty; without force → exit `3`.
-- **Url-only** entries may appear in list; run fails with a clear deferred-remote message (exit `1`). Both set → prefer `template`.
-- JSON list/run shapes: `cli.md`.
+- **`--dry-run`:** same validation as a real run; no filesystem writes; reports the file count that would be copied (`cli.md`).
+- **Url-only** entries may appear in list; run fails with a clear deferred-remote message (exit `1`, with or without `--dry-run`). Both set → prefer `template`.
+- JSON list/run shapes: `cli.md` (run includes `dry_run` bool).
 
 **Deferred (still explicit):**
 
@@ -43,8 +44,9 @@ odm generate <generator-name> --dest <rel-path> [--force]
 - Prompt / variable contract
 - Remote fetch and cache layout
 - Nx / schematics interop
-- Dry-run mode
 - Inline generator bodies in Workspace config (still forbidden)
+
+**Landed (not deferred):** `--dry-run` no-write preview on local generate.
 
 ---
 

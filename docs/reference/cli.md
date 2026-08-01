@@ -251,7 +251,7 @@ odm run <action-name> [--project <name>] [--wt <slot>] [--json] [--] [extra-args
 
 ```text
 odm generate                                    # list Generators
-odm generate <name> --dest <rel-path> [--force]
+odm generate <name> --dest <rel-path> [--force] [--dry-run]
 ```
 
 - Resolve `<name>` from merged Generator bundles (`config.md`); unknown → exit `1`.
@@ -259,10 +259,12 @@ odm generate <name> --dest <rel-path> [--force]
 - **Run**: materialize a **local** `template` directory (path relative to Workspace root) into `--dest` (also relative to root; must not escape). Recursive copy; no variable substitution.
 - **`--dest`**: required when a name is given; creates parent dirs as needed. Destination is the root of the copied tree.
 - **`--force`**: required when dest exists and is non-empty; overwrites files in place (does not delete unrelated extras). Without force → exit `3` (operation).
-- **Url-only** generators (no usable `template`): list shows them; run → exit `1` with message that remote generators are deferred. If both `template` and `url` are set, prefer `template`.
-- **`--json` run**: `{ "generator", "dest", "copied" }` (`copied` = files written).
-- Human success: `generated <name> -> <dest> (<n> files)`.
-- Deferred: remote fetch/cache, `template.toml` / prompts / vars, dry-run, Nx/schematics — `env-gen-packs.md`.
+- **`--dry-run`**: same validation as a real run (template resolve, dest relative/no escape, dest not a file, non-empty dest requires `--force`) but **never** creates dirs or copies files (including under `--force`). `copied` = files that **would** be written.
+- **Url-only** generators (no usable `template`): list shows them; run → exit `1` with message that remote generators are deferred (with or without `--dry-run`). If both `template` and `url` are set, prefer `template`.
+- **`--json` run**: `{ "generator", "dest", "copied", "dry_run" }` (`copied` = files written or that would be written; `dry_run` is `true` for `--dry-run`, `false` for a real run).
+- Human success: real run `generated <name> -> <dest> (<n> files)`; dry-run `would generate <name> -> <dest> (<n> files)`.
+- Deferred: remote fetch/cache, `template.toml` / prompts / vars, Nx/schematics — `env-gen-packs.md` (`--dry-run` landed).
+
 
 ---
 
@@ -314,8 +316,9 @@ odm agent start [--project] [--wt] …
 
 ## Full vs sketch matrix
 
-- **Full**: global flags (including `--wt` path binding); `init` (headless; `--interactive` not implemented); `sync`; `pin apply|status`; `status`; `doctor` (includes pack_missing warn); `project list|add|rm|info|git|worktree` (v1); `progen` lifecycle + **partial** store façade (implemented verbs above); `find`; `context`; `run`; `generate` (v1 local template only); `agent pack` (v1 local install/link/list/rm); `agent prompt` (v1 thin context work-package).
-- **Sketch / deferred**: `init --interactive`; reserved progen store verbs; `agent start`; deferred worktree features (config slots, pin↔slot, auto-prune on doctor, branch templates, global `--wt` depth — `worktrees.md`; doctor orphan/dirty **warn**, explicit `worktree prune` / `prune --all`, registered slot `dirty` on list/status/info, and status/info `worktree_orphans` observation landed); generate remote/templating; pack marketplace/manifest/config declarations (`env-gen-packs.md`; status `agent_packs` inventory + doctor `pack_missing` warn landed).
+- **Full**: global flags (including `--wt` path binding); `init` (headless; `--interactive` not implemented); `sync`; `pin apply|status`; `status`; `doctor` (includes pack_missing warn); `project list|add|rm|info|git|worktree` (v1); `progen` lifecycle + **partial** store façade (implemented verbs above); `find`; `context`; `run`; `generate` (v1 local template + `--dry-run`); `agent pack` (v1 local install/link/list/rm); `agent prompt` (v1 thin context work-package).
+- **Sketch / deferred**: `init --interactive`; reserved progen store verbs; `agent start`; deferred worktree features (config slots, pin↔slot, auto-prune on doctor, branch templates, global `--wt` depth — `worktrees.md`; doctor orphan/dirty **warn**, explicit `worktree prune` / `prune --all`, registered slot `dirty` on list/status/info, and status/info `worktree_orphans` observation landed); generate remote/templating (`--dry-run` landed); pack marketplace/manifest/config declarations (`env-gen-packs.md`; status `agent_packs` inventory + doctor `pack_missing` warn landed).
+
 - **Absent**: `serve`, MCP, top-level action verbs, `ops` namespace, path-valued scope flags.
 
 ## Related

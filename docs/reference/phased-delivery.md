@@ -26,7 +26,8 @@ Closing the design map means the docs package is review-complete. It does **not*
 Post-0.1.0 **landed outside the original Ship spine** (not required before v0.1.0, now available):
 
 - **Worktree slots v1** — `odm project worktree` add/list/rm/**prune** and `--wt` path binding (`worktrees.md`; deferred items still listed there)
-- **Generate local template v1** — `odm generate` list + materialize from local bundles (`env-gen-packs.md`; remote/`template.toml` depth deferred)
+- **Generate local template v1** — `odm generate` list + materialize from local bundles, including `--dry-run` no-write preview (`env-gen-packs.md`; remote/`template.toml` depth deferred)
+
 - **Agent pack local v1** — `odm agent pack` install/link/list/rm (`env-gen-packs.md`; marketplace/manifest deferred)
 - **Agent `prompt` v1 thin** — context work-package (`env-gen-packs.md`; `agent start` still sketch)
 - **Doctor worktree orphan warn** — configured-project slot dirs that are not registered git worktrees (`worktrees.md`; not fixable)

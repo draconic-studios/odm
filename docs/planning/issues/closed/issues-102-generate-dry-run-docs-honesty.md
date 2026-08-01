@@ -2,7 +2,7 @@
 id: issues-102
 title: "Docs honesty for generate --dry-run"
 description: "Record landed generate --dry-run in reference docs, CHANGELOG, README; strike pure-deferred dry-run."
-status: open
+status: closed
 issue-type: feature-request
 severity: low
 tags:
@@ -63,11 +63,11 @@ See Agent Brief.
 
 **Acceptance criteria:**
 
-- [ ] cli.md documents `--dry-run` behavior + JSON/human
-- [ ] env-gen-packs.md Deferred no longer treats dry-run as pure TODO
-- [ ] CHANGELOG Unreleased records the feature
-- [ ] Remote/templating remain clearly deferred
-- [ ] No product code required; tests still green
+- [x] cli.md documents `--dry-run` behavior + JSON/human
+- [x] env-gen-packs.md Deferred no longer treats dry-run as pure TODO
+- [x] CHANGELOG Unreleased records the feature
+- [x] Remote/templating remain clearly deferred
+- [x] No product code required; tests still green
 
 **Out of scope:**
 
@@ -77,4 +77,15 @@ See Agent Brief.
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met
+
+## Answer
+
+Docs-only honesty after 100+101:
+
+- **cli.md:** generate run form includes `--dry-run`; no-write + same validation; JSON `dry_run`; human `would generate` / `generated`; deferred list strikes dry-run (landed note); full matrix marks generate dry-run.
+- **env-gen-packs.md:** CLI block + dry-run bullet; Deferred drops Dry-run mode; **Landed** parenthetical for `--dry-run`.
+- **phased-delivery.md:** generate local bullet mentions `--dry-run` no-write preview.
+- **CHANGELOG [Unreleased]:** `odm generate --dry-run` bullet.
+- **README:** generate quickstart line shows optional `--dry-run`.
+- No Rust changes; `cargo test` green.

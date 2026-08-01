@@ -66,7 +66,7 @@ Generators (local template) and worktree slots:
 
 ```bash
 odm generate                              # list Generators
-odm generate <name> --dest <rel-path>     # materialize local template
+odm generate <name> --dest <rel-path> [--dry-run]  # materialize local template (or preview)
 odm project worktree list <project>
 odm project worktree add <project> <slot> [--branch <b>]
 odm project worktree prune <project> [--force]
