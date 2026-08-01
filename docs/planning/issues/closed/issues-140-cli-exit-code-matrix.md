@@ -2,7 +2,7 @@
 id: issues-140
 title: "CLI exit-code matrix integration tests"
 description: "Table-driven bin tests locking exit codes 1–4 and JSON error envelope across primary failure modes."
-status: reviewing
+status: closed
 issue-type: feature-request
 severity: high
 tags:
@@ -19,7 +19,7 @@ Exit codes are specified in cli.md but only ad hoc asserted. Need one table-driv
 
 ## Affected
 
-- New `crates/odm/tests/cli_exit_codes.rs`
+- New `crates/odm/tests/cli_exit_code_matrix.rs`
 - `crates/odm/src/output.rs` envelope
 
 ## Proposed Fix
@@ -60,13 +60,13 @@ For a sample of rows with `--json`, assert stdout parses as error envelope with 
 
 **Acceptance criteria:**
 
-- [ ] ≥10 distinct failure rows
-- [ ] At least 4 JSON envelope assertions
-- [ ] `cargo test -p odm --test cli_exit_codes` green
-- [ ] File ≤1000 LOC
+- [x] ≥10 distinct failure rows
+- [x] At least 4 JSON envelope assertions
+- [x] `cargo test -p odm --test cli_exit_code_matrix` green
+- [x] File ≤1000 LOC
 
 **Out of scope:** Implementing product fixes (file bugs if matrix finds wrong codes).
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met
