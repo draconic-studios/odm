@@ -6,11 +6,14 @@ See `docs/agents/issue-tracker.md`.
 
 ## Maps
 
-_(none open)_
+- [[issues-66-post-v1-dogfood-slot-depth-map]] — Post-v1 dogfood + worktree slot depth
 
 ## Frontier (open, unblocked)
 
-_(empty)_
+- [[issues-68-core-desk-worktree-dogfood]] — core-desk dogfood worktree + status + find --limit
+- [[issues-69-project-info-worktree-slots]] — project info registered worktree_slots
+- [[issues-70-doctor-dirty-worktree-slots]] — doctor dirty registered slot warns
+- [[issues-71-worktree-orphan-prune]] — project worktree prune orphans
 
 ## Blocked
 
