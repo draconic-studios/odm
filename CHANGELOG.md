@@ -31,6 +31,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`odm project info` worktree slots** — registered `worktree_slots` (`name` + `path` + `dirty`), same shape as status; empty array when none / non-git / soft-fail; human `worktrees: …` when non-empty.
 - **Worktree slot dirty observation** — `worktree list`, `status`, and `project info` probe registered slot cleanliness via `git status` (`dirty`: `true` / `false` / `null` on probe error). Human list marks dirty slots with a ` dirty` suffix.
 
+### Fixed
+
+- **`odm find` snippets** — no longer panic on multi-byte UTF-8 bodies (CJK/emoji); window start/end floored/ceiled to char boundaries.
+
 ### Changed
 
 - `examples/core-desk` includes a sample Generator (`hello` → `templates/hello`) and a tiny demo agent pack (`agent-packs/demo`).

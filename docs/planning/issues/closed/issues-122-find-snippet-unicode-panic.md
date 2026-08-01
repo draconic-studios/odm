@@ -2,7 +2,7 @@
 id: issues-122
 title: "find snippet panics on non-ASCII bodies"
 description: "odm find can abort the process when building snippets around multi-byte UTF-8 matches."
-status: open
+status: closed
 issue-type: bug
 severity: critical
 tags:
@@ -58,12 +58,16 @@ None
 
 **Acceptance criteria:**
 
-- [ ] No panic on non-ASCII bodies when building snippets
-- [ ] Unit test covers multi-byte boundary case
-- [ ] `cargo test -p odm-progen` green
+- [x] No panic on non-ASCII bodies when building snippets
+- [x] Unit test covers multi-byte boundary case
+- [x] `cargo test -p odm-progen` green
 
 **Out of scope:** FTS escaping (123), index freshness (131), CLI changes.
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met
+
+## Answer
+
+`snippet` clamps offsets with `floor_char_boundary` / `ceil_char_boundary` (and `.min(body.len())`); unit tests for empty query, CJK prefix + ASCII match, and emoji. `cargo test -p odm-progen` green.

@@ -319,8 +319,8 @@ fn snippet(body: &str, query: &str) -> Option<String> {
     let lower = body.to_lowercase();
     let q = query.to_lowercase();
     let idx = lower.find(&q)?;
-    let start = idx.saturating_sub(40);
-    let end = (idx + q.len() + 40).min(body.len());
+    let start = body.floor_char_boundary(idx.saturating_sub(40).min(body.len()));
+    let end = body.ceil_char_boundary((idx + q.len() + 40).min(body.len()));
     let mut s = body[start..end].replace('\n', " ");
     if start > 0 {
         s.insert(0, '…');
@@ -485,5 +485,27 @@ mod tests {
         assert!(one_progen_flag(&[], "x").unwrap().is_none());
         assert_eq!(one_progen_flag(&["a".into()], "x").unwrap(), Some("a"));
         assert!(one_progen_flag(&["a".into(), "b".into()], "too many").is_err());
+    }
+
+    #[test]
+    fn snippet_empty_query_is_none() {
+        assert_eq!(snippet("hello world", ""), None);
+    }
+
+    #[test]
+    fn snippet_cjk_prefix_ascii_match_no_panic() {
+        // Many 3-byte CJK chars so start = idx - 40 lands mid-char without boundary floor.
+        let prefix: String = "你".repeat(30);
+        let body = format!("{prefix}needle more text after the match site");
+        let s = snippet(&body, "needle").expect("match");
+        assert!(s.contains("needle"));
+        assert!(s.starts_with('…') || s.starts_with('你'));
+    }
+
+    #[test]
+    fn snippet_emoji_around_match_no_panic() {
+        let body = format!("{}target{}", "🔥".repeat(20), "✨".repeat(20));
+        let s = snippet(&body, "target").expect("match");
+        assert!(s.contains("target"));
     }
 }
