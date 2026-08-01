@@ -35,6 +35,8 @@ Local packaging (tarball under `dist/`, optional `gh release create`):
 ./scripts/release-build.sh
 ```
 
+Local test coverage (optional; not CI): `./scripts/coverage.sh` (needs `cargo-llvm-cov`; writes under `target/coverage/`).
+
 ## Quickstart
 
 ```bash

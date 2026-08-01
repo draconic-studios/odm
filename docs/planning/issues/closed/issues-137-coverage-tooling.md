@@ -2,13 +2,12 @@
 id: issues-137
 title: "Local coverage tooling script (no CI)"
 description: "Add scripts/coverage.sh using cargo-llvm-cov for local seam measurement; document in README or docs; no GitHub Actions test CI."
-status: reviewing
+status: closed
 issue-type: feature-request
 severity: low
 tags:
   - planning
   - issue
-  - ready-for-agent
 ---
 
 # Local coverage tooling script (no CI)
@@ -50,13 +49,13 @@ Prefer after [[issues-138-error-io-exit-unit-matrix]]–[[issues-142-progen-grou
 
 **Acceptance criteria:**
 
-- [ ] Script exists and is executable
-- [ ] Artifacts gitignored
-- [ ] No new CI workflow for tests
-- [ ] Docs one-liner
+- [x] Script exists and is executable
+- [x] Artifacts gitignored
+- [x] No new CI workflow for tests
+- [x] Docs one-liner
 
 **Out of scope:** Coverage gates in CI; 100% line enforcement.
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met
