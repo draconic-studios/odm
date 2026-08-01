@@ -2,13 +2,12 @@
 id: issues-151
 title: "Split membership module under ≤1000 LOC"
 description: "Decompose membership grab-bag (add/rm, project_git, path helper, massive tests) so no file sits on the 1k wall."
-status: reviewing
+status: closed
 issue-type: feature-request
 severity: high
 tags:
   - planning
   - issue
-  - ready-for-agent
   - wayfinder
   - wayfinder-task
   - architecture
@@ -68,11 +67,11 @@ None
 
 **Acceptance criteria:**
 
-- [ ] No single membership-related production or test `.rs` file exceeds 1000 LOC; none exceed 1250
-- [ ] Former monolith file (if kept) is ≤1000 LOC
-- [ ] Public behavior of add/rm/project git unchanged (existing unit + CLI tests pass)
-- [ ] `lib` re-exports or paths still compile for current CLI callers without behavior change
-- [ ] `cargo test` green; `cargo clippy --workspace --all-targets -- -D warnings` clean
+- [x] No single membership-related production or test `.rs` file exceeds 1000 LOC; none exceed 1250
+- [x] Former monolith file (if kept) is ≤1000 LOC
+- [x] Public behavior of add/rm/project git unchanged (existing unit + CLI tests pass)
+- [x] `lib` re-exports or paths still compile for current CLI callers without behavior change
+- [x] `cargo test` green; `cargo clippy --workspace --all-targets -- -D warnings` clean
 
 **Out of scope:**
 
@@ -80,6 +79,21 @@ None
 - Inventory / CLI spine / fsutil work
 - Changing path error typing (unless a tiny internal move with no behavior change)
 - Docs beyond one-line module comments
+
+## Acceptance
+
+- [x] Agent Brief acceptance criteria all met
+
+## Answer
+
+Split membership grab-bag by ownership:
+
+- `membership.rs` (~313 LOC) — add/rm + thin project/progen wrappers
+- `project_git.rs` (~83 LOC) — git passthrough / pin maintain on primary
+- `path_buf_to_rel` moved to `paths.rs` (path policy)
+- Tests: `membership_tests.rs` (~329), `project_git_tests.rs` (~283) via `#[cfg(test)] #[path = …]`
+
+Crate-root re-exports unchanged for CLI. `cargo test` green; clippy `-D warnings` clean.
 
 ## Comments
 
