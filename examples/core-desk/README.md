@@ -67,6 +67,18 @@ odm status --json          # projects[].worktree_slots: [{ "name", "path" }]
 # path shape: worktrees/alpha/dogfood
 # optional cleanup: odm project worktree rm alpha dogfood
 
+# Orphan / dirty doctor + prune (empty dirs under worktrees/<project>/ that are not registered)
+mkdir -p worktrees/alpha/stale-orphan
+odm doctor                 # warn worktree_orphan:alpha:stale-orphan (not fixable)
+# optional dirty registered slot:
+#   echo x > worktrees/alpha/dogfood/dirty.txt
+#   odm doctor             # warn worktree_dirty:alpha:dogfood (not fixable)
+# doctor --fix does NOT delete orphans or clean dirty slots
+odm project worktree prune alpha
+# removes empty orphan dirs; non-empty orphans need --force
+# exit 3 when non-empty orphans remain without --force
+# odm project worktree prune alpha --force
+
 # Progen / Obsidian vault
 odm progen list
 odm progen reindex

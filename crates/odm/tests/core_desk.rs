@@ -248,6 +248,104 @@ fn core_desk_worktree_status_find_gate() {
 }
 
 #[test]
+fn core_desk_prune_dirty_doctor_gate() {
+    if skip_without_git() {
+        return;
+    }
+    let (_dir, root) = setup_temp_core_desk();
+    let root_s = root.to_str().unwrap();
+
+    odm()
+        .args(["--root", root_s, "sync"])
+        .assert()
+        .success();
+    assert!(root.join("projects/alpha").is_dir());
+
+    odm()
+        .args([
+            "--root",
+            root_s,
+            "project",
+            "worktree",
+            "add",
+            "alpha",
+            "dogfood",
+            "--branch",
+            "odm-dogfood",
+        ])
+        .assert()
+        .success();
+    assert!(root.join("worktrees/alpha/dogfood").is_dir());
+
+    // empty orphan under worktrees/alpha/
+    let orphan = root.join("worktrees/alpha/stale-orphan");
+    fs::create_dir_all(&orphan).unwrap();
+
+    let doc = json_stdout(odm().args(["--root", root_s, "--json", "doctor"]));
+    assert_eq!(doc["ok"].as_bool(), Some(true));
+    let checks = doc["checks"].as_array().expect("checks");
+    let orphan_check = checks
+        .iter()
+        .find(|c| c["id"] == "worktree_orphan:alpha:stale-orphan")
+        .expect("worktree_orphan:alpha:stale-orphan");
+    assert_eq!(orphan_check["status"], "warn");
+    assert_eq!(orphan_check["fixable"].as_bool(), Some(false));
+
+    // dirty registered slot
+    fs::write(root.join("worktrees/alpha/dogfood/dirty.txt"), "x").unwrap();
+
+    let doc = json_stdout(odm().args(["--root", root_s, "--json", "doctor"]));
+    assert_eq!(doc["ok"].as_bool(), Some(true));
+    let checks = doc["checks"].as_array().expect("checks");
+    assert!(
+        checks
+            .iter()
+            .any(|c| c["id"] == "worktree_dirty:alpha:dogfood"),
+        "expected worktree_dirty:alpha:dogfood in {:?}",
+        checks
+            .iter()
+            .map(|c| c["id"].as_str())
+            .collect::<Vec<_>>()
+    );
+
+    // prune removes empty orphan; registered dogfood remains
+    let pruned = json_stdout(odm().args([
+        "--root",
+        root_s,
+        "--json",
+        "project",
+        "worktree",
+        "prune",
+        "alpha",
+    ]));
+    assert_eq!(pruned["project"], "alpha");
+    let entries = pruned["pruned"].as_array().expect("pruned");
+    assert!(
+        entries.iter().any(|e| {
+            e["name"] == "stale-orphan" && e["path"] == "worktrees/alpha/stale-orphan"
+        }),
+        "expected stale-orphan in pruned: {entries:?}"
+    );
+    assert!(!orphan.exists());
+    assert!(root.join("worktrees/alpha/dogfood").is_dir());
+
+    // optional cleanup (--force: slot still dirty from dirty.txt)
+    odm()
+        .args([
+            "--root",
+            root_s,
+            "project",
+            "worktree",
+            "rm",
+            "alpha",
+            "dogfood",
+            "--force",
+        ])
+        .assert()
+        .success();
+}
+
+#[test]
 fn core_desk_unknown_project_exit_1() {
     if skip_without_git() {
         return;

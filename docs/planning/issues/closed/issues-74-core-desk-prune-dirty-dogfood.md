@@ -2,7 +2,7 @@
 id: issues-74
 title: "core-desk dogfood prune + doctor dirty/orphan"
 description: "Extend core-desk README and integration gate for orphan warn, dirty-slot warn, and worktree prune."
-status: open
+status: closed
 issue-type: feature-request
 severity: medium
 tags:
@@ -68,11 +68,11 @@ None
 
 **Acceptance criteria:**
 
-- [ ] core-desk README documents orphan doctor warn + prune (and dirty warn or points at it)
-- [ ] Integration asserts doctor orphan id after creating orphan on core-desk alpha
-- [ ] Integration asserts doctor dirty id after dirtying a registered slot
-- [ ] Integration asserts prune removes the empty orphan and leaves registered slot
-- [ ] `cargo test` green
+- [x] core-desk README documents orphan doctor warn + prune (and dirty warn or points at it)
+- [x] Integration asserts doctor orphan id after creating orphan on core-desk alpha
+- [x] Integration asserts doctor dirty id after dirtying a registered slot
+- [x] Integration asserts prune removes the empty orphan and leaves registered slot
+- [x] `cargo test` green
 
 **Out of scope:**
 
@@ -83,3 +83,12 @@ None
 ## Acceptance
 
 Mirror Agent Brief checklist.
+
+## Answer
+
+Extended core-desk dogfood for orphan/dirty doctor and prune:
+
+- **README** (`examples/core-desk/README.md`): Worktree section documents mkdir orphan → `worktree_orphan:alpha:<name>`, optional dirty → `worktree_dirty:alpha:dogfood`, `project worktree prune` / `--force` / exit 3, and that `doctor --fix` does not delete orphans or clean dirty slots.
+- **Integration** (`core_desk_prune_dirty_doctor_gate`): after sync + worktree add, creates empty `stale-orphan`, asserts doctor warn ids for orphan and dirty, prune JSON removes orphan and leaves registered `dogfood`.
+
+No product code changes. `cargo test` green.

@@ -10,7 +10,6 @@ See `docs/agents/issue-tracker.md`.
 
 ## Frontier (open, unblocked)
 
-- [[issues-74-core-desk-prune-dirty-dogfood]] — core-desk prune + doctor dirty/orphan dogfood
 - [[issues-75-clippy-doctor-worktree]] — clippy clean doctor_worktree
 - [[issues-76-readme-slot-depth-honesty]] — root README slot-depth honesty
 
