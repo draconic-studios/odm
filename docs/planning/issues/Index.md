@@ -6,11 +6,14 @@ See `docs/agents/issue-tracker.md`.
 
 ## Maps
 
-_(none open)_
+- [[issues-60-post-v1-polish-map]] — Post-v1 polish (docs honesty, doctor split, find limit, status slots)
 
 ## Frontier (open, unblocked)
 
-_(none)_
+- [[issues-62-cli-find-context-docs-honesty]] — cli.md find/context honesty (`ready-for-agent`)
+- [[issues-63-doctor-split-worktree-orphan]] — split doctor worktree orphan module (`ready-for-agent`)
+- [[issues-64-find-limit-flag]] — `odm find --limit` (`ready-for-agent`)
+- [[issues-65-status-worktree-slots]] — status registered worktree slots (`ready-for-agent`)
 
 ## Blocked
 

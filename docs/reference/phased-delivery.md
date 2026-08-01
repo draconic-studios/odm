@@ -28,12 +28,14 @@ Post-0.1.0 **landed outside the original Ship spine** (not required before v0.1.
 - **Worktree slots v1** — `odm project worktree` add/list/rm and `--wt` path binding (`worktrees.md`; deferred items still listed there)
 - **Generate local template v1** — `odm generate` list + materialize from local bundles (`env-gen-packs.md`; remote/`template.toml` depth deferred)
 - **Agent pack local v1** — `odm agent pack` install/link/list (`env-gen-packs.md`; marketplace/manifest deferred)
+- **Agent `prompt` v1 thin** — context work-package (`env-gen-packs.md`; `agent start` still sketch)
+- **Doctor worktree orphan warn** — configured-project slot dirs that are not registered git worktrees (`worktrees.md`; not fixable)
 
 Still deferred / sketch (not Ship gates unless pulled in deliberately):
 
 - Graph/tags, env productization
 - Generate remote and full `template.toml` depth
-- Agent `start` / `prompt`
+- Agent `start` (prompt is v1 thin — see Phase spine landed)
 - Worktree deferred items (config slots, GC, pin↔slot — `worktrees.md`; doctor orphan warn landed)
 
 ### 1. Design package
@@ -111,7 +113,7 @@ Full acceptance checklist: planning issue vertical-slice-order-and-core-acceptan
 
 - HashiCorp go-plugin / npm plugin installers (dropped with Go)
 - Generator/`template.toml` full depth (local generate v1 landed later; remote/templating still deferred — `env-gen-packs.md`)
-- Agent-pack and worktree productization (both landed as local/v1 later; start/prompt and worktree deferred items still open — `env-gen-packs.md`, `worktrees.md`)
+- Agent-pack and worktree productization (both landed as local/v1 later; `agent prompt` v1 thin landed; `agent start` and worktree deferred items still open — `env-gen-packs.md`, `worktrees.md`)
 
 ### 5. Ship
 
