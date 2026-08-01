@@ -38,6 +38,7 @@ After status packs map [[issues-89-post-v1-status-packs-map]] closed, pull the n
 - Child tickets: [[issues-95-status-worktree-orphans]], [[issues-96-project-info-worktree-orphans]], [[issues-97-status-orphans-docs-honesty]], [[issues-98-core-desk-status-orphans-dogfood]].
 - Prefer order: 95 unblocked first; 96 blocked by 95 (reuse shape); 97 blocked by 95+96; 98 blocked by 95+96.
 - **95 closed:** `EntityStatus.worktree_orphans` on projects (`{name,path}`, sorted); soft-fail `[]`; human `orphans: …`; public `worktree_orphans` / `worktree_orphan_infos`; doctor DRY unchanged ids.
+- **96 closed:** `ProjectInfoDto.worktree_orphans` always-present `Vec` (`{name,path}`); fill via list + `worktree_orphan_infos`; human `orphans: …` (unindented info style); registered slots excluded.
 
 ## Not yet specified
 

@@ -300,6 +300,91 @@ fn project_info_includes_registered_worktree_slots() {
 }
 
 #[test]
+fn project_info_includes_worktree_orphans() {
+    let dir = tempdir().unwrap();
+    let root = dir.path().join("ws");
+    workspace_with_git_project(&root);
+
+    // empty orphans before any dirs
+    let empty_out = odm()
+        .args([
+            "--root",
+            root.to_str().unwrap(),
+            "--json",
+            "project",
+            "info",
+            "alpha",
+        ])
+        .assert()
+        .success()
+        .get_output()
+        .stdout
+        .clone();
+    let empty: serde_json::Value = serde_json::from_slice(&empty_out).unwrap();
+    assert_eq!(empty["worktree_orphans"], serde_json::json!([]));
+
+    odm()
+        .args([
+            "--root",
+            root.to_str().unwrap(),
+            "project",
+            "worktree",
+            "add",
+            "alpha",
+            "slot1",
+            "--branch",
+            "slot1",
+        ])
+        .assert()
+        .success();
+
+    // orphan dir not registered as a git worktree
+    fs::create_dir_all(root.join("worktrees/alpha/stale")).unwrap();
+
+    let info_out = odm()
+        .args([
+            "--root",
+            root.to_str().unwrap(),
+            "--json",
+            "project",
+            "info",
+            "alpha",
+        ])
+        .assert()
+        .success()
+        .get_output()
+        .stdout
+        .clone();
+    let info: serde_json::Value = serde_json::from_slice(&info_out).unwrap();
+    assert_eq!(info["worktree_slots"][0]["name"], "slot1");
+    assert_eq!(
+        info["worktree_orphans"],
+        serde_json::json!([{ "name": "stale", "path": "worktrees/alpha/stale" }])
+    );
+    assert!(info["worktree_orphans"][0].get("dirty").is_none());
+    // registered slot must not appear under orphans
+    let orphan_names: Vec<&str> = info["worktree_orphans"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|o| o["name"].as_str().unwrap())
+        .collect();
+    assert!(!orphan_names.contains(&"slot1"));
+
+    odm()
+        .args([
+            "--root",
+            root.to_str().unwrap(),
+            "project",
+            "info",
+            "alpha",
+        ])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("orphans: stale"));
+}
+
+#[test]
 fn project_git_wt_missing_slot_fails_without_creating_path() {
     let dir = tempdir().unwrap();
     let root = dir.path().join("ws");

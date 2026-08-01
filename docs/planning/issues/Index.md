@@ -10,12 +10,12 @@ See `docs/agents/issue-tracker.md`.
 
 ## Frontier (open, unblocked)
 
-- [[issues-96-project-info-worktree-orphans]] — project info `worktree_orphans` parity (`ready-for-agent`)
+- [[issues-97-status-orphans-docs-honesty]] — docs honesty status/info orphans (`ready-for-agent`)
+- [[issues-98-core-desk-status-orphans-dogfood]] — core-desk status orphans dogfood (`ready-for-agent`)
 
 ## Blocked
 
-- [[issues-97-status-orphans-docs-honesty]] — blocked by 96
-- [[issues-98-core-desk-status-orphans-dogfood]] — blocked by 96
+_(none)_
 
 ## Architecture deepen (post-0.1.0)
 

@@ -1,8 +1,11 @@
 //! `odm project list` / `info` — config ⨝ observation → DTO.
 
+use std::collections::BTreeSet;
+
 use odm_core::{
-    build_status, load_pin, observe_workspace, worktree_list, EntityObservation, OdmError,
-    PinState, StatusSnapshot, Workspace, WorktreeSlotInfo,
+    build_status, load_pin, observe_workspace, worktree_list, worktree_orphan_infos,
+    EntityObservation, OdmError, PinState, StatusSnapshot, Workspace, WorktreeOrphanInfo,
+    WorktreeSlotInfo,
 };
 use odm_git::Git;
 use serde::Serialize;
@@ -45,6 +48,8 @@ pub struct ProjectInfoDto {
     pub pin_state: PinState,
     /// Registered worktree slots (`name` + `path`); always present, empty when none.
     pub worktree_slots: Vec<WorktreeSlotInfo>,
+    /// Orphan slot dirs under `worktrees/<project>/` (`name` + `path`); always present.
+    pub worktree_orphans: Vec<WorktreeOrphanInfo>,
 }
 
 /// Pure projection: Workspace config ⨝ status snapshot → list DTO.
@@ -99,6 +104,7 @@ pub fn project_info_from(
         pin_state: obs.pin_state,
         // Filled by [`project_info`] via soft-fail `worktree_list`.
         worktree_slots: vec![],
+        worktree_orphans: vec![],
     }
 }
 
@@ -137,10 +143,17 @@ pub fn project_info<R: odm_git::CommandRunner>(
         entry.type_.as_deref(),
         st,
     );
-    dto.worktree_slots = match worktree_list(git, ws, name) {
-        Ok(out) => out.slots,
-        Err(_) => vec![],
-    };
+    match worktree_list(git, ws, name) {
+        Ok(out) => {
+            let registered: BTreeSet<String> = out.slots.iter().map(|s| s.name.clone()).collect();
+            dto.worktree_orphans = worktree_orphan_infos(ws, name, &registered);
+            dto.worktree_slots = out.slots;
+        }
+        Err(_) => {
+            dto.worktree_slots = vec![];
+            dto.worktree_orphans = vec![];
+        }
+    }
     Ok(dto)
 }
 
@@ -201,6 +214,10 @@ pub fn format_project_info_human(dto: &ProjectInfoDto) -> String {
             .collect();
         out.push_str(&format!("worktrees: {}\n", names.join(", ")));
     }
+    if !dto.worktree_orphans.is_empty() {
+        let names: Vec<&str> = dto.worktree_orphans.iter().map(|o| o.name.as_str()).collect();
+        out.push_str(&format!("orphans: {}\n", names.join(", ")));
+    }
     out
 }
 
@@ -210,7 +227,10 @@ mod tests {
     use std::collections::BTreeMap;
     use std::path::PathBuf;
 
-    use odm_core::{EntityStatus, PinState, ProjectEntry, WorkspaceConfig, WorktreeSlotInfo};
+    use odm_core::{
+        EntityStatus, PinState, ProjectEntry, WorkspaceConfig, WorktreeOrphanInfo,
+        WorktreeSlotInfo,
+    };
 
     fn ws_one(name: &str, path: &str) -> Workspace {
         let mut projects = BTreeMap::new();
@@ -368,6 +388,42 @@ mod tests {
         let v = serde_json::to_value(&dto).unwrap();
         assert_eq!(v["worktree_slots"], serde_json::json!([]));
         assert!(dto.worktree_slots.is_empty());
+        assert_eq!(v["worktree_orphans"], serde_json::json!([]));
+        assert!(dto.worktree_orphans.is_empty());
+    }
+
+    #[test]
+    fn project_info_dto_worktree_orphans_json_name_and_path_no_dirty() {
+        let mut dto = project_info_from(
+            "alpha",
+            "projects/alpha",
+            None,
+            None,
+            None,
+            &EntityObservation {
+                name: "alpha".into(),
+                path: "projects/alpha".into(),
+                url: None,
+                managed: false,
+                abs_path: None,
+                resolve_error: None,
+                on_disk: true,
+                is_git: true,
+                head: None,
+                origin: None,
+                dirty: None,
+                pin_rev: None,
+                pin_state: PinState::None,
+            },
+        );
+        dto.worktree_orphans = vec![WorktreeOrphanInfo {
+            name: "stale".into(),
+            path: "worktrees/alpha/stale".into(),
+        }];
+        let v = serde_json::to_value(&dto).unwrap();
+        assert_eq!(v["worktree_orphans"][0]["name"], "stale");
+        assert_eq!(v["worktree_orphans"][0]["path"], "worktrees/alpha/stale");
+        assert!(v["worktree_orphans"][0].get("dirty").is_none());
     }
 
     #[test]
@@ -442,6 +498,7 @@ mod tests {
                     dirty: Some(true),
                 },
             ],
+            worktree_orphans: vec![],
         };
         let human = format_project_info_human(&dto);
         assert!(human.contains("worktrees: a, b dirty"), "{human}");
@@ -463,8 +520,41 @@ mod tests {
             pin_rev: None,
             pin_state: PinState::None,
             worktree_slots: vec![],
+            worktree_orphans: vec![],
         };
         let human = format_project_info_human(&dto);
         assert!(!human.contains("worktrees"), "{human}");
+        assert!(!human.contains("orphans"), "{human}");
+    }
+
+    #[test]
+    fn format_project_info_human_shows_orphans_when_non_empty() {
+        let dto = ProjectInfoDto {
+            name: "alpha".into(),
+            path: "projects/alpha".into(),
+            url: None,
+            branch: None,
+            type_: None,
+            on_disk: true,
+            is_git: true,
+            head: None,
+            origin: None,
+            dirty: None,
+            pin_rev: None,
+            pin_state: PinState::None,
+            worktree_slots: vec![],
+            worktree_orphans: vec![
+                WorktreeOrphanInfo {
+                    name: "stale".into(),
+                    path: "worktrees/alpha/stale".into(),
+                },
+                WorktreeOrphanInfo {
+                    name: "other".into(),
+                    path: "worktrees/alpha/other".into(),
+                },
+            ],
+        };
+        let human = format_project_info_human(&dto);
+        assert!(human.contains("orphans: stale, other"), "{human}");
     }
 }

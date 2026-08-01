@@ -2,7 +2,7 @@
 id: issues-96
 title: "project info reports orphan worktree slot dirs"
 description: "odm project info includes worktree_orphans same shape as status project rows."
-status: open
+status: closed
 issue-type: feature-request
 severity: medium
 tags:
@@ -59,12 +59,12 @@ None (95 closed)
 
 **Acceptance criteria:**
 
-- [ ] `project info --json` has `worktree_orphans` array `{name,path}`
-- [ ] Orphan present → listed; registered slot not in orphans
-- [ ] Empty / soft-fail / non-git → `[]` (info still succeeds as today)
-- [ ] Human shows orphans when non-empty
-- [ ] Reuses 95 helper/shape (no divergent orphan definition)
-- [ ] `cargo test` green; clippy clean; file sizes OK
+- [x] `project info --json` has `worktree_orphans` array `{name,path}`
+- [x] Orphan present → listed; registered slot not in orphans
+- [x] Empty / soft-fail / non-git → `[]` (info still succeeds as today)
+- [x] Human shows orphans when non-empty
+- [x] Reuses 95 helper/shape (no divergent orphan definition)
+- [x] `cargo test` green; clippy clean; file sizes OK
 
 **Out of scope:**
 
@@ -74,4 +74,8 @@ None (95 closed)
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met
+
+## Answer
+
+`ProjectInfoDto.worktree_orphans: Vec<WorktreeOrphanInfo>` always present (like `worktree_slots`). Filled in `project_info` via single soft-fail `worktree_list` + `worktree_orphan_infos` (same definition as status 95). Human `orphans: name, …` when non-empty. Unit + CLI tests cover empty default, JSON shape (no dirty), registered-not-orphan, and human line.
