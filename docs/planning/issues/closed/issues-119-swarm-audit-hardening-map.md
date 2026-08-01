@@ -2,7 +2,7 @@
 id: issues-119
 title: "Swarm audit hardening map"
 description: "Bugs and improvements found by agent swarm walkover 2026-08-01; path safety, progen find crashes, CLI exit/JSON honesty."
-status: open
+status: closed
 issue-type: observation
 severity: high
 tags:
@@ -55,3 +55,7 @@ Ship-safe ODM after swarm audit: no process panics on normal vault content, path
 
 - [[issues-120-test-coverage-map]] — coverage suite for regressions
 - [[issues-121-full-capability-demo-map]] — dogfood that surfaces remaining gaps
+
+## Answer
+
+Destination met 2026-08-02. All fog tickets 122–136 closed under `issues/closed/`. Verified children present closed before map close.

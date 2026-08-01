@@ -2,7 +2,7 @@
 id: issues-120
 title: "100% test coverage suite map"
 description: "Behavior-seam coverage toward a complete suite: unit matrix, CLI exit codes, progen edges, coverage tooling — not vanity line %."
-status: open
+status: closed
 issue-type: feature-request
 severity: high
 tags:
@@ -42,3 +42,7 @@ Every shipped CLI verb and public lib seam has success + primary error coverage;
 
 - [[issues-119-swarm-audit-hardening-map]] — bugs that need regression tests in their own tickets
 - [[issues-121-full-capability-demo-map]] — end-to-end dogfood gate
+
+## Answer
+
+Destination met 2026-08-02. All fog tickets 137–143 closed under `issues/closed/`. Seam checklist complete for this map’s scope.

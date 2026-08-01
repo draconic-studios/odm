@@ -2,7 +2,7 @@
 id: issues-121
 title: "Full ODM capability demo map"
 description: "Extend core-desk + dogfood script + tour integration test to exercise all shipped odm tools and surface product gaps."
-status: open
+status: closed
 issue-type: feature-request
 severity: high
 tags:
@@ -39,3 +39,11 @@ One offline Workspace (`examples/core-desk`) plus `scripts/dogfood.sh` and a thi
 
 - [[issues-120-test-coverage-map]]
 - Open pack dogfood: [[issues-108-core-desk-pack-list-missing-dogfood]]
+
+## Answer
+
+Destination met 2026-08-02. Children 144–147 closed. Re-verified before map close:
+
+- `cargo test -p odm --test core_desk_full_tour` → ok
+- `examples/core-desk/scripts/dogfood.sh` → `dogfood: OK`
+- [[issues-147-demo-gap-followups]] Answer: no new gaps

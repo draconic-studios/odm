@@ -6,49 +6,15 @@ See `docs/agents/issue-tracker.md`.
 
 ## Maps
 
-- [[issues-119-swarm-audit-hardening-map]] — Swarm audit bugs/improvements (path safety, find, CLI honesty)
-- [[issues-120-test-coverage-map]] — Behavior-seam test suite toward full coverage
-- [[issues-121-full-capability-demo-map]] — core-desk full ODM capability demo + verification
+_(none live)_
 
 ## Frontier (open, unblocked)
 
-### Pre-existing
-
-- [[issues-118-website-playwright-review-improve]] — website Playwright review/improve (`ready-for-agent`; unblocked by 117)
-
-### Swarm audit — critical / high (prefer first)
-
-- [[issues-125-membership-path-escape]] — membership add path escape (`ready-for-agent`)
-- [[issues-126-action-dir-escape]] — action task dir escape (`ready-for-agent`)
-- [[issues-127-wt-missing-exit-code]] — missing wt/path exit 4 (`ready-for-agent`)
-- [[issues-128-run-json-stdio]] — run --json stdout/stderr (`ready-for-agent`)
-- [[issues-129-clap-usage-exit-json]] — clap exit 1 + JSON (`ready-for-agent`)
-- [[issues-131-progen-index-freshness-dup-ids]] — index stale + dup ids (`ready-for-agent`)
-
-### Swarm audit — medium
-
-- [[issues-130-entity-name-uniqueness]] — unique path-safe entity names (`ready-for-agent`)
-- [[issues-132-cli-json-ux-hardening]] — prune JSON / progen messages / dual wt (`ready-for-agent`)
-- [[issues-133-git-noninteractive]] — git no auth hang (`ready-for-agent`)
-- [[issues-134-wikilink-fence-frontmatter]] — fences + bad FM (`ready-for-agent`)
-- [[issues-136-docs-honesty-release-policy]] — Releases / AGENTS / progen.md (`ready-for-agent`)
-
-### Test coverage (unblocked)
-
-- [[issues-137-coverage-tooling]] — local llvm-cov script (`ready-for-agent`)
-- [[issues-138-error-io-exit-unit-matrix]] — error/io unit tests (`ready-for-agent`)
-- [[issues-139-cli-pin-sync-rm-integration]] — pin/sync/rm CLI tests (`ready-for-agent`)
-- [[issues-141-progen-unit-edges-ops]] — progen ops/unit edges (`ready-for-agent`)
-- [[issues-142-progen-group-cli-integration]] — --progen-group CLI (`ready-for-agent`)
-- [[issues-143-odm-git-worktree-real-git]] — real-git worktree test (`ready-for-agent`)
-- [[issues-144-core-desk-assets-full-surface]] — core-desk asset expand (`ready-for-agent`)
+_(none)_
 
 ## Blocked
 
-### Coverage / demo chain
-
-- [[issues-140-cli-exit-code-matrix]] — prefer after 127+129
-- [[issues-147-demo-gap-followups]] — blocked by 145+146
+_(none)_
 
 ## Architecture deepen (post-0.1.0)
 
@@ -77,3 +43,6 @@ _(none remaining)_
 - [[issues-99-post-v1-generate-dry-run-map]] — Post-v1 generate `--dry-run` (local template preview)
 - [[issues-104-post-v1-pack-list-missing-map]] — Post-v1 pack list `missing` observation (status/doctor parity)
 - [[issues-109-project-website-github-pages-map]] — Project website (`website/` on main, Actions Pages)
+- [[issues-119-swarm-audit-hardening-map]] — Swarm audit hardening (path safety, find, CLI honesty)
+- [[issues-120-test-coverage-map]] — Behavior-seam test suite + local coverage tooling
+- [[issues-121-full-capability-demo-map]] — core-desk full ODM capability demo + verification
