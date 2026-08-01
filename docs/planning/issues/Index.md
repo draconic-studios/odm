@@ -10,18 +10,17 @@ _(none open — phases 1–5 closed)_
 
 ## Frontier (open, unblocked)
 
-- [[issues-37-progen-facade-engine]] — Progen façade / engine (`ready-for-agent`)
 - [[issues-39-action-run-result-stdio]] — Action RunResult / stdio (`ready-for-agent`)
+- [[issues-38-cli-command-dtos]] — CLI command DTOs (`ready-for-agent`) — unblocked by closed [[issues-37-progen-facade-engine]]
 
 ## Blocked
 
-- [[issues-38-cli-command-dtos]] — blocked by [[issues-37-progen-facade-engine]]
+_(none)_
 
 ## Architecture deepen (post-0.1.0)
 
 Remaining from architecture review 2026-08-01; tagged `ready-for-agent` with Agent Briefs. Work frontier first.
 
-- [[issues-37-progen-facade-engine]]
 - [[issues-38-cli-command-dtos]]
 - [[issues-39-action-run-result-stdio]]
 

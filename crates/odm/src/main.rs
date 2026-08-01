@@ -15,8 +15,8 @@ use odm_core::{
 use odm_git::Git;
 use odm_progen::{
     add_progen, context_notes, doctor_progens, find_notes, format_context_human, format_find_human,
-    format_get_human, format_ls_human, get_note, list_notes, note_backlinks, note_body, note_tree,
-    reindex_progen, resolve_read_scope, resolve_single_read, rm_progen, vault_info, ScopedProgen,
+    format_get_human, format_ls_human, get_note, list_notes, one_progen_flag, open_for_id,
+    open_single, reindex_for_cli, rm_progen, vault_info, ScopedProgen,
 };
 
 use cli::{AgentCmd, Cli, Commands, PinCmd, ProgenCmd, ProjectCmd};
@@ -376,12 +376,10 @@ fn run(cli: Cli, out: &GlobalOut) -> Result<i32, OdmError> {
         Commands::Context { id } => {
             let root = discover_root(cli.root.as_deref(), &std::env::current_dir()?)?;
             let ws = load_workspace(&root)?;
-            let progen = cli.progen.first().map(|s| s.as_str());
-            if cli.progen.len() > 1 {
-                return Err(OdmError::usage(
-                    "context accepts at most one --progen (or use name:id)",
-                ));
-            }
+            let progen = one_progen_flag(
+                &cli.progen,
+                "context accepts at most one --progen (or use name:id)",
+            )?;
             let hit = context_notes(&ws, &id, progen)?;
             if out.json {
                 print_json(&hit)?;
@@ -462,7 +460,6 @@ fn run_progen(
     let root = discover_root(root_flag, &std::env::current_dir()?)?;
     let mut ws = load_workspace(&root)?;
     let git = Git::new();
-    let progen_flag = global_progen.first().map(|s| s.as_str());
 
     match cmd {
         ProgenCmd::List => {
@@ -588,12 +585,11 @@ fn run_progen(
             Ok(0)
         }
         ProgenCmd::Get { id } => {
-            if global_progen.len() > 1 {
-                return Err(OdmError::usage(
-                    "progen get accepts at most one --progen (or use name:id)",
-                ));
-            }
-            let g = get_note(&ws, &id, progen_flag)?;
+            let progen = one_progen_flag(
+                global_progen,
+                "progen get accepts at most one --progen (or use name:id)",
+            )?;
+            let g = get_note(&ws, &id, progen)?;
             if out.json {
                 print_json(&g)?;
             } else {
@@ -602,12 +598,12 @@ fn run_progen(
             Ok(0)
         }
         ProgenCmd::Body { id } => {
-            if global_progen.len() > 1 {
-                return Err(OdmError::usage(
-                    "progen body accepts at most one --progen (or use name:id)",
-                ));
-            }
-            let g = note_body(&ws, &id, progen_flag)?;
+            let progen = one_progen_flag(
+                global_progen,
+                "progen body accepts at most one --progen (or use name:id)",
+            )?;
+            // Body is presentation of get (reduced JSON / body stdout).
+            let g = get_note(&ws, &id, progen)?;
             if out.json {
                 print_json(&serde_json::json!({
                     "progen": g.progen,
@@ -623,10 +619,9 @@ fn run_progen(
             Ok(0)
         }
         ProgenCmd::Tree => {
-            if global_progen.len() > 1 {
-                return Err(OdmError::usage("progen tree accepts at most one --progen"));
-            }
-            let paths = note_tree(&ws, progen_flag)?;
+            let progen =
+                one_progen_flag(global_progen, "progen tree accepts at most one --progen")?;
+            let paths = open_single(&ws, progen)?.tree()?;
             if out.json {
                 print_json(&serde_json::json!({ "paths": paths }))?;
             } else if paths.is_empty() {
@@ -639,12 +634,12 @@ fn run_progen(
             Ok(0)
         }
         ProgenCmd::Backlinks { id } => {
-            if global_progen.len() > 1 {
-                return Err(OdmError::usage(
-                    "progen backlinks accepts at most one --progen (or use name:id)",
-                ));
-            }
-            let hits = note_backlinks(&ws, &id, progen_flag)?;
+            let progen = one_progen_flag(
+                global_progen,
+                "progen backlinks accepts at most one --progen (or use name:id)",
+            )?;
+            let (store, nid) = open_for_id(&ws, &id, progen)?;
+            let hits = store.backlinks(&nid)?;
             if out.json {
                 print_json(&serde_json::json!({ "backlinks": hits }))?;
             } else {
@@ -653,10 +648,9 @@ fn run_progen(
             Ok(0)
         }
         ProgenCmd::Ls => {
-            if global_progen.len() > 1 {
-                return Err(OdmError::usage("progen ls accepts at most one --progen"));
-            }
-            let hits = list_notes(&ws, progen_flag)?;
+            let progen =
+                one_progen_flag(global_progen, "progen ls accepts at most one --progen")?;
+            let hits = list_notes(&ws, progen)?;
             if out.json {
                 print_json(&serde_json::json!({ "notes": hits }))?;
             } else {
@@ -665,20 +659,7 @@ fn run_progen(
             Ok(0)
         }
         ProgenCmd::Reindex => {
-            let scope = if let Some(n) = progen_flag {
-                if global_progen.len() > 1 {
-                    return Err(OdmError::usage(
-                        "progen reindex: pass one --progen or none for all",
-                    ));
-                }
-                vec![resolve_single_read(&ws, Some(n))?]
-            } else {
-                resolve_read_scope(&ws, &[], &[])?
-            };
-            let mut stats = Vec::new();
-            for sp in scope {
-                stats.push(reindex_progen(&ws, &sp)?);
-            }
+            let stats = reindex_for_cli(&ws, global_progen)?;
             if out.json {
                 print_json(&serde_json::json!({ "results": stats.iter().map(|s| {
                     serde_json::json!({
@@ -695,10 +676,9 @@ fn run_progen(
             Ok(0)
         }
         ProgenCmd::Doctor => {
-            if global_progen.len() > 1 {
-                return Err(OdmError::usage("progen doctor accepts at most one --progen"));
-            }
-            let checks = doctor_progens(&ws, progen_flag)?;
+            let progen =
+                one_progen_flag(global_progen, "progen doctor accepts at most one --progen")?;
+            let checks = doctor_progens(&ws, progen)?;
             let ok = checks.iter().all(|c| c.ok);
             if out.json {
                 print_json(&serde_json::json!({ "ok": ok, "checks": checks }))?;

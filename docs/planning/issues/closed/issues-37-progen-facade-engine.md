@@ -2,7 +2,7 @@
 id: issues-37
 title: "Progen façade engine depth"
 description: "Deepen public Progen store handle and federation; hide index ensure/open; delete thin aliases."
-status: open
+status: closed
 issue-type: feature-request
 severity: medium
 tags:
@@ -72,13 +72,13 @@ See Agent Brief.
 - Vault ensure non-clobber semantics for `.obsidian/`
 
 **Acceptance criteria:**
-- [ ] Callers of find/list/get/context/reindex do not open or ensure the index themselves
-- [ ] No public pure-alias ops that only rename another public op
-- [ ] Federated find and in-store context semantics unchanged
-- [ ] CLI progen commands keep the same flags, exit codes, and JSON/human success shapes
-- [ ] Library supports reindex for a full read scope in one call
-- [ ] Progen integration tests pass; add/adjust unit tests on the façade interface (not Connection)
-- [ ] `cargo test` and `cargo clippy -- -D warnings` clean for touched crates
+- [x] Callers of find/list/get/context/reindex do not open or ensure the index themselves
+- [x] No public pure-alias ops that only rename another public op
+- [x] Federated find and in-store context semantics unchanged
+- [x] CLI progen commands keep the same flags, exit codes, and JSON/human success shapes
+- [x] Library supports reindex for a full read scope in one call
+- [x] Progen integration tests pass; add/adjust unit tests on the façade interface (not Connection)
+- [x] `cargo test` and `cargo clippy -- -D warnings` clean for touched crates
 
 **Out of scope:**
 - Replacing SQLite with upstream progenitor engine (seam readiness only)
@@ -86,6 +86,10 @@ See Agent Brief.
 - Graph/backlink engine redesign beyond existing context/backlinks behavior
 - Moving all human formatters in this ticket
 - Progen lifecycle add/rm ownership (membership issue) except consuming path helpers
+
+## Answer
+
+Added concrete `ProgenStore` façade (`crates/odm-progen/src/store.rs`) that owns ensure/open index once per handle and exposes find/list/get/context/tree/backlinks/reindex without leaking `Connection`. Federation via `find_notes` + `reindex_scope`/`reindex_for_cli`; CLI uses `one_progen_flag` and façade open helpers. Removed pure aliases (`note_body`, `note_tree`, `note_backlinks`, `resolve_single_read`). Index open/ensure sealed `pub(crate)`. CLI flags/JSON/exit codes unchanged; integration + façade unit tests green.
 
 ## Comments
 

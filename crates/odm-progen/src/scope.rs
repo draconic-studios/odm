@@ -79,14 +79,6 @@ pub fn resolve_write_progen(
     scoped_from_config(&ws.root, &ws.config, &name)
 }
 
-/// Single-root read under `odm progen` (require --progen when multiple).
-pub fn resolve_single_read(
-    ws: &Workspace,
-    progen: Option<&str>,
-) -> Result<ScopedProgen, OdmError> {
-    resolve_write_progen(ws, progen)
-}
-
 fn require_progen(config: &WorkspaceConfig, name: &str) -> Result<(), OdmError> {
     if config.progens.contains_key(name) {
         Ok(())

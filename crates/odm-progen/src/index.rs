@@ -37,7 +37,7 @@ pub struct IndexStats {
 }
 
 /// `.odm/progen/<name>/`
-pub fn index_dir(ws_root: &Path, progen_name: &str) -> PathBuf {
+pub(crate) fn index_dir(ws_root: &Path, progen_name: &str) -> PathBuf {
     progen_index_dir(ws_root, progen_name)
 }
 
@@ -46,7 +46,7 @@ fn index_db_path(ws_root: &Path, progen_name: &str) -> PathBuf {
 }
 
 /// Rebuild disposable index for one Progen from vault files.
-pub fn reindex_progen(ws: &Workspace, sp: &ScopedProgen) -> Result<IndexStats, OdmError> {
+pub(crate) fn reindex_progen(ws: &Workspace, sp: &ScopedProgen) -> Result<IndexStats, OdmError> {
     let notes = walk_notes(&sp.path)?;
     let dir = index_dir(&ws.root, &sp.name);
     fs::create_dir_all(&dir).map_err(|e| {
@@ -109,7 +109,7 @@ pub fn reindex_progen(ws: &Workspace, sp: &ScopedProgen) -> Result<IndexStats, O
     })
 }
 
-pub fn open_index(ws_root: &Path, progen_name: &str) -> Result<Connection, OdmError> {
+pub(crate) fn open_index(ws_root: &Path, progen_name: &str) -> Result<Connection, OdmError> {
     let db = index_db_path(ws_root, progen_name);
     if !db.exists() {
         return Err(OdmError::operation(format!(
@@ -120,7 +120,7 @@ pub fn open_index(ws_root: &Path, progen_name: &str) -> Result<Connection, OdmEr
 }
 
 /// Ensure index exists; rebuild if missing.
-pub fn ensure_index(ws: &Workspace, sp: &ScopedProgen) -> Result<(), OdmError> {
+pub(crate) fn ensure_index(ws: &Workspace, sp: &ScopedProgen) -> Result<(), OdmError> {
     let db = index_db_path(&ws.root, &sp.name);
     if !db.exists() {
         reindex_progen(ws, sp)?;
@@ -129,14 +129,14 @@ pub fn ensure_index(ws: &Workspace, sp: &ScopedProgen) -> Result<(), OdmError> {
 }
 
 #[derive(Debug, Clone)]
-pub struct IndexedNote {
+pub(crate) struct IndexedNote {
     pub id: String,
     pub rel_path: String,
     pub title: String,
     pub body: String,
 }
 
-pub fn load_all_notes(conn: &Connection) -> Result<Vec<IndexedNote>, OdmError> {
+pub(crate) fn load_all_notes(conn: &Connection) -> Result<Vec<IndexedNote>, OdmError> {
     let mut stmt = conn
         .prepare("SELECT id, rel_path, title, body FROM notes ORDER BY rel_path")
         .map_err(|e| OdmError::operation(e.to_string()))?;
@@ -157,7 +157,7 @@ pub fn load_all_notes(conn: &Connection) -> Result<Vec<IndexedNote>, OdmError> {
     Ok(out)
 }
 
-pub fn search_fts(
+pub(crate) fn search_fts(
     conn: &Connection,
     query: &str,
     limit: usize,
@@ -190,7 +190,7 @@ pub fn search_fts(
     Ok(out)
 }
 
-pub fn get_indexed(conn: &Connection, id: &str) -> Result<Option<IndexedNote>, OdmError> {
+pub(crate) fn get_indexed(conn: &Connection, id: &str) -> Result<Option<IndexedNote>, OdmError> {
     let mut stmt = conn
         .prepare("SELECT id, rel_path, title, body FROM notes WHERE id = ?1")
         .map_err(|e| OdmError::operation(e.to_string()))?;
@@ -236,7 +236,7 @@ pub fn get_indexed(conn: &Connection, id: &str) -> Result<Option<IndexedNote>, O
     }
 }
 
-pub fn outgoing_links(conn: &Connection, src_id: &str) -> Result<Vec<String>, OdmError> {
+pub(crate) fn outgoing_links(conn: &Connection, src_id: &str) -> Result<Vec<String>, OdmError> {
     let mut stmt = conn
         .prepare("SELECT target FROM links WHERE src_id = ?1 ORDER BY target")
         .map_err(|e| OdmError::operation(e.to_string()))?;
@@ -250,11 +250,14 @@ pub fn outgoing_links(conn: &Connection, src_id: &str) -> Result<Vec<String>, Od
     Ok(out)
 }
 
-pub fn resolve_link_target(conn: &Connection, target: &str) -> Result<Option<IndexedNote>, OdmError> {
+pub(crate) fn resolve_link_target(
+    conn: &Connection,
+    target: &str,
+) -> Result<Option<IndexedNote>, OdmError> {
     get_indexed(conn, target)
 }
 
-pub fn backlinks_for(conn: &Connection, target: &str) -> Result<Vec<String>, OdmError> {
+pub(crate) fn backlinks_for(conn: &Connection, target: &str) -> Result<Vec<String>, OdmError> {
     let mut stmt = conn
         .prepare(
             "SELECT DISTINCT src_id FROM links WHERE target = ?1 ORDER BY src_id",
