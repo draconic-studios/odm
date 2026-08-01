@@ -17,14 +17,17 @@ First public spine release: core multi-git Workspace, Progen integration, and Ac
   - `odm project` lifecycle — add, list, rm, info, git
   - Workspace discovery, pin file, gitignore manage
 - **Progen**
-  - Vault engine façade under `odm progen …`
-  - Top-level `odm find` and `odm context` with multi-Progen scope
-  - Progen lifecycle (add/list/rm/info) and store verbs
+  - In-repo Obsidian-compatible vault engine under `odm progen …` (façade swap-ready for upstream crates later)
+  - Lifecycle: add/list/rm/info; store: get/body/ls/tree/backlinks/reindex/doctor
+  - Top-level `odm find` and `odm context` with multi-Progen scope (`--progen`, `--progen-group`)
 - **Actions**
-  - `odm run` — list and dispatch Action bundles from Workspace config
-  - Shell-out model for action command bodies
+  - `odm run` — list and dispatch Action bundles (`tasks: [{ run, dir? }]`) from Workspace config
+  - Shell-out model; cwd via task dir / `--project` / `--wt`; exit-code passthrough
+- **CLI**
+  - Globals: `--root`, `--json`, `--project`, `--wt`, `--progen`, `--progen-group`
+  - Sketch stubs: `generate`, `agent`, `project worktree` (exit 1 not-implemented)
 - **Dogfood**
-  - `examples/core-desk` — offline Workspace exercising core, path-only Progen, and shell Actions
+  - `examples/core-desk` — offline Workspace exercising core, path-only Progen, groups, and shell Actions
 - **Ship**
   - `scripts/release-build.sh` — release tarball under `dist/odm-<version>-<target>.tar.gz`
   - Consumer install docs (README, `docs/reference/install.md`)
