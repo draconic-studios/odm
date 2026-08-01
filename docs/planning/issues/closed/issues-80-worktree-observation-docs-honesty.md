@@ -2,7 +2,7 @@
 id: issues-80
 title: "Docs honesty for prune --all and slot dirty observation"
 description: "Align worktrees/cli/phased-delivery/CHANGELOG/README with prune --all and slot dirty fields."
-status: open
+status: closed
 issue-type: feature-request
 severity: low
 tags:
@@ -75,12 +75,12 @@ See Agent Brief.
 
 **Acceptance criteria:**
 
-- [ ] worktrees.md Deferred no longer lists multi-project prune or status dirty observation as TODO
-- [ ] cli.md documents prune --all and dirty field
-- [ ] phased-delivery Phase spine + deferred aligned
-- [ ] CHANGELOG accurate (no duplicate contradictory bullets)
-- [ ] No false “shipped” claims for still-deferred items
-- [ ] `cargo test` green
+- [x] worktrees.md Deferred no longer lists multi-project prune or status dirty observation as TODO
+- [x] cli.md documents prune --all and dirty field
+- [x] phased-delivery Phase spine + deferred aligned
+- [x] CHANGELOG accurate (no duplicate contradictory bullets)
+- [x] No false “shipped” claims for still-deferred items
+- [x] `cargo test` green
 
 **Out of scope:**
 
@@ -91,3 +91,14 @@ See Agent Brief.
 ## Acceptance
 
 Mirror Agent Brief checklist.
+
+## Answer
+
+Docs-only honesty after 78/79:
+
+- **phased-delivery** Phase spine: `worktree_slots` includes `dirty`; added `prune --all` multi-project orphan GC. Deferred drops multi-project prune as open; keeps config slots / pin↔slot / auto-prune / branch templates / status orphan listing / global `--wt`; notes prune/`--all`/doctor warns/slot dirty landed.
+- **cli.md**: worktree blurb names `prune --all` + list `dirty`; sketch matrix lists remaining deferred and landed prune/`--all`/dirty observation.
+- **worktrees.md** Deferred: multi-project **entities** and status **orphan listing** stay open with landed parentheticals (not prune/dirty as TODO).
+- **CHANGELOG** / root README: already accurate — no edit (YAGNI).
+
+`cargo test` green (no Rust changes).

@@ -10,7 +10,6 @@ See `docs/agents/issue-tracker.md`.
 
 ## Frontier (open, unblocked)
 
-- [[issues-80-worktree-observation-docs-honesty]] — docs honesty prune --all + slot dirty (`ready-for-agent`)
 - [[issues-81-core-desk-worktree-observation-dogfood]] — core-desk dogfood prune --all + dirty status (`ready-for-agent`)
 
 ## Blocked

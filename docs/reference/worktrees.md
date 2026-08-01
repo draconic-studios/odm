@@ -46,8 +46,8 @@ odm project worktree prune --all [--force]
 - Branch naming templates
 - Auto prune on `doctor --fix` (prune stays an explicit command)
 - Pin file interaction with slots (pin stays Primary-oriented unless later decided)
-- Multi-Project or Workspace-level slots (prune `--all` landed)
-- `status` obligations for orphans (registered slot dirty observation landed on list/status/info; doctor dirty-slot **warn** landed)
+- Multi-Project or Workspace-level slot **entities** (config/placement beyond per-Project dirs; prune `--all` multi-project orphan GC already landed)
+- `status` listing of orphan dirs (registered slot dirty observation landed on list/status/info; doctor dirty-slot **warn** landed; orphans stay doctor-warn + prune)
 - Global `--wt` deep behavior beyond path binding on `project git` / `run`
 
 ## Non-goals
