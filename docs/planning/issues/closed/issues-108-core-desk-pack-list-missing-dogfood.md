@@ -2,13 +2,12 @@
 id: issues-108
 title: "core-desk dogfood pack list missing"
 description: "core-desk README + gate: pack list missing false after install, true after dest delete, clear after rm."
-status: open
+status: closed
 issue-type: feature-request
 severity: low
 tags:
   - planning
   - issue
-  - ready-for-agent
   - wayfinder
   - wayfinder-task
 ---
@@ -69,10 +68,10 @@ See Agent Brief.
 
 **Acceptance criteria:**
 
-- [ ] core-desk README documents pack list missing observation
-- [ ] Integration gate asserts false → true → cleared via rm
-- [ ] `core_desk.rs` within LOC limits
-- [ ] `cargo test` green
+- [x] core-desk README documents pack list missing observation
+- [x] Integration gate asserts false → true → cleared via rm
+- [x] `core_desk.rs` within LOC limits
+- [x] `cargo test` green
 
 **Out of scope:**
 
@@ -82,4 +81,4 @@ See Agent Brief.
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met

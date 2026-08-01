@@ -598,6 +598,74 @@ fn core_desk_agent_pack_rm_gate() {
 }
 
 #[test]
+fn core_desk_pack_list_missing_gate() {
+    if skip_without_git() {
+        return;
+    }
+    let (dir, root) = setup_temp_core_desk();
+    let root_s = root.to_str().unwrap();
+    let home = dir.path().join("agent-home");
+    let home_s = home.to_str().unwrap();
+    let dest = home.join("demo");
+
+    odm()
+        .args([
+            "--root",
+            root_s,
+            "agent",
+            "pack",
+            "install",
+            "agent-packs/demo",
+            "--home",
+            home_s,
+        ])
+        .assert()
+        .success();
+    assert!(dest.is_dir());
+
+    odm()
+        .args(["--root", root_s, "agent", "pack", "list"])
+        .assert()
+        .success()
+        .stdout(predicate::eq("demo\n"));
+
+    let v = json_stdout(odm().args(["--root", root_s, "--json", "agent", "pack", "list"]));
+    let packs = v["packs"].as_array().expect("packs");
+    assert_eq!(packs.len(), 1);
+    assert_eq!(packs[0]["name"], "demo");
+    assert_eq!(packs[0]["missing"].as_bool(), Some(false));
+
+    fs::remove_dir_all(&dest).unwrap();
+    assert!(!dest.exists());
+
+    odm()
+        .args(["--root", root_s, "agent", "pack", "list"])
+        .assert()
+        .success()
+        .stdout(predicate::eq("demo missing\n"));
+
+    let v = json_stdout(odm().args(["--root", root_s, "--json", "agent", "pack", "list"]));
+    let packs = v["packs"].as_array().expect("packs");
+    assert_eq!(packs.len(), 1);
+    assert_eq!(packs[0]["name"], "demo");
+    assert_eq!(packs[0]["missing"].as_bool(), Some(true));
+
+    odm()
+        .args(["--root", root_s, "agent", "pack", "rm", "demo"])
+        .assert()
+        .success();
+
+    odm()
+        .args(["--root", root_s, "agent", "pack", "list"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("(no agent packs)"));
+
+    let v = json_stdout(odm().args(["--root", root_s, "--json", "agent", "pack", "list"]));
+    assert_eq!(v["packs"].as_array().unwrap().len(), 0);
+}
+
+#[test]
 fn core_desk_status_packs_doctor_gate() {
     if skip_without_git() {
         return;
