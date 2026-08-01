@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`odm-git` non-interactive lifecycle** — captured git ops set `GIT_TERMINAL_PROMPT=0` so clone/fetch fail fast instead of hanging on auth prompts; `Git::run` passthrough stays user-facing.
 - **Progen index freshness** — `ensure_index` rebuilds when vault note paths/mtimes change (meta `vault_fp`); edits and deletes show up on next open/find without manual `reindex`.
 - **Progen duplicate note ids** — reindex fails with both `rel_path`s named instead of an opaque UNIQUE constraint error.
 - **`project add` / `progen add` path escape** — membership paths validated with `resolve_under_root` before mutate/save so `../` escapes never brick the Workspace config.

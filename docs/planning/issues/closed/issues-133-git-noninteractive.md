@@ -2,7 +2,7 @@
 id: issues-133
 title: "Git runner non-interactive (no auth hang)"
 description: "ProcessRunner can hang on interactive git auth; agents need fail-fast."
-status: open
+status: closed
 issue-type: bug
 severity: medium
 tags:
@@ -53,12 +53,12 @@ None
 
 **Acceptance criteria:**
 
-- [ ] Lifecycle git ops set non-interactive env
-- [ ] Test proves env (mock) or documents contract
-- [ ] `cargo test -p odm-git` green
+- [x] Lifecycle git ops set non-interactive env
+- [x] Test proves env (mock) or documents contract
+- [x] `cargo test -p odm-git` green
 
 **Out of scope:** credential helpers productization; SSH agent config.
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met

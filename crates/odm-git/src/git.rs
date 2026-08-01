@@ -15,8 +15,10 @@ pub struct WorktreeEntry {
 
 /// Shell-out git façade for ODM multi-git lifecycle.
 ///
-/// Paths must be absolute. Library ops use `git -C <path>` and capture stdio.
-/// [`Git::run`] inherits stdio for `odm project git` passthrough.
+/// Paths must be absolute. Library ops use `git -C <path>`, capture stdio, and
+/// run non-interactively (`GIT_TERMINAL_PROMPT=0` via the process runner).
+/// [`Git::run`] inherits stdio for `odm project git` passthrough and does not
+/// force non-interactive env.
 #[derive(Debug, Clone)]
 pub struct Git<R: CommandRunner = ProcessRunner> {
     runner: R,
