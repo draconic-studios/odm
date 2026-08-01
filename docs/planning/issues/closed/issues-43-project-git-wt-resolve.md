@@ -2,7 +2,7 @@
 id: issues-43
 title: "project git --wt resolve"
 description: "Honor --wt on odm project git using worktree slot path; pin maintain stays primary-only."
-status: open
+status: closed
 issue-type: feature-request
 severity: medium
 tags:
@@ -84,7 +84,16 @@ See Agent Brief.
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met
+
+## Answer
+
+Landed `project git --wt` resolve:
+
+- **Core** `project_git(..., wt: Option<&str>)`: when `wt` set, validate slot name, require existing `worktrees/<project>/<slot>` that is a git repo, run git there; skip pin auto-maintain. Primary path + pin maintain unchanged when `wt` is `None`.
+- **CLI**: remove `not_implemented("project git --wt")`; pass command/global effective wt into core.
+- Unit tests (fake runner): slot `-C` path, missing → NotFound, invalid name → Usage, unknown project → Usage, primary path without wt, pin file unchanged with wt.
+- Unblocks [[issues-44-worktree-integration-and-docs]]
 
 ## Comments
 

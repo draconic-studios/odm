@@ -270,10 +270,8 @@ fn run(cli: Cli, out: &GlobalOut) -> Result<i32, OdmError> {
                     git_args,
                 } => {
                     let effective_wt = wt.or(global_wt);
-                    if effective_wt.is_some() {
-                        return Err(OdmError::not_implemented("project git --wt"));
-                    }
-                    let status = project_git(&git, &ws, &name, &git_args)?;
+                    let status =
+                        project_git(&git, &ws, &name, &git_args, effective_wt.as_deref())?;
                     Ok(status.code().unwrap_or(1))
                 }
                 ProjectCmd::Worktree { cmd } => match cmd {

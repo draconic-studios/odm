@@ -10,11 +10,11 @@ See `docs/agents/issue-tracker.md`.
 
 ## Frontier (open, unblocked)
 
-- [[issues-43-project-git-wt-resolve]] — `project git --wt` slot cwd (`ready-for-agent`)
+- [[issues-44-worktree-integration-and-docs]] — integration tests + docs (`ready-for-agent`)
 
 ## Blocked
 
-- [[issues-44-worktree-integration-and-docs]] — blocked by [[issues-43-project-git-wt-resolve]]
+_(none)_
 
 ## Architecture deepen (post-0.1.0)
 
