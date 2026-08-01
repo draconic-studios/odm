@@ -6,6 +6,8 @@ How ODM treats **Progen** stores and multi-store query scope. Domain terms: root
 
 A **Progen** is a named docs/memory store: Markdown on disk plus a disposable index. ODM declares each store under `progens` in Workspace config (`path`, optional `url`). The store is not owned by the ODM state directory.
 
+**v0.1 engine:** in-repo Obsidian-compatible vault engine (Markdown + YAML frontmatter + `[[wikilinks]]` + disposable SQLite FTS under `.odm/progen/<name>/`). External progenitor crates are not required yet; the ODM façade is swap-ready for upstream later.
+
 Often the store is its own git repo. Path may nest under a Project without making it a Project.
 
 ## Ownership split

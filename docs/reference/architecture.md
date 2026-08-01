@@ -142,6 +142,8 @@ odm-agent              # pack link/install (sketch-depth OK; may start thin in b
 # no odm-serve in v1
 ```
 
+v0.1 ships an **in-repo** Obsidian-compatible vault engine inside `odm-progen` (not external progenitor crates yet); the façade stays swap-ready.
+
 Rules:
 
 - **Depend inward** — `odm` → feature crates → `odm-core`. Progen crates never depend on ODM.

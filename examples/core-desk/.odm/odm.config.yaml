@@ -11,5 +11,8 @@ projects:
 progens:
   notes:
     path: progens/notes
+progen_groups:
+  default:
+    - notes
 actions:
   core: actions/core.yaml
