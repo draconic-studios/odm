@@ -219,20 +219,14 @@ fn pack_missing_source_not_found() {
 }
 
 #[test]
-fn agent_start_prompt_still_stubs() {
+fn agent_start_still_stub() {
     let (_dir, root) = setup_pack_ws();
     let root_s = root.to_str().unwrap();
 
-    for args in [
-        ["agent", "start"].as_slice(),
-        ["agent", "prompt", "x"].as_slice(),
-    ] {
-        odm()
-            .args(["--root", root_s])
-            .args(args)
-            .assert()
-            .failure()
-            .code(1)
-            .stderr(predicate::str::contains("not implemented"));
-    }
+    odm()
+        .args(["--root", root_s, "agent", "start"])
+        .assert()
+        .failure()
+        .code(1)
+        .stderr(predicate::str::contains("not implemented"));
 }

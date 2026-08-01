@@ -330,21 +330,13 @@ fn run(cli: Cli, out: &GlobalOut) -> Result<i32, OdmError> {
             }
             Ok(0)
         }
-        Commands::Context { id } => {
-            let root = discover_root(cli.root.as_deref(), &std::env::current_dir()?)?;
-            let ws = load_workspace(&root)?;
-            let progen = one_progen_flag(
-                &cli.progen,
-                "context accepts at most one --progen (or use name:id)",
-            )?;
-            let hit = context_notes(&ws, &id, progen)?;
-            if out.json {
-                print_json(&hit)?;
-            } else {
-                print!("{}", format_context_human(&hit));
-            }
-            Ok(0)
-        }
+        Commands::Context { id } => run_context_prompt(
+            cli.root.as_deref(),
+            &cli.progen,
+            out,
+            &id,
+            "context accepts at most one --progen (or use name:id)",
+        ),
         Commands::Run { action, extra } => {
             let root = discover_root(cli.root.as_deref(), &std::env::current_dir()?)?;
             let ws = load_workspace(&root)?;
@@ -456,9 +448,35 @@ fn run(cli: Cli, out: &GlobalOut) -> Result<i32, OdmError> {
                 }
             }
             AgentCmd::Start { .. } => Err(OdmError::not_implemented("agent start")),
-            AgentCmd::Prompt { .. } => Err(OdmError::not_implemented("agent prompt")),
+            AgentCmd::Prompt { id } => run_context_prompt(
+                cli.root.as_deref(),
+                &cli.progen,
+                out,
+                &id,
+                "agent prompt accepts at most one --progen (or use name:id)",
+            ),
         },
     }
+}
+
+/// Shared path for `odm context` and `odm agent prompt` (thin context packaging).
+fn run_context_prompt(
+    root_flag: Option<&Path>,
+    global_progen: &[String],
+    out: &GlobalOut,
+    id: &str,
+    multi_progen_msg: &str,
+) -> Result<i32, OdmError> {
+    let root = discover_root(root_flag, &std::env::current_dir()?)?;
+    let ws = load_workspace(&root)?;
+    let progen = one_progen_flag(global_progen, multi_progen_msg)?;
+    let hit = context_notes(&ws, id, progen)?;
+    if out.json {
+        print_json(&hit)?;
+    } else {
+        print!("{}", format_context_human(&hit));
+    }
+    Ok(0)
 }
 
 fn run_progen(

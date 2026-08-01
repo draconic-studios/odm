@@ -2,7 +2,7 @@
 id: issues-58
 title: "Agent prompt thin v1 (CLI over context)"
 description: "Implement odm agent prompt <id> as thin Progen context work-package; keep agent start stub."
-status: open
+status: closed
 issue-type: feature-request
 severity: medium
 tags:
@@ -74,12 +74,12 @@ odm agent prompt <id> [--progen <name>] [--json]
 
 **Acceptance criteria:**
 
-- [ ] `odm agent prompt <existing-id>` exit 0, stdout includes note id/body or context sections
-- [ ] `odm --json agent prompt <id>` valid JSON with anchor/outgoing/incoming (or equivalent ContextHit fields)
-- [ ] Unknown id → exit 4
-- [ ] `odm agent start` still exit 1 not-implemented
-- [ ] No new crate; no marketplace/start runtime
-- [ ] `cargo test` green
+- [x] `odm agent prompt <existing-id>` exit 0, stdout includes note id/body or context sections
+- [x] `odm --json agent prompt <id>` valid JSON with anchor/outgoing/incoming (or equivalent ContextHit fields)
+- [x] Unknown id → exit 4
+- [x] `odm agent start` still exit 1 not-implemented
+- [x] No new crate; no marketplace/start runtime
+- [x] `cargo test` green
 
 **Out of scope:**
 
@@ -90,4 +90,15 @@ odm agent prompt <id> [--progen <name>] [--json]
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met
+
+## Answer
+
+Implemented `odm agent prompt <id>` as a thin alias of `odm context`.
+
+- **CLI:** `AgentCmd::Prompt { id: String }` (typed id; no trailing rest).
+- **Handler:** shared `run_context_prompt` used by both `context` and `agent prompt` — same `one_progen_flag` / `context_notes` / `format_context_human` / `ContextHit` JSON path.
+- **Human header:** reuses `format_context_human` (`# context <id>`).
+- **`agent start`:** still `not_implemented` exit 1.
+- **Tests:** `agent_prompt_is_thin_context_alias` (happy human/json, exit 4, start stub); stub-only tests no longer expect prompt not-implemented.
+- Docs honesty deferred to [[issues-59-agent-prompt-integration-docs]].

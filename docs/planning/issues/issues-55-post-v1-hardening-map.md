@@ -38,10 +38,12 @@ After worktree/generate/pack v1 landed, close the next AFK-ready slice:
 - [[issues-56-reference-docs-v1-honesty]] closed — reference docs honesty: worktree/pack v1 markers, progen façade implemented vs reserved, `init --interactive` not-implemented.
 - [[issues-57-doctor-worktree-orphans]] closed — doctor Warn on orphan `worktrees/<project>/<slot>` dirs (`worktree_orphan:…`, fixable false); configured Projects only; docs honesty in worktrees/cli/phased-delivery.
 - Orphan scan lock: configured Projects only (ignore unknown names under `worktrees/`).
+- [[issues-58-agent-prompt-thin]] closed — `odm agent prompt <id>` thin alias of context via shared `run_context_prompt`; typed `id`; JSON = `ContextHit`; human reuses `format_context_human`; `agent start` still stub.
+- Human header lock: reuse `# context <id>` (no separate agent-prompt header).
 
 ## Not yet specified
 
-- Exact human header string for prompt vs context (implementer may reuse `format_context_human` or twin with `# agent prompt <id>`).
+- _(none for remaining child [[issues-59-agent-prompt-integration-docs]] beyond its brief)_
 
 ## Out of scope
 

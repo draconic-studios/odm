@@ -10,11 +10,11 @@ See `docs/agents/issue-tracker.md`.
 
 ## Frontier (open, unblocked)
 
-- [[issues-58-agent-prompt-thin]] — Agent prompt thin v1 (CLI over context)
+- [[issues-59-agent-prompt-integration-docs]] — Agent prompt integration tests and docs
 
 ## Blocked
 
-- [[issues-59-agent-prompt-integration-docs]] — blocked by [[issues-58-agent-prompt-thin]]
+_(none)_
 
 ## Architecture deepen (post-0.1.0)
 

@@ -261,10 +261,10 @@ pub enum AgentCmd {
         #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
         rest: Vec<String>,
     },
-    /// Prompt helpers (not implemented).
+    /// Package note context as an agent work-package (thin alias of `context`).
     Prompt {
-        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
-        rest: Vec<String>,
+        /// Note id, or `progen:id`.
+        id: String,
     },
 }
 
