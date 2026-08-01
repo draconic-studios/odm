@@ -50,7 +50,7 @@ odm progen …
 odm find | context
 odm run
 odm generate …          # v1 local template
-odm agent pack …        # v1 local install/link/list
+odm agent pack …        # v1 local install/link/list/rm
 odm agent prompt …      # v1 thin (context work-package)
 odm agent start         # sketch
 ```
@@ -118,9 +118,9 @@ Workspace snapshot: configured Projects/Progens, on-disk presence, git/pin drift
 odm doctor [--fix]
 ```
 
-**ODM-side** checks only: config load, declared paths, gitignore management drift, pin file consistency basics, worktree slot orphan **warns** (configured Project dirs under `worktrees/<project>/` that are not registered git worktrees; not fixable), and dirty registered worktree slot **warns** (`worktree_dirty:<project>:<slot>`; not fixable). Not store-content doctor (`odm progen doctor`).
+**ODM-side** checks only: config load, declared paths, gitignore management drift, pin file consistency basics, worktree slot orphan **warns** (configured Project dirs under `worktrees/<project>/` that are not registered git worktrees; not fixable), dirty registered worktree slot **warns** (`worktree_dirty:<project>:<slot>`; not fixable), and agent pack missing-path **warns** (`pack_missing:<name>` when a registry entry’s path has no path/symlink on disk; not fixable; dangling symlink present is not missing). Not store-content doctor (`odm progen doctor`).
 
-- **`--fix`**: mechanical ODM repairs only (same spirit as upstream progen doctor) — no destructive git rewrites; does not delete orphan worktree dirs or clean/stash dirty slots.
+- **`--fix`**: mechanical ODM repairs only (same spirit as upstream progen doctor) — no destructive git rewrites; does not delete orphan worktree dirs, clean/stash dirty slots, or edit/remove agent pack registry entries or destinations.
 
 ---
 
@@ -260,7 +260,7 @@ odm generate <name> --dest <rel-path> [--force]
 
 ---
 
-### `odm agent pack` — **v1 local install/link/list**
+### `odm agent pack` — **v1 local install/link/list/rm**
 
 All AI/agent-facing UX lives under `odm agent` (not a top-level `pack` command). Pack v1 is local filesystem only.
 
@@ -268,6 +268,7 @@ All AI/agent-facing UX lives under `odm agent` (not a top-level `pack` command).
 odm agent pack list
 odm agent pack install <source> --home <path> [--force]
 odm agent pack link <source> --home <path> [--force]
+odm agent pack rm <name>
 ```
 
 - **Workspace required** (same discovery as generate).
@@ -276,9 +277,10 @@ odm agent pack link <source> --home <path> [--force]
 - **`install`:** recursive copy of source into `<home>/<name>/`. Dest exists without `--force` → exit `3`. With `--force`, replace then copy. Missing source → exit `4`.
 - **`link`:** symlink `<home>/<name>` → absolute resolved source. Same exists/`--force` policy. Platforms without symlink support → clear operation error (no silent copy fallback).
 - **`list`:** registry-backed (`.odm/agent-packs.json`). Human: one name per line sorted; empty → `(no agent packs)`. `--json`: `{ "packs": [ { "name", "source", "path", "mode" } ] }` (`mode` = `"install"` | `"link"`).
-- **install/link `--json`:** single entry object (same fields as list items), not wrapped.
-- Human success: `installed <name> -> <path>` / `linked <name> -> <path>`.
-- Deferred: pack manifest, marketplace, config-declared packs, status/doctor pack reports; `agent start` runtime — `env-gen-packs.md`.
+- **`rm`:** drop registry entry and best-effort delete destination (install tree or link symlink). Missing dest still succeeds (stale-registry cleanup). Unknown name → exit `4`. Human: `removed <name> -> <path>`. `--json`: single entry object (same fields as list items) for the removed pack.
+- **install/link/rm `--json`:** single entry object (same fields as list items), not wrapped.
+- Human success: `installed <name> -> <path>` / `linked <name> -> <path>` / `removed <name> -> <path>`.
+- Deferred: pack manifest, marketplace, config-declared packs, status pack reports (doctor missing-path warn landed — see doctor); `agent start` runtime — `env-gen-packs.md`.
 
 ### `odm agent prompt` — **v1 thin** (context work-package)
 
@@ -306,8 +308,8 @@ odm agent start [--project] [--wt] …
 
 ## Full vs sketch matrix
 
-- **Full**: global flags (including `--wt` path binding); `init` (headless; `--interactive` not implemented); `sync`; `pin apply|status`; `status`; `doctor`; `project list|add|rm|info|git|worktree` (v1); `progen` lifecycle + **partial** store façade (implemented verbs above); `find`; `context`; `run`; `generate` (v1 local template only); `agent pack` (v1 local install/link/list only); `agent prompt` (v1 thin context work-package).
-- **Sketch / deferred**: `init --interactive`; reserved progen store verbs; `agent start`; deferred worktree features (config slots, pin↔slot, auto-prune on doctor, status orphan listing, global `--wt` depth — `worktrees.md`; doctor orphan/dirty **warn**, explicit `worktree prune` / `prune --all`, and registered slot `dirty` on list/status/info landed); generate remote/templating; pack marketplace/manifest/config declarations (`env-gen-packs.md`).
+- **Full**: global flags (including `--wt` path binding); `init` (headless; `--interactive` not implemented); `sync`; `pin apply|status`; `status`; `doctor` (includes pack_missing warn); `project list|add|rm|info|git|worktree` (v1); `progen` lifecycle + **partial** store façade (implemented verbs above); `find`; `context`; `run`; `generate` (v1 local template only); `agent pack` (v1 local install/link/list/rm); `agent prompt` (v1 thin context work-package).
+- **Sketch / deferred**: `init --interactive`; reserved progen store verbs; `agent start`; deferred worktree features (config slots, pin↔slot, auto-prune on doctor, status orphan listing, global `--wt` depth — `worktrees.md`; doctor orphan/dirty **warn**, explicit `worktree prune` / `prune --all`, and registered slot `dirty` on list/status/info landed); generate remote/templating; pack marketplace/manifest/config declarations and status pack reports (`env-gen-packs.md`; doctor `pack_missing` warn landed).
 - **Absent**: `serve`, MCP, top-level action verbs, `ops` namespace, path-valued scope flags.
 
 ## Related

@@ -11,10 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **`odm generate`** — v1 local template materialize: list Generators from bundles; `generate <name> --dest <path> [--force]` copies a local template tree under the Workspace (remote/url-only run deferred with a clear error).
 - **`odm project worktree`** — Worktree slot add/list/rm and `--wt` path binding (no longer a not-implemented stub).
-- **`odm agent pack`** — v1 local install/link/list into an agent home (`--home`); Workspace registry `.odm/agent-packs.json`; `agent start` remains a not-implemented stub.
+- **`odm agent pack`** — v1 local install/link/list/rm into an agent home (`--home`); Workspace registry `.odm/agent-packs.json`; `rm` drops registry entry and best-effort deletes dest (missing dest still OK; unknown name → exit `4`); `agent start` remains a not-implemented stub.
 - **`odm agent prompt`** — v1 thin context work-package: packages one note’s Progen neighborhood to stdout (same path/JSON as `odm context`); `agent start` still stubbed.
 - **`odm doctor` worktree orphan warn** — Warn checks `worktree_orphan:<project>:<slot>` for configured-project dirs under `worktrees/` that are not registered git worktrees (`fixable: false`; `--fix` does not delete).
 - **`odm doctor` worktree dirty-slot warn** — Warn checks `worktree_dirty:<project>:<slot>` for registered worktree slots with a dirty working tree (`fixable: false`; `--fix` does not clean or stash).
+- **`odm doctor` pack missing-path warn** — Warn checks `pack_missing:<name>` when a registered agent pack path has no path/symlink on disk (`fixable: false`; `--fix` does not edit registry or delete pack paths).
 - **`odm project worktree prune`** — remove orphan slot dirs under `worktrees/<project>/` (same orphan definition as doctor). Default deletes empty orphans only (exit `3` if any non-empty orphan remains after partial cleanup); `--force` recursive-deletes orphans. Never deletes registered worktrees. Doctor `--fix` still does not delete orphans.
 - **`odm project worktree prune --all`** — prune orphans across every configured Project (same empty/`--force` rules); skips missing primary / non-git projects; exit `3` on any skipped non-empty without `--force`.
 - **`odm find --limit`** — max hits per Progen store (default **200**); `0` is rejected with usage exit `1`.

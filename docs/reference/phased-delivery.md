@@ -27,10 +27,11 @@ Post-0.1.0 **landed outside the original Ship spine** (not required before v0.1.
 
 - **Worktree slots v1** — `odm project worktree` add/list/rm/**prune** and `--wt` path binding (`worktrees.md`; deferred items still listed there)
 - **Generate local template v1** — `odm generate` list + materialize from local bundles (`env-gen-packs.md`; remote/`template.toml` depth deferred)
-- **Agent pack local v1** — `odm agent pack` install/link/list (`env-gen-packs.md`; marketplace/manifest deferred)
+- **Agent pack local v1** — `odm agent pack` install/link/list/rm (`env-gen-packs.md`; marketplace/manifest deferred)
 - **Agent `prompt` v1 thin** — context work-package (`env-gen-packs.md`; `agent start` still sketch)
 - **Doctor worktree orphan warn** — configured-project slot dirs that are not registered git worktrees (`worktrees.md`; not fixable)
 - **Doctor worktree dirty-slot warn** — registered dirty slots `worktree_dirty:<project>:<slot>` (`worktrees.md`; not fixable)
+- **Doctor pack missing-path warn** — registry packs whose path is absent on disk `pack_missing:<name>` (`env-gen-packs.md` / `cli.md`; not fixable; `--fix` does not edit registry)
 - **`odm find --limit`** — max hits per Progen store (default 200)
 - **Status + project info `worktree_slots`** — registered slots (`name` + `path` + `dirty`) on `odm status` projects and `odm project info` (same shape on `worktree list`); empty when none / non-git / soft-fail
 - **`odm project worktree prune --all`** — multi-project orphan GC across every configured Project (`worktrees.md`; same empty/`--force` rules as per-project prune)

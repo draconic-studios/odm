@@ -61,12 +61,13 @@ odm generate <generator-name> --dest <rel-path> [--force]
 - **Registry:** Workspace-local `.odm/agent-packs.json` (list is registry-backed; does not scan arbitrary homes).
 - **No** pack **payloads** under `.odm/` (only the registry); no global pack-registry product; marketplace/fetch cache deferred.
 
-**CLI (v1 local install/link/list landed):**
+**CLI (v1 local install/link/list/rm landed):**
 
 ```text
 odm agent pack list
 odm agent pack install <source> --home <path> [--force]
 odm agent pack link <source> --home <path> [--force]
+odm agent pack rm <name>
 ```
 
 - **Source:** local directory; relative under Workspace root (no escape); name = basename. No remote/marketplace; no `pack.toml` required in v1.
@@ -74,6 +75,8 @@ odm agent pack link <source> --home <path> [--force]
 - **`install`:** recursive copy. Exists without `--force` → exit `3`. Missing source → exit `4`.
 - **`link`:** symlink to absolute source; same force policy; no silent copy fallback when symlinks unavailable.
 - **`list`:** human one name per line (empty → `(no agent packs)`); JSON shapes in `cli.md`.
+- **`rm`:** drop registry entry and best-effort delete dest; missing dest still OK; unknown name → exit `4`. Human/JSON shapes in `cli.md`.
+- **Doctor:** missing-path **warn** `pack_missing:<name>` when a registry path has no path/symlink entry (`fixable: false`; `--fix` does not edit registry or delete pack paths). Dangling symlink present is not missing. Details: `cli.md`.
 
 **Deferred (still explicit):**
 
@@ -82,7 +85,7 @@ odm agent pack link <source> --home <path> [--force]
 - Marketplace protocol / remote fetch
 - First-class agent matrix (Cursor, Claude, etc.)
 - Pack declarations in Workspace config spine
-- `status` / `doctor` pack reports
+- `status` pack reports (doctor missing-path warn landed)
 
 ---
 
@@ -119,7 +122,7 @@ odm agent start [--project …] [--wt …] …
 - **Plugin host** (legacy Go go-plugin / npm installers) — dead path.
 - **No** top-level `pack` or `env` commands — agent UX under `odm agent …` only.
 - **No** cross-store graph API (see `graph.md`, `progen.md`).
-- **`status` / `doctor`:** no obligation to report packs, env, or generator cache in this package; core remains correct when sketch features are absent.
+- **`status` / env / generator cache:** no obligation to report packs, env, or generator cache on `status` in this package; doctor missing-path pack warn is landed (`pack_missing:<name>`). Core remains correct when sketch features are absent.
 
 ---
 

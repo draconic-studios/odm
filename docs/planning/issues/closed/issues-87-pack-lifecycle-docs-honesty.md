@@ -2,7 +2,7 @@
 id: issues-87
 title: "Docs honesty: pack rm + doctor pack_missing + README prune --all"
 description: "Update cli/env-gen-packs/phased-delivery/CHANGELOG/README for pack rm, pack_missing doctor, and prune --all surface."
-status: open
+status: closed
 issue-type: feature-request
 severity: low
 tags:
@@ -65,12 +65,12 @@ See Agent Brief.
 
 **Acceptance criteria:**
 
-- [ ] cli.md documents pack rm + pack_missing doctor warn
-- [ ] env-gen-packs.md pack section includes rm; deferred narrowed
-- [ ] CHANGELOG Unreleased bullets present
-- [ ] README mentions prune --all; pack surface not “install/link/list only” if it lists pack verbs
-- [ ] No false “not implemented” for pack rm
-- [ ] `cargo test` green
+- [x] cli.md documents pack rm + pack_missing doctor warn
+- [x] env-gen-packs.md pack section includes rm; deferred narrowed
+- [x] CHANGELOG Unreleased bullets present
+- [x] README mentions prune --all; pack surface not “install/link/list only” if it lists pack verbs
+- [x] No false “not implemented” for pack rm
+- [x] `cargo test` green
 
 **Out of scope:**
 
@@ -80,4 +80,16 @@ See Agent Brief.
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met
+
+## Answer
+
+Docs-only honesty after 84–86:
+
+- **cli.md:** pack tree + section include `rm` (human/JSON/exit 4); doctor blurb + `--fix` note cover `pack_missing:<name>` warn (not fixable); full/sketch matrix updated.
+- **env-gen-packs.md:** CLI includes rm + doctor missing-path note; deferred narrowed to status pack reports (doctor warn landed); shared absences honest.
+- **phased-delivery.md:** pack local v1 lists install/link/list/rm; Phase spine bullet for doctor pack_missing warn.
+- **CHANGELOG [Unreleased]:** pack rm on agent pack bullet; new doctor pack_missing warn bullet.
+- **README:** status line install/link/list/rm + pack_missing; worktree quick block has `prune --all`.
+- **architecture.md:** untouched (no false denial of doctor pack checks).
+- No Rust changes; `cargo test` green.

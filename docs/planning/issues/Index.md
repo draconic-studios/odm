@@ -10,7 +10,6 @@ See `docs/agents/issue-tracker.md`.
 
 ## Frontier (open, unblocked)
 
-- [[issues-87-pack-lifecycle-docs-honesty]] — docs honesty pack rm + pack_missing (ready-for-agent; unblocked by 86)
 - [[issues-88-core-desk-pack-rm-dogfood]] — core-desk pack rm dogfood (ready-for-agent; unblocked by 85)
 
 ## Blocked

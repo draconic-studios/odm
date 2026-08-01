@@ -2,7 +2,7 @@
 
 Poly-repo workspace OS for humans and AI agents: one config, one CLI, and orchestrated Projects + Progens without submodules or a second brain product.
 
-**Status:** v0.1.0 spine (multi-git, Progen, Actions) plus post-0.1.0 **worktree slots** (add/list/prune; doctor orphan/dirty warns) and local **`odm generate`**. Agent pack install/link/list is local v1; **`odm agent prompt`** is v1 thin (context work-package); `agent start` remains sketch.
+**Status:** v0.1.0 spine (multi-git, Progen, Actions) plus post-0.1.0 **worktree slots** (add/list/prune; doctor orphan/dirty warns) and local **`odm generate`**. Agent pack install/link/list/rm is local v1 (doctor `pack_missing` warn); **`odm agent prompt`** is v1 thin (context work-package); `agent start` remains sketch.
 
 ## Install
 
@@ -70,6 +70,7 @@ odm generate <name> --dest <rel-path>     # materialize local template
 odm project worktree list <project>
 odm project worktree add <project> <slot> [--branch <b>]
 odm project worktree prune <project> [--force]
+odm project worktree prune --all [--force]
 ```
 
 See [docs/reference/cli.md](docs/reference/cli.md) for full surfaces (including `agent pack`) and [examples/core-desk/README.md](examples/core-desk/README.md) for dogfood depth.
