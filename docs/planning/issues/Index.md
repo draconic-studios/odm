@@ -6,15 +6,16 @@ See `docs/agents/issue-tracker.md`.
 
 ## Maps
 
-_(none open)_
+- [[issues-45-generators-map]] — Generators (local template materialize)
 
 ## Frontier (open, unblocked)
 
-_(empty)_
+- [[issues-46-clippy-clean-tests]] — Clippy clean test code (`ready-for-agent`)
+- [[issues-48-generate-cli]] — Generate CLI list + materialize (`ready-for-agent`, wayfinder-task)
 
 ## Blocked
 
-_(none)_
+- [[issues-49-generate-integration-and-docs]] — blocked by [[issues-48-generate-cli]]
 
 ## Architecture deepen (post-0.1.0)
 

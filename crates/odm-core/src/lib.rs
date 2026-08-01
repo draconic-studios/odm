@@ -5,6 +5,7 @@ mod config;
 mod discover;
 mod doctor;
 mod error;
+mod generate;
 mod gitignore;
 mod init;
 mod io;
@@ -30,6 +31,7 @@ pub use doctor::{
     format_doctor_human, run_doctor, CheckStatus, DoctorCheck, DoctorReport,
 };
 pub use error::{exit_code, OdmError};
+pub use generate::{generate_local, generator, GenerateOutcome};
 pub use gitignore::{
     apply_managed_gitignore, desired_ancestor_lines, desired_block, desired_workspace_lines,
     update_workspace_gitignore, workspace_gitignore_has_drift, BEGIN_MARKER, END_MARKER,
