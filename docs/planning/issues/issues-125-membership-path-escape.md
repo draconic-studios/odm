@@ -2,7 +2,7 @@
 id: issues-125
 title: "membership_add validates path escape before save"
 description: "project/progen add accepts ../ paths, writes config, then load_workspace fails — bricks the Workspace."
-status: open
+status: reviewing
 issue-type: bug
 severity: high
 tags:
