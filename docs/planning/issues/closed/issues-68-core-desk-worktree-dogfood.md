@@ -2,7 +2,7 @@
 id: issues-68
 title: "core-desk dogfood worktree + status slots + find --limit"
 description: "Extend examples/core-desk README and core_desk integration gate for worktree, status slots, find --limit."
-status: open
+status: closed
 issue-type: feature-request
 severity: medium
 tags:
@@ -68,10 +68,10 @@ None
 
 **Acceptance criteria:**
 
-- [ ] core-desk README documents worktree add/list + status slots + find --limit
-- [ ] Integration test asserts status JSON `worktree_slots` after add on core-desk alpha
-- [ ] Integration test exercises `find --limit` against core-desk progen token
-- [ ] `cargo test` green
+- [x] core-desk README documents worktree add/list + status slots + find --limit
+- [x] Integration test asserts status JSON `worktree_slots` after add on core-desk alpha
+- [x] Integration test exercises `find --limit` against core-desk progen token
+- [x] `cargo test` green
 
 **Out of scope:**
 
@@ -82,3 +82,11 @@ None
 ## Acceptance
 
 Mirror Agent Brief checklist.
+
+## Answer
+
+Extended core-desk dogfood for post-0.1.0 worktree/status/find surfaces:
+
+- **README** (`examples/core-desk/README.md`): Worktree section documents `project worktree add alpha dogfood --branch odm-dogfood`, list, status human/JSON `worktree_slots`, optional rm; progen section adds `find DeskUniqueToken --limit 5`. Existing generate/pack/progen examples kept.
+- **Integration** (`crates/odm/tests/core_desk.rs`): sibling `core_desk_worktree_status_find_gate` — sync → worktree add → assert alpha `worktree_slots` contains dogfood at `worktrees/alpha/dogfood` → reindex → `find DeskUniqueToken --limit 1 --json` (one hit, id `welcome`) → optional rm. Skips without git.
+- No product code changes. `cargo test` green.

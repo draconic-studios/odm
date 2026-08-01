@@ -59,10 +59,19 @@ odm doctor
 odm project list
 odm pin apply
 
+# Worktree slots (git primary after sync; --branch avoids double-checkout of main)
+odm project worktree add alpha dogfood --branch odm-dogfood
+odm project worktree list alpha
+odm status                 # human lists slot names when non-empty
+odm status --json          # projects[].worktree_slots: [{ "name", "path" }]
+# path shape: worktrees/alpha/dogfood
+# optional cleanup: odm project worktree rm alpha dogfood
+
 # Progen / Obsidian vault
 odm progen list
 odm progen reindex
 odm find DeskUniqueToken
+odm find DeskUniqueToken --limit 5
 odm context welcome
 odm agent prompt welcome
 # Open progens/notes in Obsidian or: obsidian-cli … against that folder

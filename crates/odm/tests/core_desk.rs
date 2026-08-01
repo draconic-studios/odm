@@ -169,6 +169,85 @@ fn core_desk_full_gate() {
 }
 
 #[test]
+fn core_desk_worktree_status_find_gate() {
+    if skip_without_git() {
+        return;
+    }
+    let (_dir, root) = setup_temp_core_desk();
+    let root_s = root.to_str().unwrap();
+
+    odm()
+        .args(["--root", root_s, "sync"])
+        .assert()
+        .success();
+    assert!(root.join("projects/alpha").is_dir());
+
+    // worktree add with --branch (primary already has default branch checked out)
+    odm()
+        .args([
+            "--root",
+            root_s,
+            "project",
+            "worktree",
+            "add",
+            "alpha",
+            "dogfood",
+            "--branch",
+            "odm-dogfood",
+        ])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("dogfood"));
+    assert!(root.join("worktrees/alpha/dogfood").is_dir());
+
+    // status --json → alpha has registered worktree_slots
+    let st = json_stdout(odm().args(["--root", root_s, "--json", "status"]));
+    let projects = st["projects"].as_array().expect("projects");
+    let alpha = projects
+        .iter()
+        .find(|p| p["name"] == "alpha")
+        .expect("alpha project");
+    let slots = alpha["worktree_slots"].as_array().expect("worktree_slots");
+    let dogfood = slots
+        .iter()
+        .find(|s| s["name"] == "dogfood")
+        .expect("dogfood slot");
+    assert_eq!(dogfood["path"], "worktrees/alpha/dogfood");
+
+    // find --limit against core-desk progen token
+    odm()
+        .args(["--root", root_s, "progen", "reindex"])
+        .assert()
+        .success();
+    let found = json_stdout(odm().args([
+        "--root",
+        root_s,
+        "find",
+        "DeskUniqueToken",
+        "--limit",
+        "1",
+        "--json",
+    ]));
+    let hits = found["hits"].as_array().expect("hits");
+    assert_eq!(hits.len(), 1);
+    assert_eq!(hits[0]["id"], "welcome");
+
+    // tidy temp dir
+    odm()
+        .args([
+            "--root",
+            root_s,
+            "project",
+            "worktree",
+            "rm",
+            "alpha",
+            "dogfood",
+        ])
+        .assert()
+        .success();
+}
+
+#[test]
 fn core_desk_unknown_project_exit_1() {
     if skip_without_git() {
         return;
