@@ -225,6 +225,7 @@ mod tests {
                 pin_rev: None,
                 pin_state: PinState::MissingPinFile,
                 dirty: Some(false),
+                worktree_slots: None,
             }],
             progens: vec![],
         }

@@ -6,11 +6,11 @@ See `docs/agents/issue-tracker.md`.
 
 ## Maps
 
-- [[issues-60-post-v1-polish-map]] — Post-v1 polish (docs honesty, doctor split, find limit, status slots)
+_(none open)_
 
 ## Frontier (open, unblocked)
 
-- [[issues-65-status-worktree-slots]] — status registered worktree slots (`ready-for-agent`)
+_(empty)_
 
 ## Blocked
 
@@ -33,3 +33,4 @@ _(none remaining)_
 - [[issues-45-generators-map]] — Generators local template v1 (post-0.1.0)
 - [[issues-50-agent-packs-map]] — Agent packs local install/link/list (post-0.1.0)
 - [[issues-55-post-v1-hardening-map]] — Post-v1 hardening + agent prompt thin
+- [[issues-60-post-v1-polish-map]] — Post-v1 polish (docs honesty, doctor split, find limit, status slots)

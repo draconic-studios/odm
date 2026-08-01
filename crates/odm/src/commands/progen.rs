@@ -167,6 +167,7 @@ mod tests {
                 pin_rev: None,
                 pin_state: PinState::None,
                 dirty: None,
+                worktree_slots: None,
             }],
         };
         let dto = progen_list_from(&ws, &snap);

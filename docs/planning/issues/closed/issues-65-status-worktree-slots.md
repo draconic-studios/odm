@@ -2,7 +2,7 @@
 id: issues-65
 title: "status reports registered worktree slots per project"
 description: "odm status includes registered worktree slots for each Project (not orphans)."
-status: open
+status: closed
 issue-type: feature-request
 severity: medium
 tags:
@@ -66,12 +66,12 @@ None
 
 **Acceptance criteria:**
 
-- [ ] `odm status --json` project entries include `worktree_slots` array with name/path
-- [ ] Registered slot from worktree list appears; orphan-only dirs do **not** appear (unless also registered — they are not)
-- [ ] Empty / non-git project → `worktree_slots: []` (or equivalent empty)
-- [ ] Human output mentions slots when present
-- [ ] cli.md + worktrees.md updated
-- [ ] `cargo test` green
+- [x] `odm status --json` project entries include `worktree_slots` array with name/path
+- [x] Registered slot from worktree list appears; orphan-only dirs do **not** appear (unless also registered — they are not)
+- [x] Empty / non-git project → `worktree_slots: []` (or equivalent empty)
+- [x] Human output mentions slots when present
+- [x] cli.md + worktrees.md updated
+- [x] `cargo test` green
 
 **Out of scope:**
 
@@ -83,4 +83,8 @@ None
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met
+
+## Answer
+
+`build_status` soft-fills each Project’s `worktree_slots` via `worktree_list` (`WorktreeSlotInfo` name + relative path, already sorted). List errors → `[]` without failing status. Progens keep `worktree_slots: None` (omitted from JSON). Human adds `worktrees: a, b` only when non-empty. Docs: `cli.md` + `worktrees.md`. Tests cover registered slots, empty/non-git/list Err, progen omit, human noise rules.

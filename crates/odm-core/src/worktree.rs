@@ -19,7 +19,7 @@ pub struct WorktreeSlotOutcome {
 }
 
 /// One slot row for list.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub struct WorktreeSlotInfo {
     pub name: String,
     /// Relative to workspace root: `worktrees/<project>/<slot>`.

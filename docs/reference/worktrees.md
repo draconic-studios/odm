@@ -33,7 +33,7 @@ odm project worktree rm <project> <slot> [--force]
 - Slot only on a **Project** whose Primary checkout is a **git** repo. Non-git Project → hard error on `worktree add` / list / rm (exit `3` operation).
 - Slot name: non-empty name token (no path separators, no `.` / `..`); names only, not filesystem paths.
 - **Primary checkout is never a slot.** Omit `--wt` → Primary.
-- `project rm` does **not** delete `worktrees/<project>/` by default (same keep-tree spirit as Project trees). Orphan slot dirs are possible; `odm doctor` **warns** on configured-project slot dirs that are not registered git worktrees (`fixable: false` — does not delete on `--fix`). Cleanup remains manual or a later GC/prune concern. Core `status` has no orphan obligation in v1.
+- `project rm` does **not** delete `worktrees/<project>/` by default (same keep-tree spirit as Project trees). Orphan slot dirs are possible; `odm doctor` **warns** on configured-project slot dirs that are not registered git worktrees (`fixable: false` — does not delete on `--fix`). Cleanup remains manual or a later GC/prune concern. `odm status` lists **registered** slots only (same filter as `project worktree list`); orphans remain doctor-only.
 
 ## Deferred
 
@@ -42,7 +42,7 @@ odm project worktree rm <project> <slot> [--force]
 - GC / prune policy (including auto-delete of doctor-warned orphans)
 - Pin file interaction with slots (pin stays Primary-oriented unless later decided)
 - Multi-Project or Workspace-level slots
-- `status` obligations for orphans or dirty slots; doctor dirty-slot checks
+- `status` obligations for orphans or dirty slots (registered slots already in status); doctor dirty-slot checks
 - Global `--wt` deep behavior beyond path binding on `project git` / `run`
 
 ## Non-goals

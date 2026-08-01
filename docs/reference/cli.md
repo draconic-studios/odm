@@ -108,7 +108,7 @@ odm pin status [name…]
 odm status
 ```
 
-Workspace snapshot: configured Projects/Progens, on-disk presence, git/pin drift summary, dirty hints. Does not fetch. `--json` for agents.
+Workspace snapshot: configured Projects/Progens, on-disk presence, git/pin drift summary, dirty hints, and **registered** worktree slots per Project. Does not fetch. `--json` for agents: each project includes `worktree_slots: [ { "name", "path" } ]` (`path` is `worktrees/<project>/<slot>`; empty array when none / non-git / list soft-fails). Progens omit `worktree_slots`. Human output lists slot names only when non-empty. Orphan dirs are doctor-only — see `worktrees.md`.
 
 ---
 
