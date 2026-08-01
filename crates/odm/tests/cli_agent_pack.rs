@@ -360,3 +360,95 @@ fn agent_start_still_stub() {
         .code(1)
         .stderr(predicate::str::contains("not implemented"));
 }
+
+#[test]
+fn doctor_pack_missing_after_deleted_dest() {
+    let (_dir, root) = setup_pack_ws();
+    let root_s = root.to_str().unwrap();
+    let home = root.join("agent-home");
+    let home_s = home.to_str().unwrap();
+    let dest = home.join("core-desk");
+    let registry = root.join(".odm/agent-packs.json");
+
+    odm()
+        .args([
+            "--root",
+            root_s,
+            "agent",
+            "pack",
+            "install",
+            "packs/core-desk",
+            "--home",
+            home_s,
+        ])
+        .assert()
+        .success();
+    assert!(dest.is_dir());
+
+    let doc = json_stdout(odm().args(["--root", root_s, "--json", "doctor"]));
+    assert_eq!(doc["ok"].as_bool(), Some(true));
+    let checks = doc["checks"].as_array().expect("checks");
+    assert!(
+        checks
+            .iter()
+            .all(|c| c["id"] != "pack_missing:core-desk"),
+        "present pack must not pack_missing: {:?}",
+        checks
+            .iter()
+            .map(|c| c["id"].as_str())
+            .collect::<Vec<_>>()
+    );
+
+    fs::remove_dir_all(&dest).unwrap();
+    assert!(!dest.exists());
+    let registry_before = fs::read(&registry).expect("registry after install");
+
+    let doc = json_stdout(odm().args(["--root", root_s, "--json", "doctor"]));
+    assert_eq!(doc["ok"].as_bool(), Some(true));
+    let checks = doc["checks"].as_array().expect("checks");
+    let missing = checks
+        .iter()
+        .find(|c| c["id"] == "pack_missing:core-desk")
+        .expect("pack_missing:core-desk after deleted dest");
+    assert_eq!(missing["status"], "warn");
+    assert_eq!(missing["fixable"].as_bool(), Some(false));
+
+    odm()
+        .args(["--root", root_s, "doctor", "--fix"])
+        .assert()
+        .success();
+
+    let doc = json_stdout(odm().args(["--root", root_s, "--json", "doctor"]));
+    assert_eq!(doc["ok"].as_bool(), Some(true));
+    let checks = doc["checks"].as_array().expect("checks");
+    let missing = checks
+        .iter()
+        .find(|c| c["id"] == "pack_missing:core-desk")
+        .expect("pack_missing still present after --fix");
+    assert_eq!(missing["status"], "warn");
+    assert_eq!(missing["fixable"].as_bool(), Some(false));
+
+    let registry_after = fs::read(&registry).expect("registry after --fix");
+    assert_eq!(
+        registry_before, registry_after,
+        "doctor --fix must not rewrite agent-packs registry"
+    );
+
+    odm()
+        .args(["--root", root_s, "agent", "pack", "rm", "core-desk"])
+        .assert()
+        .success();
+
+    let doc = json_stdout(odm().args(["--root", root_s, "--json", "doctor"]));
+    let checks = doc["checks"].as_array().expect("checks");
+    assert!(
+        checks
+            .iter()
+            .all(|c| c["id"] != "pack_missing:core-desk"),
+        "after pack rm, no pack_missing:core-desk: {:?}",
+        checks
+            .iter()
+            .map(|c| c["id"].as_str())
+            .collect::<Vec<_>>()
+    );
+}

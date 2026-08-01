@@ -37,10 +37,11 @@ After pack lifecycle map [[issues-82-post-v1-pack-lifecycle-hardening-map]] clos
 - Child tickets: [[issues-90-status-agent-packs]], [[issues-91-doctor-pack-missing-cli]], [[issues-92-status-packs-docs-honesty]], [[issues-93-core-desk-status-packs-dogfood]].
 - Prefer order: 90 and 91 unblocked in parallel; 92 blocked by 90; 93 blocked by 90+91.
 - **90 closed:** `StatusSnapshot.agent_packs` always present; each row name/source/path/mode/missing via `pack_list` + `symlink_metadata` (doctor-aligned); soft-fail `[]`; human `Agent packs:` section; packs-only not swallowed.
+- **91 closed:** bin integration `doctor_pack_missing_after_deleted_dest` in `cli_agent_pack.rs` — install→no pack_missing→delete dest→`pack_missing:core-desk` warn fixable false; `--fix` leaves registry; pack rm clears.
 
 ## Not yet specified
 
-- Docs honesty wording (92); core-desk dogfood steps (93); doctor pack_missing CLI integration (91).
+- Docs honesty wording (92); core-desk dogfood steps (93).
 
 ## Out of scope
 

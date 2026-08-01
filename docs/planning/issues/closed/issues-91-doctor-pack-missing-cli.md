@@ -2,7 +2,7 @@
 id: issues-91
 title: "CLI integration: doctor pack_missing warn"
 description: "Bin-level test: registry pack with deleted dest → odm doctor --json includes pack_missing warn."
-status: open
+status: closed
 issue-type: feature-request
 severity: medium
 tags:
@@ -62,9 +62,9 @@ None
 
 **Acceptance criteria:**
 
-- [ ] Integration test covers present → no pack_missing; deleted dest → pack_missing warn
-- [ ] Asserts fixable false / warn; `--fix` does not remove registry entry or clear warn
-- [ ] No drive-by refactors; `cargo test` green
+- [x] Integration test covers present → no pack_missing; deleted dest → pack_missing warn
+- [x] Asserts fixable false / warn; `--fix` does not remove registry entry or clear warn
+- [x] No drive-by refactors; `cargo test` green
 
 **Out of scope:**
 
@@ -74,4 +74,8 @@ None
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met
+
+## Answer
+
+Added `doctor_pack_missing_after_deleted_dest` in `crates/odm/tests/cli_agent_pack.rs`: install core-desk → doctor JSON has no `pack_missing:core-desk` → delete dest → warn + `fixable: false` → `doctor --fix` leaves warn and registry bytes unchanged → `agent pack rm` clears the check. No product code change (CLI wiring already correct).

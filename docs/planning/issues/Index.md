@@ -10,12 +10,12 @@ See `docs/agents/issue-tracker.md`.
 
 ## Frontier (open, unblocked)
 
-- [[issues-91-doctor-pack-missing-cli]] — CLI integration: doctor pack_missing warn
 - [[issues-92-status-packs-docs-honesty]] — status packs docs honesty (unblocked after 90)
+- [[issues-93-core-desk-status-packs-dogfood]] — core-desk status packs + pack_missing dogfood (unblocked after 90+91)
 
 ## Blocked
 
-- [[issues-93-core-desk-status-packs-dogfood]] — blocked by 91
+_(none)_
 
 ## Architecture deepen (post-0.1.0)
 
