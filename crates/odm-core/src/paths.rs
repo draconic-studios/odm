@@ -70,6 +70,31 @@ pub fn abs_checkout(root: &Path, rel: &str) -> Result<PathBuf, OdmError> {
     resolve_under_root(root, rel)
 }
 
+/// Single path component used as a name (entity, worktree slot, …).
+///
+/// Non-empty after trim; no `/` `\` NUL; not `.` or `..`; no Windows drive prefix.
+/// Returns the trimmed token, or a short reason string on failure.
+pub fn parse_path_token(name: &str) -> Result<&str, &'static str> {
+    let trimmed = name.trim();
+    if trimmed.is_empty() {
+        return Err("empty");
+    }
+    if trimmed == "." || trimmed == ".." {
+        return Err("dot");
+    }
+    if trimmed.contains('/') || trimmed.contains('\\') || trimmed.contains('\0') {
+        return Err("separator");
+    }
+    if trimmed.starts_with('/') {
+        return Err("absolute");
+    }
+    let bytes = trimmed.as_bytes();
+    if bytes.len() >= 2 && bytes[0].is_ascii_alphabetic() && bytes[1] == b':' {
+        return Err("drive");
+    }
+    Ok(trimmed)
+}
+
 /// Worktree slot working tree: `<root>/worktrees/<project>/<slot>`.
 pub fn worktree_slot_path(root: &Path, project_name: &str, slot_name: &str) -> PathBuf {
     root.join("worktrees").join(project_name).join(slot_name)
@@ -142,5 +167,14 @@ mod tests {
             agent_packs_path(root),
             PathBuf::from("/ws/.odm/agent-packs.json")
         );
+    }
+
+    #[test]
+    fn parse_path_token_rules() {
+        assert_eq!(parse_path_token("  ok  ").unwrap(), "ok");
+        assert!(parse_path_token("").is_err());
+        assert!(parse_path_token("a/b").is_err());
+        assert!(parse_path_token("..").is_err());
+        assert!(parse_path_token(".").is_err());
     }
 }

@@ -2,7 +2,7 @@
 id: issues-130
 title: "Entity names unique and path-safe"
 description: "Projects and Progens may share names (pin/managed collision); names may contain / breaking worktree paths."
-status: reviewing
+status: closed
 issue-type: bug
 severity: medium
 tags:
@@ -57,13 +57,13 @@ None
 
 **Acceptance criteria:**
 
-- [ ] Cross-map duplicate names rejected
-- [ ] Unsafe entity names rejected at load and add
-- [ ] Tests cover both
-- [ ] `cargo test -p odm-core` green
+- [x] Cross-map duplicate names rejected
+- [x] Unsafe entity names rejected at load and add
+- [x] Tests cover both
+- [x] `cargo test -p odm-core` green
 
 **Out of scope:** renaming existing bad configs automatically; slot rename.
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met

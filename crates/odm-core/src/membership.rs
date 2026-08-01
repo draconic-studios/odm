@@ -7,7 +7,7 @@ use odm_git::Git;
 
 use crate::checkout::{materialize, ManagedEntity, MaterializeOutcome};
 use crate::config::{
-    save_config, ProjectEntry, ProgenEntry, Workspace, WorkspaceConfig,
+    require_entity_name, save_config, ProjectEntry, ProgenEntry, Workspace, WorkspaceConfig,
 };
 use crate::error::OdmError;
 use crate::gitignore::apply_managed_gitignore;
@@ -80,15 +80,30 @@ pub fn membership_add<R: odm_git::CommandRunner>(
 ) -> Result<Option<MaterializeOutcome>, OdmError> {
     let kind = entry.kind();
     let label = kind.label();
-    if name.trim().is_empty() {
-        return Err(OdmError::usage(format!("{label} name must not be empty")));
-    }
+    // Config load uses workspace errors; add is a CLI mutation → usage.
+    require_entity_name(label, name).map_err(|e| match e {
+        OdmError::Workspace(m) => OdmError::usage(m),
+        other => other,
+    })?;
     let already = match kind {
         MembershipKind::Project => config.projects.contains_key(name),
         MembershipKind::Progen => config.progens.contains_key(name),
     };
     if already {
         return Err(OdmError::usage(format!("{label} '{name}' already exists")));
+    }
+    let cross = match kind {
+        MembershipKind::Project => config.progens.contains_key(name),
+        MembershipKind::Progen => config.projects.contains_key(name),
+    };
+    if cross {
+        let other = match kind {
+            MembershipKind::Project => "progen",
+            MembershipKind::Progen => "project",
+        };
+        return Err(OdmError::usage(format!(
+            "name '{name}' is already used as a {other}"
+        )));
     }
     if entry.path().trim().is_empty() {
         return Err(OdmError::usage(format!("{label} path must not be empty")));
@@ -715,6 +730,96 @@ mod tests {
         .unwrap_err();
         assert!(err.to_string().contains("relative"), "{err}");
         assert!(!cfg.projects.contains_key("abs"));
+    }
+
+    #[test]
+    fn membership_add_rejects_cross_map_name() {
+        let dir = tempdir().unwrap();
+        let res = init_workspace(InitOptions {
+            path: dir.path().to_path_buf(),
+            no_git: true,
+            name: None,
+        })
+        .unwrap();
+        let root = res.root;
+        let g = Git::new();
+        let mut cfg = WorkspaceConfig::default();
+        project_add(
+            &g,
+            &root,
+            &mut cfg,
+            "shared",
+            ProjectEntry {
+                path: "projects/shared".into(),
+                url: None,
+                branch: None,
+                type_: None,
+            },
+            true,
+        )
+        .unwrap();
+        let err = progen_add(
+            &g,
+            &root,
+            &mut cfg,
+            "shared",
+            ProgenEntry {
+                path: "progens/shared".into(),
+                url: None,
+                branch: None,
+            },
+            true,
+        )
+        .unwrap_err();
+        assert!(err.to_string().contains("already used as a project"), "{err}");
+        assert!(!cfg.progens.contains_key("shared"));
+    }
+
+    #[test]
+    fn membership_add_rejects_unsafe_entity_name() {
+        let dir = tempdir().unwrap();
+        let res = init_workspace(InitOptions {
+            path: dir.path().to_path_buf(),
+            no_git: true,
+            name: None,
+        })
+        .unwrap();
+        let root = res.root;
+        let g = Git::new();
+        let mut cfg = WorkspaceConfig::default();
+        for bad in ["a/b", ".."] {
+            let err = project_add(
+                &g,
+                &root,
+                &mut cfg,
+                bad,
+                ProjectEntry {
+                    path: "p".into(),
+                    url: None,
+                    branch: None,
+                    type_: None,
+                },
+                true,
+            )
+            .unwrap_err();
+            assert!(err.to_string().contains("invalid project name"), "{err}");
+            assert!(!cfg.projects.contains_key(bad));
+        }
+        project_add(
+            &g,
+            &root,
+            &mut cfg,
+            "good-name",
+            ProjectEntry {
+                path: "projects/good".into(),
+                url: None,
+                branch: None,
+                type_: None,
+            },
+            true,
+        )
+        .unwrap();
+        assert!(cfg.projects.contains_key("good-name"));
     }
 
     // --- project_git --wt ---

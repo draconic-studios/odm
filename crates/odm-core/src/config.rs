@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::OdmError;
 use crate::io::atomic_write;
-use crate::paths::resolve_under_root;
+use crate::paths::{parse_path_token, resolve_under_root};
 
 pub use crate::paths::{config_path, odm_dir, pin_path};
 
@@ -178,12 +178,17 @@ pub fn validate_and_load_bundles(
 
 fn validate_entity_names_and_paths(config: &WorkspaceConfig) -> Result<(), OdmError> {
     for (name, entry) in &config.projects {
-        require_non_empty_name("project", name)?;
+        require_entity_name("project", name)?;
         validate_rel_path("project", name, &entry.path)?;
     }
     for (name, entry) in &config.progens {
-        require_non_empty_name("progen", name)?;
+        require_entity_name("progen", name)?;
         validate_rel_path("progen", name, &entry.path)?;
+        if config.projects.contains_key(name) {
+            return Err(OdmError::workspace(format!(
+                "name '{name}' is used for both a project and a progen"
+            )));
+        }
     }
     for name in config.progen_groups.keys() {
         require_non_empty_name("progen_group", name)?;
@@ -202,6 +207,26 @@ fn require_non_empty_name(kind: &str, name: &str) -> Result<(), OdmError> {
         return Err(OdmError::workspace(format!("{kind} name must not be empty")));
     }
     Ok(())
+}
+
+/// Project/Progen map key: path-safe token (same rules as worktree slot names).
+pub fn require_entity_name(kind: &str, name: &str) -> Result<(), OdmError> {
+    match parse_path_token(name) {
+        Ok(_) => Ok(()),
+        Err("empty") => Err(OdmError::workspace(format!("{kind} name must not be empty"))),
+        Err("dot") => Err(OdmError::workspace(format!(
+            "invalid {kind} name '{}'",
+            name.trim()
+        ))),
+        Err("separator") => Err(OdmError::workspace(format!(
+            "invalid {kind} name '{}': path separators not allowed",
+            name.trim()
+        ))),
+        Err(_) => Err(OdmError::workspace(format!(
+            "invalid {kind} name '{}': must be a simple name",
+            name.trim()
+        ))),
+    }
 }
 
 fn validate_rel_path(kind: &str, name: &str, path: &str) -> Result<(), OdmError> {
@@ -670,5 +695,48 @@ progen_groups:
         let yaml = "projects:\n  p:\n    path: x\n    type: lib\n";
         let c = parse_config_yaml(yaml).unwrap();
         assert_eq!(c.projects["p"].type_.as_deref(), Some("lib"));
+    }
+
+    #[test]
+    fn cross_map_duplicate_name_rejected() {
+        let yaml = r#"
+projects:
+  shared:
+    path: projects/shared
+progens:
+  shared:
+    path: progens/shared
+"#;
+        let c = parse_config_yaml(yaml).unwrap();
+        let dir = tempdir().unwrap();
+        let err = validate_and_load_bundles(dir.path(), c).unwrap_err();
+        assert!(err.to_string().contains("both a project and a progen"), "{err}");
+        assert!(matches!(err, OdmError::Workspace(_)));
+    }
+
+    #[test]
+    fn entity_name_path_unsafe_rejected() {
+        let dir = tempdir().unwrap();
+        let bad_names: &[&str] = &["a/b", "..", ".", r"a\b", "a\0b"];
+        for bad in bad_names {
+            let mut c = WorkspaceConfig::default();
+            c.projects.insert(
+                (*bad).into(),
+                ProjectEntry {
+                    path: "p".into(),
+                    url: None,
+                    branch: None,
+                    type_: None,
+                },
+            );
+            let err = validate_and_load_bundles(dir.path(), c).unwrap_err();
+            assert!(
+                err.to_string().contains("invalid project name"),
+                "bad={bad:?} err={err}"
+            );
+        }
+        let yaml = "projects:\n  good-name:\n    path: p\nprogens:\n  other:\n    path: q\n";
+        let c = parse_config_yaml(yaml).unwrap();
+        validate_and_load_bundles(dir.path(), c).unwrap();
     }
 }

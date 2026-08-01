@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Entity name uniqueness / path safety** — Project and Progen names must be unique across both maps and path-safe tokens (no `/` `\` `.` `..`); enforced on config load and membership add.
 - **`odm run` missing cwd paths** — known project path or `--wt` slot missing on disk now exits `4` (`not_found`); unknown project names still exit `1` (`usage`).
 - **Docs honesty** — install leads with build-from-source (Releases = when published); `AGENTS.md` allows Pages-only Actions; `progen.md` / `cli.md` federation = `find` only; README docs links; guide-actions HTML paren.
 - **Progen wikilinks in code** — fenced ```/~~~ blocks and inline `` `code` `` no longer contribute graph edges; invalid YAML frontmatter hard-fails reindex with the note path.

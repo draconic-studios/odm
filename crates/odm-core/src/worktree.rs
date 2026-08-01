@@ -75,33 +75,23 @@ pub struct WorktreePruneAllOutcome {
 ///
 /// Rejects empty, `.` / `..`, path separators, NUL, and absolute-looking names.
 pub fn validate_slot_name(name: &str) -> Result<String, OdmError> {
-    let trimmed = name.trim();
-    if trimmed.is_empty() {
-        return Err(OdmError::usage("worktree slot name must not be empty"));
+    use crate::paths::parse_path_token;
+    match parse_path_token(name) {
+        Ok(t) => Ok(t.to_string()),
+        Err("empty") => Err(OdmError::usage("worktree slot name must not be empty")),
+        Err("dot") => Err(OdmError::usage(format!(
+            "invalid worktree slot name '{}'",
+            name.trim()
+        ))),
+        Err("separator") => Err(OdmError::usage(format!(
+            "invalid worktree slot name '{}': path separators not allowed",
+            name.trim()
+        ))),
+        Err(_) => Err(OdmError::usage(format!(
+            "invalid worktree slot name '{}': must be a simple name",
+            name.trim()
+        ))),
     }
-    if trimmed == "." || trimmed == ".." {
-        return Err(OdmError::usage(format!(
-            "invalid worktree slot name '{trimmed}'"
-        )));
-    }
-    if trimmed.contains('/') || trimmed.contains('\\') || trimmed.contains('\0') {
-        return Err(OdmError::usage(format!(
-            "invalid worktree slot name '{trimmed}': path separators not allowed"
-        )));
-    }
-    // Belt-and-suspenders: absolute / Windows drive even without separators.
-    if trimmed.starts_with('/') {
-        return Err(OdmError::usage(format!(
-            "invalid worktree slot name '{trimmed}': must be a simple name"
-        )));
-    }
-    let bytes = trimmed.as_bytes();
-    if bytes.len() >= 2 && bytes[0].is_ascii_alphabetic() && bytes[1] == b':' {
-        return Err(OdmError::usage(format!(
-            "invalid worktree slot name '{trimmed}': must be a simple name"
-        )));
-    }
-    Ok(trimmed.to_string())
 }
 
 /// List git worktree slots under `worktrees/<project>/` (sorted by name).

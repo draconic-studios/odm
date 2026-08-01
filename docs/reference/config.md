@@ -24,7 +24,7 @@ Missing Action or Generator maps means none are defined (not an error). A declar
 
 \*A useful Workspace usually has at least one Project or Progen; empty config is valid for bootstrap.
 
-All entity collections are **maps keyed by name**, not arrays. Keys use **snake_case**.
+All entity collections are **maps keyed by name**, not arrays. Keys use **snake_case**. Project and Progen names are unique across both maps and must be path tokens (no `/`, `\`, `.`, or `..`) — same rules as worktree slot names.
 
 No top-level: layout templates, worktree slots, agent packs, env profiles, submodule fields, inline Action/Generator bodies.
 
