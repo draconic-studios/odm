@@ -2,7 +2,7 @@
 id: issues-101
 title: "CLI odm generate --dry-run"
 description: "Wire --dry-run on generate run; human would-generate line; JSON dry_run field."
-status: open
+status: closed
 issue-type: feature-request
 severity: medium
 tags:
@@ -70,11 +70,11 @@ See Agent Brief.
 
 **Acceptance criteria:**
 
-- [ ] `odm generate <name> --dest <p> --dry-run` exits 0, writes nothing, prints would-generate / JSON `dry_run: true`
-- [ ] Real run JSON includes `dry_run: false`; human still `generated …`
-- [ ] Force/non-empty/error exit codes unchanged vs non-dry-run
-- [ ] Integration tests cover dry-run success + no-write + real-run regression
-- [ ] `cargo test` green; clippy clean; LOC limits held
+- [x] `odm generate <name> --dest <p> --dry-run` exits 0, writes nothing, prints would-generate / JSON `dry_run: true`
+- [x] Real run JSON includes `dry_run: false`; human still `generated …`
+- [x] Force/non-empty/error exit codes unchanged vs non-dry-run
+- [x] Integration tests cover dry-run success + no-write + real-run regression
+- [x] `cargo test` green; clippy clean; LOC limits held
 
 **Out of scope:**
 
@@ -84,4 +84,8 @@ See Agent Brief.
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met
+
+## Answer
+
+Wired `--dry-run` on `Commands::Generate` (`requires = "name"`). Dispatch passes `dry_run` into `generate_local`. `GenerateRunDto` always includes `dry_run: bool`. Human: `would generate …` vs `generated …`. Integration tests: dry-run JSON/no-write, human would-generate, nonempty dest exit 3, url-only+dry-run exit 1; real-run asserts `dry_run: false`. Full `cargo test` green; clippy clean. Docs/core-desk left for 102–103.

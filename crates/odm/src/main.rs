@@ -415,7 +415,12 @@ fn run(cli: Cli, out: &GlobalOut) -> Result<i32, OdmError> {
                 }
             }
         }
-        Commands::Generate { name, dest, force } => {
+        Commands::Generate {
+            name,
+            dest,
+            force,
+            dry_run,
+        } => {
             let root = discover_root(cli.root.as_deref(), &std::env::current_dir()?)?;
             let ws = load_workspace(&root)?;
             match name {
@@ -433,17 +438,18 @@ fn run(cli: Cli, out: &GlobalOut) -> Result<i32, OdmError> {
                         OdmError::usage("generate requires --dest <path> when a name is given")
                     })?;
                     let dest_rel = path_buf_to_rel(&dest)?;
-                    let outcome = generate_local(&ws, &name, &dest_rel, force, false)?;
+                    let outcome = generate_local(&ws, &name, &dest_rel, force, dry_run)?;
                     if out.json {
                         print_json(&GenerateRunDto {
                             generator: name,
                             dest: dest_rel,
                             copied: outcome.copied,
+                            dry_run,
                         })?;
                     } else {
                         print!(
                             "{}",
-                            format_generate_run_human(&name, &dest_rel, outcome.copied)
+                            format_generate_run_human(&name, &dest_rel, outcome.copied, dry_run)
                         );
                     }
                     Ok(0)

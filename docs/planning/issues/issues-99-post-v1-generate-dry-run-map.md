@@ -42,6 +42,7 @@ After status orphans map [[issues-94-post-v1-status-orphans-map]] closed, pull t
 - Child tickets: [[issues-100-generate-dry-run-core]], [[issues-101-generate-dry-run-cli]], [[issues-102-generate-dry-run-docs-honesty]], [[issues-103-core-desk-generate-dry-run-dogfood]].
 - Prefer order: 100 unblocked first; 101 blocked by 100; 102 blocked by 100+101; 103 blocked by 100+101.
 - **100 closed:** `generate_local(..., force, dry_run)`; dry-run validates + `count_tree` (files/symlinks), zero writes even with force; real path unchanged when `dry_run=false`; CLI still passes `false` until 101.
+- **101 closed:** CLI `--dry-run` on generate-run; `GenerateRunDto.dry_run`; human `would generate` / `generated`; integration coverage in `cli_generate.rs`.
 
 ## Not yet specified
 

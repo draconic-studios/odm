@@ -45,9 +45,13 @@ pub fn format_generator_list_human(dto: &GeneratorListDto) -> String {
     out
 }
 
-/// Human success one-liner after materialize.
-pub fn format_generate_run_human(name: &str, dest: &str, copied: u32) -> String {
-    format!("generated {name} -> {dest} ({copied} files)\n")
+/// Human success one-liner after materialize (or dry-run preview).
+pub fn format_generate_run_human(name: &str, dest: &str, copied: u32, dry_run: bool) -> String {
+    if dry_run {
+        format!("would generate {name} -> {dest} ({copied} files)\n")
+    } else {
+        format!("generated {name} -> {dest} ({copied} files)\n")
+    }
 }
 
 /// `odm generate <name> --json` envelope.
@@ -56,6 +60,7 @@ pub struct GenerateRunDto {
     pub generator: String,
     pub dest: String,
     pub copied: u32,
+    pub dry_run: bool,
 }
 
 #[cfg(test)]
@@ -116,18 +121,41 @@ mod tests {
             generator: "pkg".into(),
             dest: "out/pkg".into(),
             copied: 3,
+            dry_run: false,
         };
         let v = serde_json::to_value(&dto).unwrap();
         assert_eq!(v["generator"], "pkg");
         assert_eq!(v["dest"], "out/pkg");
         assert_eq!(v["copied"], 3);
+        assert_eq!(v["dry_run"], false);
+    }
+
+    #[test]
+    fn generate_run_dto_dry_run_true() {
+        let dto = GenerateRunDto {
+            generator: "pkg".into(),
+            dest: "out/pkg".into(),
+            copied: 2,
+            dry_run: true,
+        };
+        let v = serde_json::to_value(&dto).unwrap();
+        assert_eq!(v["dry_run"], true);
+        assert_eq!(v["copied"], 2);
     }
 
     #[test]
     fn format_generate_run_human_line() {
         assert_eq!(
-            format_generate_run_human("pkg", "out/pkg", 2),
+            format_generate_run_human("pkg", "out/pkg", 2, false),
             "generated pkg -> out/pkg (2 files)\n"
+        );
+    }
+
+    #[test]
+    fn format_generate_run_human_dry_run_line() {
+        assert_eq!(
+            format_generate_run_human("pkg", "out/pkg", 2, true),
+            "would generate pkg -> out/pkg (2 files)\n"
         );
     }
 }

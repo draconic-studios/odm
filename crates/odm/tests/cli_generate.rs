@@ -107,10 +107,110 @@ fn generate_materializes_nested_template() {
     assert_eq!(v["generator"], "hello");
     assert_eq!(v["dest"], "out/json");
     assert_eq!(v["copied"].as_u64(), Some(1));
+    assert_eq!(v["dry_run"], false);
     assert_file_eq(
         &root.join("out/json/nested/hello.txt"),
         "hello-from-template\n",
     );
+}
+
+#[test]
+fn generate_dry_run_json_no_write() {
+    let (_dir, root) = setup_gen_ws();
+    let root_s = root.to_str().unwrap();
+    let dest = root.join("out/dry");
+
+    let v = json_stdout(odm().args([
+        "--root",
+        root_s,
+        "--json",
+        "generate",
+        "hello",
+        "--dest",
+        "out/dry",
+        "--dry-run",
+    ]));
+    assert_eq!(v["generator"], "hello");
+    assert_eq!(v["dest"], "out/dry");
+    assert_eq!(v["dry_run"], true);
+    assert!(v["copied"].as_u64().unwrap() > 0);
+    assert!(!dest.exists(), "dry-run must not create dest");
+}
+
+#[test]
+fn generate_dry_run_human_would_generate() {
+    let (_dir, root) = setup_gen_ws();
+    let root_s = root.to_str().unwrap();
+
+    odm()
+        .args([
+            "--root",
+            root_s,
+            "generate",
+            "hello",
+            "--dest",
+            "out/dry-h",
+            "--dry-run",
+        ])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("would generate hello -> out/dry-h"));
+
+    assert!(!root.join("out/dry-h").exists());
+}
+
+#[test]
+fn generate_dry_run_nonempty_dest_requires_force() {
+    let (_dir, root) = setup_gen_ws();
+    let root_s = root.to_str().unwrap();
+
+    odm()
+        .args([
+            "--root",
+            root_s,
+            "generate",
+            "hello",
+            "--dest",
+            "out/x",
+        ])
+        .assert()
+        .success();
+
+    odm()
+        .args([
+            "--root",
+            root_s,
+            "generate",
+            "hello",
+            "--dest",
+            "out/x",
+            "--dry-run",
+        ])
+        .assert()
+        .failure()
+        .code(3)
+        .stderr(predicate::str::contains("not empty"))
+        .stderr(predicate::str::contains("force"));
+}
+
+#[test]
+fn generate_url_only_dry_run_exit_1() {
+    let (_dir, root) = setup_gen_ws();
+    odm()
+        .args([
+            "--root",
+            root.to_str().unwrap(),
+            "generate",
+            "remote",
+            "--dest",
+            "out/remote",
+            "--dry-run",
+        ])
+        .assert()
+        .failure()
+        .code(1)
+        .stderr(predicate::str::contains("no local template"))
+        .stderr(predicate::str::contains("remote"));
 }
 
 #[test]

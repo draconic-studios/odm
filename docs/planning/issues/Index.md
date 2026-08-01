@@ -10,12 +10,12 @@ See `docs/agents/issue-tracker.md`.
 
 ## Frontier (open, unblocked)
 
-- [[issues-101-generate-dry-run-cli]] — `ready-for-agent` — CLI `--dry-run` flag + human/JSON
+- [[issues-102-generate-dry-run-docs-honesty]] — `ready-for-agent` — docs/CHANGELOG honesty for generate dry-run
+- [[issues-103-core-desk-generate-dry-run-dogfood]] — `ready-for-agent` — core-desk dry-run dogfood gate
 
 ## Blocked
 
-- [[issues-102-generate-dry-run-docs-honesty]] — blocked by 101
-- [[issues-103-core-desk-generate-dry-run-dogfood]] — blocked by 101
+_(none)_
 
 ## Architecture deepen (post-0.1.0)
 

@@ -117,6 +117,9 @@ pub enum Commands {
         /// Overwrite files when destination is non-empty.
         #[arg(long, requires = "name")]
         force: bool,
+        /// Preview without writing files.
+        #[arg(long, requires = "name")]
+        dry_run: bool,
     },
 
     /// Agent pack / session helpers.
