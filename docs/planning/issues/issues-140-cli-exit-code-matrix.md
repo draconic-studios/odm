@@ -2,7 +2,7 @@
 id: issues-140
 title: "CLI exit-code matrix integration tests"
 description: "Table-driven bin tests locking exit codes 1–4 and JSON error envelope across primary failure modes."
-status: open
+status: reviewing
 issue-type: feature-request
 severity: high
 tags:
