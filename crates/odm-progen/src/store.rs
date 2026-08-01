@@ -10,7 +10,7 @@ use crate::index::{
     self, get_indexed, load_all_notes, outgoing_links, resolve_link_target, search_fts, IndexedNote,
     IndexStats,
 };
-use crate::scope::{resolve_read_scope, resolve_write_progen, ScopedProgen};
+use crate::scope::{resolve_read_scope, resolve_single_progen, resolve_write_progen, ScopedProgen};
 
 #[derive(Debug, Clone, Serialize)]
 pub struct FindHit {
@@ -215,7 +215,7 @@ pub fn find_notes(
 
 /// List notes in one Progen (single-root).
 pub fn list_notes(ws: &Workspace, progen: Option<&str>) -> Result<Vec<LsHit>, OdmError> {
-    let sp = resolve_write_progen(ws, progen)?;
+    let sp = resolve_single_progen(ws, progen)?;
     ProgenStore::open(ws, &sp)?.list()
 }
 
@@ -241,7 +241,7 @@ pub fn context_notes(
 
 /// Open single-root store for tree/backlinks/get-style CLI ops.
 pub fn open_single(ws: &Workspace, progen: Option<&str>) -> Result<ProgenStore, OdmError> {
-    let sp = resolve_write_progen(ws, progen)?;
+    let sp = resolve_single_progen(ws, progen)?;
     ProgenStore::open(ws, &sp)
 }
 
@@ -300,11 +300,18 @@ fn resolve_id(
 ) -> Result<(ScopedProgen, String), OdmError> {
     if let Some((name, id)) = id_arg.split_once(':') {
         if ws.config.progens.contains_key(name) {
-            let sp = resolve_write_progen(ws, Some(name))?;
+            if let Some(flag) = progen {
+                if flag != name {
+                    return Err(OdmError::usage(format!(
+                        "id prefix progen '{name}' conflicts with --progen '{flag}'"
+                    )));
+                }
+            }
+            let sp = resolve_single_progen(ws, Some(name))?;
             return Ok((sp, id.to_string()));
         }
     }
-    let sp = resolve_write_progen(ws, progen)?;
+    let sp = resolve_single_progen(ws, progen)?;
     Ok((sp, id_arg.to_string()))
 }
 
@@ -485,6 +492,69 @@ mod tests {
         assert!(one_progen_flag(&[], "x").unwrap().is_none());
         assert_eq!(one_progen_flag(&["a".into()], "x").unwrap(), Some("a"));
         assert!(one_progen_flag(&["a".into(), "b".into()], "too many").is_err());
+    }
+
+    fn ws_two(root: &std::path::Path) -> Workspace {
+        for rel in ["va", "vb"] {
+            ensure_vault(&root.join(rel)).unwrap();
+        }
+        let mut progens = BTreeMap::new();
+        progens.insert(
+            "a".into(),
+            ProgenEntry {
+                path: "va".into(),
+                url: None,
+                branch: None,
+            },
+        );
+        progens.insert(
+            "b".into(),
+            ProgenEntry {
+                path: "vb".into(),
+                url: None,
+                branch: None,
+            },
+        );
+        fs::create_dir_all(root.join(".odm")).unwrap();
+        Workspace {
+            root: root.to_path_buf(),
+            config: WorkspaceConfig {
+                progens,
+                ..Default::default()
+            },
+            actions: BTreeMap::new(),
+            generators: BTreeMap::new(),
+        }
+    }
+
+    #[test]
+    fn resolve_id_name_id_conflicts_with_progen_flag() {
+        let d = tempdir().unwrap();
+        let ws = ws_two(d.path());
+        let err = resolve_id(&ws, "a:note1", Some("b")).unwrap_err();
+        let msg = err.to_string();
+        assert!(msg.contains("conflicts"), "{msg}");
+        assert!(msg.contains("'a'"), "{msg}");
+        assert!(msg.contains("'b'"), "{msg}");
+    }
+
+    #[test]
+    fn resolve_id_name_id_matches_progen_flag() {
+        let d = tempdir().unwrap();
+        let ws = ws_two(d.path());
+        let (sp, id) = resolve_id(&ws, "a:note1", Some("a")).unwrap();
+        assert_eq!(sp.name, "a");
+        assert_eq!(id, "note1");
+    }
+
+    #[test]
+    fn multi_progen_read_message_has_no_write() {
+        let d = tempdir().unwrap();
+        let ws = ws_two(d.path());
+        let err = list_notes(&ws, None).unwrap_err();
+        let msg = err.to_string();
+        assert!(msg.contains("requires --progen"), "{msg}");
+        assert!(!msg.to_lowercase().contains("write"), "{msg}");
     }
 
     #[test]

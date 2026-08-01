@@ -41,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **CLI JSON/UX hardening** — single-project `worktree prune --json` includes `skipped_nonempty` and prune rows are `{name,path}` only (no `dirty`); multi-progen single-root errors omit “write”; `name:id` vs `--progen` mismatch → usage exit `1`; conflicting repeated `--wt` values → usage exit `1`.
 - **`odm generate --force` file↔dir type conflicts** — per-path remove then write when dest type disagrees with the template (dir where file needed, or file where dir needed), matching symlink overwrite behavior; unit tests cover both directions.
 - **`odm run --json` stdout/stderr** — envelope always includes captured `stdout` and `stderr` strings (concatenated across tasks in order) so agents can debug failures without a second non-JSON run; capture still keeps process stdout clean JSON.
 - **Entity name uniqueness / path safety** — Project and Progen names must be unique across both maps and path-safe tokens (no `/` `\` `.` `..`); enforced on config load and membership add.

@@ -2,7 +2,7 @@
 id: issues-132
 title: "CLI JSON/UX hardening batch"
 description: "Prune JSON skipped_nonempty; neutral single-progen errors; name:id vs --progen conflict; dual --wt hard error; prune DTO dirty null."
-status: reviewing
+status: closed
 issue-type: bug
 severity: medium
 tags:
@@ -63,12 +63,19 @@ None
 
 **Acceptance criteria:**
 
-- [ ] All five behaviors implemented
-- [ ] Tests cover each
-- [ ] `cargo test -p odm -p odm-progen` green
+- [x] All five behaviors implemented
+- [x] Tests cover each
+- [x] `cargo test -p odm -p odm-progen` green
 
 **Out of scope:** clap exit (129); run stdio (128); wt missing exit (127).
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met
+
+## Resolution
+
+- Prune DTO: `skipped_nonempty` always present; entries `{name,path}` only.
+- `resolve_single_progen` neutral multi-progen message; reads use it.
+- `name:id` vs `--progen` mismatch → usage 1.
+- Conflicting repeated `--wt` (argv scan; clap global Append loses split positions) → usage 1.

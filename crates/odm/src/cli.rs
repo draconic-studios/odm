@@ -25,9 +25,9 @@ pub struct Cli {
     #[arg(long, global = true)]
     pub project: Option<String>,
 
-    /// Worktree slot name (with --project).
-    #[arg(long, global = true)]
-    pub wt: Option<String>,
+    /// Worktree slot name (with --project). Repeatable; conflicting values → usage error.
+    #[arg(long, global = true, action = clap::ArgAction::Append)]
+    pub wt: Vec<String>,
 
     #[command(subcommand)]
     pub command: Commands,
@@ -172,8 +172,6 @@ pub enum ProjectCmd {
     /// Run git in a project checkout.
     Git {
         name: String,
-        #[arg(long)]
-        wt: Option<String>,
         #[arg(last = true)]
         git_args: Vec<String>,
     },

@@ -73,9 +73,53 @@ fn exit_clap_error(e: clap::Error) -> ExitCode {
     }
 }
 
+/// Collect every `--wt` / `--wt=` before `--` (clap global Append drops split positions).
+fn collect_wt_from_argv(args: impl IntoIterator<Item = String>) -> Vec<String> {
+    let mut out = Vec::new();
+    let mut iter = args.into_iter();
+    // skip argv0
+    let _ = iter.next();
+    while let Some(a) = iter.next() {
+        if a == "--" {
+            break;
+        }
+        if a == "--wt" {
+            if let Some(v) = iter.next() {
+                if v != "--" && !v.starts_with('-') {
+                    out.push(v);
+                }
+            }
+        } else if let Some(rest) = a.strip_prefix("--wt=") {
+            out.push(rest.to_string());
+        }
+    }
+    out
+}
+
+/// Collapse repeated `--wt` flags: none / one / equal repeats OK; differing → usage.
+fn resolve_wt_flags(flags: &[String]) -> Result<Option<String>, OdmError> {
+    match flags {
+        [] => Ok(None),
+        [w] => Ok(Some(w.clone())),
+        [first, rest @ ..] => {
+            if rest.iter().all(|w| w == first) {
+                Ok(Some(first.clone()))
+            } else {
+                Err(OdmError::usage(format!(
+                    "conflicting --wt values: {}",
+                    flags.join(", ")
+                )))
+            }
+        }
+    }
+}
+
 fn run(cli: Cli, out: &GlobalOut) -> Result<i32, OdmError> {
     let global_project = cli.project.clone();
-    let global_wt = cli.wt.clone();
+    // Prefer argv scan: clap global Append loses values when `--wt` appears both
+    // before and after the subcommand. `cli.wt` is still declared for help surface.
+    let _cli_wt = cli.wt;
+    let global_wt = resolve_wt_flags(&collect_wt_from_argv(std::env::args()))?;
     match cli.command {
         Commands::Init {
             path,
@@ -293,14 +337,9 @@ fn run(cli: Cli, out: &GlobalOut) -> Result<i32, OdmError> {
                     }
                     Ok(0)
                 }
-                ProjectCmd::Git {
-                    name,
-                    wt,
-                    git_args,
-                } => {
-                    let effective_wt = wt.or(global_wt);
+                ProjectCmd::Git { name, git_args } => {
                     let status =
-                        project_git(&git, &ws, &name, &git_args, effective_wt.as_deref())?;
+                        project_git(&git, &ws, &name, &git_args, global_wt.as_deref())?;
                     Ok(status.code().unwrap_or(1))
                 }
                 ProjectCmd::Worktree { cmd } => match cmd {
@@ -732,5 +771,37 @@ fn run_progen(
                 Ok(3)
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod wt_flag_tests {
+    use super::{collect_wt_from_argv, resolve_wt_flags};
+
+    #[test]
+    fn collect_split_and_equals() {
+        let args = vec![
+            "odm".into(),
+            "--wt".into(),
+            "a".into(),
+            "project".into(),
+            "git".into(),
+            "p".into(),
+            "--wt=b".into(),
+            "--".into(),
+            "status".into(),
+        ];
+        assert_eq!(collect_wt_from_argv(args), vec!["a", "b"]);
+    }
+
+    #[test]
+    fn resolve_conflict_and_equal() {
+        assert!(resolve_wt_flags(&[]).unwrap().is_none());
+        assert_eq!(resolve_wt_flags(&["x".into()]).unwrap().as_deref(), Some("x"));
+        assert_eq!(
+            resolve_wt_flags(&["x".into(), "x".into()]).unwrap().as_deref(),
+            Some("x")
+        );
+        assert!(resolve_wt_flags(&["a".into(), "b".into()]).is_err());
     }
 }

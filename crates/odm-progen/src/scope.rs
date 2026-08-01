@@ -48,8 +48,10 @@ pub fn resolve_read_scope(
         .collect()
 }
 
-/// Resolve exactly one Progen for writes (or sole configured).
-pub fn resolve_write_progen(
+/// Resolve exactly one Progen (sole configured or via `--progen`).
+///
+/// Used by single-root read and write paths. Error message is neutral (no “write”).
+pub fn resolve_single_progen(
     ws: &Workspace,
     progen: Option<&str>,
 ) -> Result<ScopedProgen, OdmError> {
@@ -72,11 +74,19 @@ pub fn resolve_write_progen(
             .expect("len == 1"),
         None => {
             return Err(OdmError::usage(
-                "write requires --progen <name> when multiple progens are configured",
+                "requires --progen <name> when multiple progens are configured",
             ));
         }
     };
     scoped_from_config(&ws.root, &ws.config, &name)
+}
+
+/// Resolve exactly one Progen for writes (or sole configured).
+pub fn resolve_write_progen(
+    ws: &Workspace,
+    progen: Option<&str>,
+) -> Result<ScopedProgen, OdmError> {
+    resolve_single_progen(ws, progen)
 }
 
 fn require_progen(config: &WorkspaceConfig, name: &str) -> Result<(), OdmError> {
@@ -210,6 +220,10 @@ mod tests {
             },
         );
         let ws = ws_with(dir.path().to_path_buf(), p, BTreeMap::new());
+        let err = resolve_single_progen(&ws, None).unwrap_err();
+        let msg = err.to_string();
+        assert!(msg.contains("requires --progen"), "{msg}");
+        assert!(!msg.contains("write"), "{msg}");
         assert!(resolve_write_progen(&ws, None).is_err());
         assert_eq!(resolve_write_progen(&ws, Some("a")).unwrap().name, "a");
     }

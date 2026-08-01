@@ -21,6 +21,13 @@ pub struct WorktreeSlotDto {
     pub dirty: Option<bool>,
 }
 
+/// One pruned/skipped slot entry (`{name,path}` only — no dirty).
+#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
+pub struct WorktreePruneSlotDto {
+    pub name: String,
+    pub path: String,
+}
+
 /// One slot under `prune --all` JSON (includes project).
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
 pub struct WorktreePruneAllSlotDto {
@@ -41,7 +48,8 @@ pub struct WorktreeSlotActionDto {
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
 pub struct WorktreePruneDto {
     pub project: String,
-    pub pruned: Vec<WorktreeSlotDto>,
+    pub pruned: Vec<WorktreePruneSlotDto>,
+    pub skipped_nonempty: Vec<WorktreePruneSlotDto>,
 }
 
 /// `odm project worktree prune --all --json`.
@@ -75,10 +83,18 @@ pub fn worktree_slot_action_dto(out: &WorktreeSlotOutcome) -> WorktreeSlotAction
     }
 }
 
+fn prune_slot_dto(s: &odm_core::WorktreeSlotInfo) -> WorktreePruneSlotDto {
+    WorktreePruneSlotDto {
+        name: s.name.clone(),
+        path: s.path.clone(),
+    }
+}
+
 pub fn worktree_prune_dto(out: &WorktreePruneOutcome) -> WorktreePruneDto {
     WorktreePruneDto {
         project: out.project.clone(),
-        pruned: out.pruned.iter().map(slot_dto).collect(),
+        pruned: out.pruned.iter().map(prune_slot_dto).collect(),
+        skipped_nonempty: out.skipped_nonempty.iter().map(prune_slot_dto).collect(),
     }
 }
 
@@ -275,14 +291,20 @@ mod tests {
                 path: "worktrees/alpha/stale".into(),
                 dirty: None,
             }],
-            skipped_nonempty: vec![],
+            skipped_nonempty: vec![WorktreeSlotInfo {
+                name: "full".into(),
+                path: "worktrees/alpha/full".into(),
+                dirty: None,
+            }],
         };
         let v = serde_json::to_value(worktree_prune_dto(&out)).unwrap();
         assert_eq!(v["project"], "alpha");
         assert_eq!(v["pruned"][0]["name"], "stale");
         assert_eq!(v["pruned"][0]["path"], "worktrees/alpha/stale");
-        assert!(v["pruned"][0]["dirty"].is_null());
-        assert!(v.get("skipped_nonempty").is_none());
+        assert!(v["pruned"][0].get("dirty").is_none());
+        assert_eq!(v["skipped_nonempty"][0]["name"], "full");
+        assert_eq!(v["skipped_nonempty"][0]["path"], "worktrees/alpha/full");
+        assert!(v["skipped_nonempty"][0].get("dirty").is_none());
     }
 
     #[test]

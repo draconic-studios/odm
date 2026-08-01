@@ -417,6 +417,51 @@ fn project_git_wt_missing_slot_fails_without_creating_path() {
 }
 
 #[test]
+fn project_git_dual_wt_conflict_usage() {
+    let dir = tempdir().unwrap();
+    let root = dir.path().join("ws");
+    workspace_with_git_project(&root);
+
+    odm()
+        .args([
+            "--root",
+            root.to_str().unwrap(),
+            "--wt",
+            "slot-a",
+            "project",
+            "git",
+            "alpha",
+            "--wt",
+            "slot-b",
+            "--",
+            "status",
+        ])
+        .assert()
+        .failure()
+        .code(1)
+        .stderr(predicate::str::contains("conflicting --wt"));
+
+    // equal values OK (still missing → 4)
+    odm()
+        .args([
+            "--root",
+            root.to_str().unwrap(),
+            "--wt",
+            "same",
+            "project",
+            "git",
+            "alpha",
+            "--wt",
+            "same",
+            "--",
+            "status",
+        ])
+        .assert()
+        .failure()
+        .code(4);
+}
+
+#[test]
 fn worktree_add_non_git_project_fails() {
     let dir = tempdir().unwrap();
     let root = dir.path().join("ws");
@@ -517,6 +562,12 @@ fn worktree_prune_empty_orphan_and_force_and_registered_safe() {
     assert_eq!(pruned.len(), 1);
     assert_eq!(pruned[0]["name"], "empty-orphan");
     assert_eq!(pruned[0]["path"], "worktrees/alpha/empty-orphan");
+    assert!(pruned[0].get("dirty").is_none());
+    let skipped = partial["skipped_nonempty"].as_array().unwrap();
+    assert_eq!(skipped.len(), 1);
+    assert_eq!(skipped[0]["name"], "full-orphan");
+    assert_eq!(skipped[0]["path"], "worktrees/alpha/full-orphan");
+    assert!(skipped[0].get("dirty").is_none());
     assert!(!empty.exists());
     assert!(full.is_dir());
     assert!(live.is_dir());

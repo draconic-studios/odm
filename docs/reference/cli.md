@@ -150,8 +150,8 @@ odm project worktree prune --all [--force]
 - **`list` / `info`**: config + disk/git summary; `--json`. `info` includes registered `worktree_slots: [ { "name", "path", "dirty" } ]` (`path` is `worktrees/<project>/<slot>`; `dirty` is `true` / `false` / `null` on probe failure; empty array when none / non-git / list soft-fails) and `worktree_orphans: [ { "name", "path" } ]` (always present; empty when none / non-git / soft-fail; same orphan definition as doctor/prune). Human lists slot names when non-empty (`worktrees: a, b dirty`) and orphan names when non-empty (`orphans: a, b`).
 - **`add`**: write Project entry; if `url` set, materialize unless `--no-clone` (`multi-git.md`).
 - **`rm`**: un-declare; tree **kept** by default; `--delete` removes tree if clean; dirty → fail unless `--force`. Does **not** delete `worktrees/<project>/`.
-- **`git`**: run `git -C <primary-or-wt> <git-args…>` (argv after `--`, not a shell string). Exit code = git’s. On success, if pin file exists and **HEAD changed** on **Primary**, **auto-maintain** that entity’s pin (not “sync”). `--wt` selects slot working tree (must exist; no auto-create; pin maintain stays Primary-only).
-- **`worktree`**: **v1 implemented** — `list` / `add` / `rm` / `prune` / `prune --all` for slots at `worktrees/<project>/<slot>/`. `list` JSON slots include `dirty` (`true` / `false` / `null`). Primary must be a git repo. Details and deferred items: `worktrees.md`.
+- **`git`**: run `git -C <primary-or-wt> <git-args…>` (argv after `--`, not a shell string). Exit code = git’s. On success, if pin file exists and **HEAD changed** on **Primary**, **auto-maintain** that entity’s pin (not “sync”). `--wt` selects slot working tree (must exist; no auto-create; pin maintain stays Primary-only). Global `--wt` and command `--wt` must match when both set (differ → usage exit `1`).
+- **`worktree`**: **v1 implemented** — `list` / `add` / `rm` / `prune` / `prune --all` for slots at `worktrees/<project>/<slot>/`. `list` JSON slots include `dirty` (`true` / `false` / `null`). Single-project `prune --json` includes `skipped_nonempty: [{name,path}]` (no `dirty` on prune rows). Primary must be a git repo. Details and deferred items: `worktrees.md`.
 
 No `project sync` — use top-level `odm sync [name]`.
 
@@ -227,7 +227,7 @@ odm context <progen-name>:<id> …
 
 - In-store neighborhood only — **no** cross-store graph walk.
 - Fixed one-hop neighborhood as `ContextHit` (`anchor` / `outgoing` / `incoming`). No `--depth` or other upstream scope flags.
-- Disambiguation: require `--progen` when more than one Progen is in play, **or** accept `name:id` prefix. Sole configured Progen → bare `id` OK. At most one `--progen` (or use `name:id`).
+- Disambiguation: require `--progen` when more than one Progen is in play, **or** accept `name:id` prefix. Sole configured Progen → bare `id` OK. At most one `--progen` (or use `name:id`). If `name:id` prefix and `--progen` both set and differ → usage exit `1`.
 
 ---
 
@@ -300,7 +300,7 @@ odm agent prompt <progen-name>:<id> …
 
 - Thin alias of `odm context`: same Progen scope rules, same human markdown neighborhood, same `--json` shape (`ContextHit` with `anchor` / `outgoing` / `incoming`).
 - Packages one note’s in-store context to stdout for agents — **not** a second prompt engine, task planner, or graph walk.
-- Disambiguation: require `--progen` (global) when more than one Progen is in play, **or** accept `name:id`. Sole configured Progen → bare `id` OK. At most one `--progen`.
+- Disambiguation: require `--progen` (global) when more than one Progen is in play, **or** accept `name:id`. Sole configured Progen → bare `id` OK. At most one `--progen`. Conflicting `name:id` prefix vs `--progen` → usage exit `1`.
 - Unknown id → exit `4`. Success → exit `0`.
 - Details / deferred depth: `env-gen-packs.md`.
 

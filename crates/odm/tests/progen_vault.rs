@@ -434,6 +434,33 @@ fn multi_progen_scope() {
     let hits = only_a["hits"].as_array().unwrap();
     assert_eq!(hits.len(), 1);
     assert_eq!(hits[0]["progen"], "a");
+
+    // multi-progen single-root read: neutral message (no "write")
+    odm()
+        .current_dir(&root)
+        .args(["progen", "ls"])
+        .assert()
+        .failure()
+        .code(1)
+        .stderr(predicate::str::contains("requires --progen"))
+        .stderr(predicate::str::contains("write").not());
+
+    // name:id vs conflicting --progen → usage
+    odm()
+        .current_dir(&root)
+        .args(["--progen", "b", "progen", "get", "a:onlya"])
+        .assert()
+        .failure()
+        .code(1)
+        .stderr(predicate::str::contains("conflicts"));
+
+    // matching name:id + --progen OK
+    odm()
+        .current_dir(&root)
+        .args(["--progen", "a", "progen", "get", "a:onlya", "--json"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("onlya"));
 }
 
 #[test]
