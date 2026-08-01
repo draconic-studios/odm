@@ -7,7 +7,7 @@ use std::process::ExitCode;
 use clap::error::ErrorKind;
 use clap::Parser;
 use odm::commands::{
-    find_notes_dto, format_action_list_human, format_generate_run_human,
+    action_run_dto, find_notes_dto, format_action_list_human, format_generate_run_human,
     format_generator_list_human, format_pack_install_human, format_pack_link_human,
     format_pack_list_human, format_pack_rm_human, format_progen_add_human, format_progen_info_human,
     format_progen_list_human, format_project_add_human, format_project_info_human,
@@ -430,10 +430,7 @@ fn run(cli: Cli, out: &GlobalOut) -> Result<i32, OdmError> {
                         },
                     )?;
                     if out.json {
-                        print_json(&serde_json::json!({
-                            "action": name,
-                            "exitCode": result.exit_code,
-                        }))?;
+                        print_json(&action_run_dto(name, &result))?;
                     }
                     Ok(result.exit_code)
                 }

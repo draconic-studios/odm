@@ -2,7 +2,7 @@
 id: issues-128
 title: "run --json includes captured stdout/stderr"
 description: "With --json, action stdio is captured then discarded; envelope only has action+exitCode so agents cannot debug failures."
-status: reviewing
+status: closed
 issue-type: bug
 severity: high
 tags:
@@ -59,14 +59,14 @@ None
 
 **Acceptance criteria:**
 
-- [ ] JSON envelope includes stdout/stderr strings
-- [ ] Capture still prevents interleaved pollution of the JSON object
-- [ ] Integration tests assert stream content
-- [ ] cli.md updated
-- [ ] `cargo test -p odm` green
+- [x] JSON envelope includes stdout/stderr strings
+- [x] Capture still prevents interleaved pollution of the JSON object
+- [x] Integration tests assert stream content
+- [x] cli.md updated
+- [x] `cargo test -p odm` green
 
 **Out of scope:** per-task JSON array (YAGNI unless already trivial); exit code changes.
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met

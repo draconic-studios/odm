@@ -92,15 +92,62 @@ fn run_unknown_exit_1() {
 #[test]
 fn run_json_hello() {
     let (_dir, root) = setup_temp_core_desk();
+    let out = odm()
+        .args([
+            "--root",
+            root.to_str().unwrap(),
+            "--json",
+            "run",
+            "hello",
+        ])
+        .assert()
+        .success()
+        .get_output()
+        .stdout
+        .clone();
+    let v: Value = serde_json::from_slice(&out).expect("stdout is sole JSON object");
+    assert_eq!(v["action"].as_str(), Some("hello"));
+    assert_eq!(v["exitCode"].as_i64(), Some(0));
+    let stdout = v["stdout"].as_str().expect("stdout field");
+    assert!(stdout.contains("hello-desk"), "got: {stdout}");
+    assert_eq!(v["stderr"].as_str(), Some(""));
+}
+
+#[test]
+fn run_json_fail() {
+    let (_dir, root) = setup_temp_core_desk();
+    let out = odm()
+        .args(["--root", root.to_str().unwrap(), "--json", "run", "fail"])
+        .assert()
+        .failure()
+        .code(7)
+        .get_output()
+        .stdout
+        .clone();
+    let v: Value = serde_json::from_slice(&out).expect("stdout is sole JSON object");
+    assert_eq!(v["action"].as_str(), Some("fail"));
+    assert_eq!(v["exitCode"].as_i64(), Some(7));
+    assert!(v["stdout"].as_str().is_some());
+    assert!(v["stderr"].as_str().is_some());
+}
+
+#[test]
+fn run_json_chain_concatenates_stdout() {
+    let (_dir, root) = setup_temp_core_desk();
     let v = json_stdout(odm().args([
         "--root",
         root.to_str().unwrap(),
         "--json",
         "run",
-        "hello",
+        "chain",
     ]));
-    assert_eq!(v["action"].as_str(), Some("hello"));
     assert_eq!(v["exitCode"].as_i64(), Some(0));
+    let stdout = v["stdout"].as_str().expect("stdout");
+    assert!(stdout.contains("step1"), "got: {stdout}");
+    assert!(stdout.contains("step2"), "got: {stdout}");
+    let i1 = stdout.find("step1").unwrap();
+    let i2 = stdout.find("step2").unwrap();
+    assert!(i1 < i2, "tasks concatenated in order");
 }
 
 #[test]

@@ -32,7 +32,8 @@ pub use progen::{
     ProgenInfoDto, ProgenListDto, ProgenListItem,
 };
 pub use run::{
-    format_action_list_human, list_actions_dto, ActionListDto, ActionListItem, ActionTaskDto,
+    action_run_dto, format_action_list_human, list_actions_dto, ActionListDto, ActionListItem,
+    ActionRunDto, ActionTaskDto,
 };
 pub use status::status_snapshot;
 pub use worktree::{
