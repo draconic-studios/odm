@@ -282,6 +282,63 @@ fn run_wt_requires_project_exit_1() {
 }
 
 #[test]
+fn run_missing_wt_slot_exit_4() {
+    let (_dir, root) = setup_cwd_workspace();
+    odm()
+        .args([
+            "--root",
+            root.to_str().unwrap(),
+            "run",
+            "pwdhere",
+            "--project",
+            "alpha",
+            "--wt",
+            "missing",
+        ])
+        .assert()
+        .failure()
+        .code(4)
+        .stderr(predicate::str::contains("worktree slot not found"));
+}
+
+#[test]
+fn run_missing_project_path_exit_4() {
+    let (_dir, root) = setup_cwd_workspace();
+    fs::remove_dir_all(root.join("projects/alpha")).unwrap();
+    odm()
+        .args([
+            "--root",
+            root.to_str().unwrap(),
+            "run",
+            "pwdhere",
+            "--project",
+            "alpha",
+        ])
+        .assert()
+        .failure()
+        .code(4)
+        .stderr(predicate::str::contains("project path missing"));
+}
+
+#[test]
+fn run_unknown_project_exit_1() {
+    let (_dir, root) = setup_cwd_workspace();
+    odm()
+        .args([
+            "--root",
+            root.to_str().unwrap(),
+            "run",
+            "pwdhere",
+            "--project",
+            "nope",
+        ])
+        .assert()
+        .failure()
+        .code(1)
+        .stderr(predicate::str::contains("unknown project"));
+}
+
+#[test]
 fn run_extra_args_via_cli() {
     let (_dir, root) = setup_cwd_workspace();
     odm()

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Local coverage script** — `./scripts/coverage.sh` runs `cargo llvm-cov --workspace` (HTML + lcov under `target/coverage/`); install hint if missing; not wired to CI.
 - **Website Playwright** — local e2e harness under `website/` (`npm run test:e2e`; chromium).
 - **Website Playwright smoke suite** — `website/e2e/smoke.spec.ts` covers all `website/*.html` pages (load, nav, install/quickstart/concepts/features content, CSS asset, mobile viewport).
 - **Website a11y + link crawl** — `@axe-core/playwright` scans (home/install/guide-workspace) plus internal link/anchor crawl; site UX polish (start-here path, contrast, focus-visible, guide meta/crumbs).
@@ -33,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`odm run` missing cwd paths** — known project path or `--wt` slot missing on disk now exits `4` (`not_found`); unknown project names still exit `1` (`usage`).
 - **Docs honesty** — install leads with build-from-source (Releases = when published); `AGENTS.md` allows Pages-only Actions; `progen.md` / `cli.md` federation = `find` only; README docs links; guide-actions HTML paren.
 - **Progen wikilinks in code** — fenced ```/~~~ blocks and inline `` `code` `` no longer contribute graph edges; invalid YAML frontmatter hard-fails reindex with the note path.
 - **Clap usage exit codes** — parse failures (unknown command / bad flags) exit `1` (not clap’s default `2`), matching library usage errors; with `--json` on argv, stdout is the standard `{ ok: false, error: { code: "usage", … } }` envelope.

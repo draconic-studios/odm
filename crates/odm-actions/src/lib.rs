@@ -100,8 +100,8 @@ pub fn resolve_cwd(
             })?;
             let cwd = abs_checkout(ws.root.as_path(), &entry.path)?;
             if !cwd.is_dir() {
-                return Err(OdmError::usage(format!(
-                    "project path does not exist: {}",
+                return Err(OdmError::not_found(format!(
+                    "project path missing: {}",
                     entry.path
                 )));
             }
@@ -113,8 +113,8 @@ pub fn resolve_cwd(
             }
             let cwd = worktree_slot_path(ws.root.as_path(), project, slot);
             if !cwd.is_dir() {
-                return Err(OdmError::usage(format!(
-                    "worktree path does not exist: worktrees/{project}/{slot}"
+                return Err(OdmError::not_found(format!(
+                    "worktree slot not found: worktrees/{project}/{slot}"
                 )));
             }
             Ok(cwd)
@@ -532,5 +532,59 @@ mod tests {
     fn run_action_wt_requires_project() {
         let err = CwdTarget::from_flags(None, Some("slot1")).unwrap_err();
         assert!(err.to_string().contains("--wt requires --project"));
+    }
+
+    #[test]
+    fn resolve_cwd_missing_project_path_is_not_found() {
+        let dir = tempdir().unwrap();
+        let ws = ws_with_actions(dir.path().to_path_buf(), BTreeMap::new());
+        let err = resolve_cwd(&ws, CwdTarget::Project { name: "alpha" }, None).unwrap_err();
+        assert!(matches!(err, OdmError::NotFound(_)), "{err:?}");
+        assert!(err.to_string().contains("project path missing"), "{err}");
+    }
+
+    #[test]
+    fn resolve_cwd_unknown_project_is_usage() {
+        let dir = tempdir().unwrap();
+        let ws = ws_with_actions(dir.path().to_path_buf(), BTreeMap::new());
+        let err = resolve_cwd(&ws, CwdTarget::Project { name: "nope" }, None).unwrap_err();
+        assert!(matches!(err, OdmError::Usage(_)), "{err:?}");
+        assert!(err.to_string().contains("unknown project"), "{err}");
+    }
+
+    #[test]
+    fn resolve_cwd_missing_wt_slot_is_not_found() {
+        let dir = tempdir().unwrap();
+        let root = dir.path();
+        fs::create_dir_all(root.join("projects/alpha")).unwrap();
+        let ws = ws_with_actions(root.to_path_buf(), BTreeMap::new());
+        let err = resolve_cwd(
+            &ws,
+            CwdTarget::Worktree {
+                project: "alpha",
+                slot: "missing",
+            },
+            None,
+        )
+        .unwrap_err();
+        assert!(matches!(err, OdmError::NotFound(_)), "{err:?}");
+        assert!(err.to_string().contains("worktree slot not found"), "{err}");
+    }
+
+    #[test]
+    fn resolve_cwd_unknown_project_on_wt_is_usage() {
+        let dir = tempdir().unwrap();
+        let ws = ws_with_actions(dir.path().to_path_buf(), BTreeMap::new());
+        let err = resolve_cwd(
+            &ws,
+            CwdTarget::Worktree {
+                project: "nope",
+                slot: "slot1",
+            },
+            None,
+        )
+        .unwrap_err();
+        assert!(matches!(err, OdmError::Usage(_)), "{err:?}");
+        assert!(err.to_string().contains("unknown project"), "{err}");
     }
 }

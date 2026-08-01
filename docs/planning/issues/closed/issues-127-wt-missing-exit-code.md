@@ -2,7 +2,7 @@
 id: issues-127
 title: "Align missing --wt / project path exit codes to 4"
 description: "run treats missing worktree/project path as usage exit 1; project git and docs use not_found exit 4."
-status: reviewing
+status: closed
 issue-type: bug
 severity: high
 tags:
@@ -57,13 +57,13 @@ None
 
 **Acceptance criteria:**
 
-- [ ] Missing slot on `run` → exit 4
-- [ ] Missing project path on `run` → exit 4
-- [ ] Unknown project name still exit 1
-- [ ] Tests green
+- [x] Missing slot on `run` → exit 4
+- [x] Missing project path on `run` → exit 4
+- [x] Unknown project name still exit 1
+- [x] Tests green
 
 **Out of scope:** clap parse exit (129); dual global/local `--wt` precedence (can fold tiny hard-error into 132 if easy).
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met
