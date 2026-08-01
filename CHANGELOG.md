@@ -63,6 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **CLI Present/Ctx spine** — binary is a thin adapter: one `Ctx::open`, family handlers in `odm::commands`, single `finish`/`Present` path for success JSON+human+exit; typed DTOs for init/sync/pin/progen store envelopes; project/progen list human derived from the same DTO as JSON; `--wt` resolved once next to clap (`resolve_wt_from_env`); pure `status_snapshot` alias removed (`main.rs` ~200 LOC).
 - **Typed path resolve errors** — `resolve_under_root` returns `PathResolveError::{Absolute,Escape}`; callers match the type instead of sniffing English message text (exit codes / `error.code` unchanged).
 - `examples/core-desk` includes a sample Generator (`hello` → `templates/hello`) and a tiny demo agent pack (`agent-packs/demo`).
 - `examples/core-desk` assets expand: second Progen `ops` + `all-docs` group, vault note ids (`readme` / `ops-note`), project-scoped `in-alpha` actions, gitignore for dogfood debris.

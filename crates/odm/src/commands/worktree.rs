@@ -1,9 +1,13 @@
-//! `odm project worktree` DTOs and human formatters.
+//! `odm project worktree` handlers, DTOs, and human formatters.
 
 use odm_core::{
+    worktree_add, worktree_list, worktree_prune, worktree_prune_all, worktree_rm, OdmError,
     WorktreeListOutcome, WorktreePruneAllOutcome, WorktreePruneOutcome, WorktreeSlotOutcome,
 };
 use serde::Serialize;
+
+use crate::ctx::Ctx;
+use crate::present::{json_value, Present, Ready};
 
 /// `odm project worktree list --json`.
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
@@ -167,6 +171,84 @@ pub fn format_worktree_prune_human(out: &WorktreePruneOutcome) -> String {
         ));
     }
     s
+}
+
+impl Present for WorktreeListDto {
+    fn to_json(&self) -> Result<serde_json::Value, OdmError> {
+        json_value(self)
+    }
+    fn to_human(&self) -> String {
+        let mut s = String::new();
+        for slot in &self.slots {
+            s.push_str(&slot.name);
+            if slot.dirty == Some(true) {
+                s.push_str(" dirty");
+            }
+            s.push('\n');
+        }
+        s
+    }
+}
+
+pub fn list_cmd(ctx: &Ctx, project: &str) -> Result<Ready<WorktreeListDto>, OdmError> {
+    let outcome = worktree_list(&ctx.git, &ctx.ws, project)?;
+    let dto = worktree_list_dto(&outcome);
+    let human = format_worktree_list_human(&outcome);
+    Ok(Ready::ok(dto, human))
+}
+
+pub fn add_cmd(
+    ctx: &Ctx,
+    project: &str,
+    slot: &str,
+    branch: Option<&str>,
+) -> Result<Ready<WorktreeSlotActionDto>, OdmError> {
+    let outcome = worktree_add(&ctx.git, &ctx.ws, project, slot, branch)?;
+    let dto = worktree_slot_action_dto(&outcome);
+    Ok(Ready::ok(dto, format_worktree_add_human(&outcome)))
+}
+
+pub fn rm_cmd(
+    ctx: &Ctx,
+    project: &str,
+    slot: &str,
+    force: bool,
+) -> Result<Ready<WorktreeSlotActionDto>, OdmError> {
+    let outcome = worktree_rm(&ctx.git, &ctx.ws, project, slot, force)?;
+    let dto = worktree_slot_action_dto(&outcome);
+    Ok(Ready::ok(dto, format_worktree_rm_human(&outcome)))
+}
+
+pub fn prune_cmd(
+    ctx: &Ctx,
+    project: Option<String>,
+    all: bool,
+    force: bool,
+) -> Result<Ready<serde_json::Value>, OdmError> {
+    if all {
+        let outcome = worktree_prune_all(&ctx.git, &ctx.ws, force)?;
+        let dto = worktree_prune_all_dto(&outcome);
+        let exit = if outcome.skipped_nonempty.is_empty() {
+            0
+        } else {
+            3
+        };
+        let human = format_worktree_prune_all_human(&outcome);
+        let val = json_value(&dto)?;
+        Ok(Ready::with_exit(val, human, exit))
+    } else {
+        let project = project.expect("clap requires project unless --all");
+        let outcome = worktree_prune(&ctx.git, &ctx.ws, &project, force)?;
+        let dto = worktree_prune_dto(&outcome);
+        let exit = if outcome.skipped_nonempty.is_empty() {
+            0
+        } else {
+            3
+        };
+        let human = format_worktree_prune_human(&outcome);
+        let val = json_value(&dto)?;
+        Ok(Ready::with_exit(val, human, exit))
+    }
 }
 
 pub fn format_worktree_prune_all_human(out: &WorktreePruneAllOutcome) -> String {

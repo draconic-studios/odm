@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
+use odm_core::OdmError;
 
 #[derive(Debug, Parser)]
 #[command(name = "odm", version, about = "Orchestrated Development Management")]
@@ -26,11 +27,58 @@ pub struct Cli {
     pub project: Option<String>,
 
     /// Worktree slot name (with --project). Repeatable; conflicting values → usage error.
+    /// Help surface only — execution resolves via [`resolve_wt_from_env`] (clap global Append
+    /// drops values when `--wt` appears both before and after the subcommand).
     #[arg(long, global = true, action = clap::ArgAction::Append)]
     pub wt: Vec<String>,
 
     #[command(subcommand)]
     pub command: Commands,
+}
+
+/// Resolve `--wt` once from process argv (single source of truth for execution).
+pub fn resolve_wt_from_env() -> Result<Option<String>, OdmError> {
+    resolve_wt_flags(&collect_wt_from_argv(std::env::args()))
+}
+
+/// Collect every `--wt` / `--wt=` before `--` (clap global Append drops split positions).
+pub fn collect_wt_from_argv(args: impl IntoIterator<Item = String>) -> Vec<String> {
+    let mut out = Vec::new();
+    let mut iter = args.into_iter();
+    let _ = iter.next(); // skip argv0
+    while let Some(a) = iter.next() {
+        if a == "--" {
+            break;
+        }
+        if a == "--wt" {
+            if let Some(v) = iter.next() {
+                if v != "--" && !v.starts_with('-') {
+                    out.push(v);
+                }
+            }
+        } else if let Some(rest) = a.strip_prefix("--wt=") {
+            out.push(rest.to_string());
+        }
+    }
+    out
+}
+
+/// Collapse repeated `--wt` flags: none / one / equal repeats OK; differing → usage.
+pub fn resolve_wt_flags(flags: &[String]) -> Result<Option<String>, OdmError> {
+    match flags {
+        [] => Ok(None),
+        [w] => Ok(Some(w.clone())),
+        [first, rest @ ..] => {
+            if rest.iter().all(|w| w == first) {
+                Ok(Some(first.clone()))
+            } else {
+                Err(OdmError::usage(format!(
+                    "conflicting --wt values: {}",
+                    flags.join(", ")
+                )))
+            }
+        }
+    }
 }
 
 #[derive(Debug, Subcommand)]
@@ -315,4 +363,41 @@ pub enum PackCmd {
         /// Pack name as registered (directory basename).
         name: String,
     },
+}
+
+#[cfg(test)]
+mod wt_flag_tests {
+    use super::{collect_wt_from_argv, resolve_wt_flags};
+
+    #[test]
+    fn collect_split_and_equals() {
+        let args = vec![
+            "odm".into(),
+            "--wt".into(),
+            "a".into(),
+            "project".into(),
+            "git".into(),
+            "p".into(),
+            "--wt=b".into(),
+            "--".into(),
+            "status".into(),
+        ];
+        assert_eq!(collect_wt_from_argv(args), vec!["a", "b"]);
+    }
+
+    #[test]
+    fn resolve_conflict_and_equal() {
+        assert!(resolve_wt_flags(&[]).unwrap().is_none());
+        assert_eq!(
+            resolve_wt_flags(&["x".into()]).unwrap().as_deref(),
+            Some("x")
+        );
+        assert_eq!(
+            resolve_wt_flags(&["x".into(), "x".into()])
+                .unwrap()
+                .as_deref(),
+            Some("x")
+        );
+        assert!(resolve_wt_flags(&["a".into(), "b".into()]).is_err());
+    }
 }

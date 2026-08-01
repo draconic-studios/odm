@@ -1,11 +1,16 @@
-//! `odm project list` / `info` — config ⨝ observation → DTO.
+//! `odm project` handlers — list/info/add/rm + DTOs.
 
 use odm_core::{
-    build_status, load_pin, observe_project_worktrees_soft, observe_workspace, EntityObservation,
-    OdmError, PinState, StatusSnapshot, Workspace, WorktreeOrphanInfo, WorktreeSlotInfo,
+    build_status, load_pin, observe_project_worktrees_soft, observe_workspace, path_buf_to_rel,
+    project_add, project_git, project_rm, EntityObservation, OdmError, PinState, ProjectEntry,
+    StatusSnapshot, Workspace, WorktreeOrphanInfo, WorktreeSlotInfo,
 };
 use odm_git::Git;
 use serde::Serialize;
+
+use crate::commands::materialize::{format_project_add_human, materialize_json_opt};
+use crate::ctx::Ctx;
+use crate::present::{json_value, NamedMaterialize, NamedOk, Present, Ready};
 
 /// `odm project list --json` envelope.
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
@@ -146,24 +151,108 @@ pub fn project_info<R: odm_git::CommandRunner>(
     Ok(dto)
 }
 
-/// Human multi-line list (beside DTO; not a third presentation home).
-pub fn format_project_list_human(ws: &Workspace, snap: &StatusSnapshot) -> String {
-    if ws.config.projects.is_empty() {
+/// Human multi-line list from the same DTO as JSON (no dual join).
+pub fn format_project_list_human(dto: &ProjectListDto) -> String {
+    if dto.projects.is_empty() {
         return "(no projects)\n".into();
     }
     let mut out = String::new();
-    for (name, e) in &ws.config.projects {
-        let managed = if e.url.is_some() { "managed" } else { "path" };
-        let st = snap.projects.iter().find(|p| p.name == *name);
-        let on_disk = st.map(|s| s.on_disk).unwrap_or(false);
-        let is_git = st.map(|s| s.is_git).unwrap_or(false);
-        let pin = st.map(|s| s.pin_state.as_str()).unwrap_or("-");
+    for p in &dto.projects {
+        let managed = if p.url.is_some() { "managed" } else { "path" };
+        let pin = p.pin_state.map(|s| s.as_str()).unwrap_or("-");
         out.push_str(&format!(
-            "{name}\t{}\t{managed}\ton_disk={on_disk}\tis_git={is_git}\tpin={pin}\n",
-            e.path
+            "{}\t{}\t{managed}\ton_disk={}\tis_git={}\tpin={pin}\n",
+            p.name, p.path, p.on_disk, p.is_git
         ));
     }
     out
+}
+
+impl Present for ProjectListDto {
+    fn to_json(&self) -> Result<serde_json::Value, OdmError> {
+        json_value(self)
+    }
+    fn to_human(&self) -> String {
+        format_project_list_human(self)
+    }
+}
+
+impl Present for ProjectInfoDto {
+    fn to_json(&self) -> Result<serde_json::Value, OdmError> {
+        json_value(self)
+    }
+    fn to_human(&self) -> String {
+        format_project_info_human(self)
+    }
+}
+
+/// Handler: list projects.
+pub fn list_cmd(ctx: &Ctx) -> Result<ProjectListDto, OdmError> {
+    list_projects(&ctx.git, &ctx.ws)
+}
+
+/// Handler: project info.
+pub fn info_cmd(ctx: &Ctx, name: &str) -> Result<ProjectInfoDto, OdmError> {
+    project_info(&ctx.git, &ctx.ws, name)
+}
+
+/// Handler: project add → named materialize envelope.
+pub fn add_cmd(
+    ctx: &mut Ctx,
+    name: &str,
+    path: &std::path::Path,
+    url: Option<String>,
+    branch: Option<String>,
+    type_: Option<String>,
+    no_clone: bool,
+) -> Result<Ready<NamedMaterialize>, OdmError> {
+    let rel = path_buf_to_rel(path)?;
+    let entry = ProjectEntry {
+        path: rel,
+        url,
+        branch,
+        type_,
+    };
+    let outcome = project_add(
+        &ctx.git,
+        &ctx.ws.root,
+        &mut ctx.ws.config,
+        name,
+        entry,
+        no_clone,
+    )?;
+    let dto = NamedMaterialize::new(name, materialize_json_opt(outcome));
+    Ok(Ready::ok(dto, format_project_add_human(name, outcome)))
+}
+
+/// Handler: project rm → named ok envelope.
+pub fn rm_cmd(
+    ctx: &mut Ctx,
+    name: &str,
+    delete: bool,
+    force: bool,
+) -> Result<Ready<NamedOk>, OdmError> {
+    project_rm(
+        &ctx.git,
+        &ctx.ws.root,
+        &mut ctx.ws.config,
+        name,
+        delete,
+        force,
+    )?;
+    Ok(Ready::ok(
+        NamedOk::new(name),
+        format!("removed project {name}"),
+    ))
+}
+
+/// Handler: project git passthrough — raw exit only (stdio already inherited).
+pub fn git_cmd(
+    ctx: &Ctx,
+    name: &str,
+    git_args: &[String],
+) -> Result<std::process::ExitStatus, OdmError> {
+    project_git(&ctx.git, &ctx.ws, name, git_args, ctx.wt.as_deref())
 }
 
 /// Human multi-line info (beside DTO).
@@ -282,6 +371,16 @@ mod tests {
         assert_eq!(p["pin_state"], "missing_pin_file");
         // envelope key
         assert!(v.get("projects").unwrap().is_array());
+    }
+
+    #[test]
+    fn project_list_human_from_same_dto() {
+        let ws = ws_one("alpha", "projects/alpha");
+        let snap = snap_one("alpha", "projects/alpha");
+        let dto = project_list_from(&ws, &snap);
+        let human = format_project_list_human(&dto);
+        assert!(human.contains("alpha\tprojects/alpha\tmanaged\ton_disk=true\tis_git=true\tpin=missing_pin_file\n"), "{human}");
+        assert_eq!(format_project_list_human(&ProjectListDto { projects: vec![] }), "(no projects)\n");
     }
 
     #[test]

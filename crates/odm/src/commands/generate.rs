@@ -1,7 +1,12 @@
-//! `odm generate` — Generator list DTO and human formatting.
+//! `odm generate` — handlers, list/run DTOs, human formatting.
 
-use odm_core::Workspace;
+use std::path::PathBuf;
+
+use odm_core::{generate_local, path_buf_to_rel, OdmError, Workspace};
 use serde::Serialize;
+
+use crate::ctx::Ctx;
+use crate::present::{json_value, Present, Ready};
 
 /// `odm generate --json` (no name) envelope.
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
@@ -61,6 +66,55 @@ pub struct GenerateRunDto {
     pub dest: String,
     pub copied: u32,
     pub dry_run: bool,
+}
+
+impl Present for GeneratorListDto {
+    fn to_json(&self) -> Result<serde_json::Value, OdmError> {
+        json_value(self)
+    }
+    fn to_human(&self) -> String {
+        format_generator_list_human(self)
+    }
+}
+
+impl Present for GenerateRunDto {
+    fn to_json(&self) -> Result<serde_json::Value, OdmError> {
+        json_value(self)
+    }
+    fn to_human(&self) -> String {
+        format_generate_run_human(&self.generator, &self.dest, self.copied, self.dry_run)
+    }
+}
+
+pub fn generate_cmd(
+    ctx: &Ctx,
+    name: Option<String>,
+    dest: Option<PathBuf>,
+    force: bool,
+    dry_run: bool,
+) -> Result<Ready<serde_json::Value>, OdmError> {
+    match name {
+        None => {
+            let dto = list_generators_dto(&ctx.ws);
+            let human = format_generator_list_human(&dto);
+            Ok(Ready::ok(json_value(&dto)?, human))
+        }
+        Some(name) => {
+            let dest = dest.ok_or_else(|| {
+                OdmError::usage("generate requires --dest <path> when a name is given")
+            })?;
+            let dest_rel = path_buf_to_rel(&dest)?;
+            let outcome = generate_local(&ctx.ws, &name, &dest_rel, force, dry_run)?;
+            let dto = GenerateRunDto {
+                generator: name.clone(),
+                dest: dest_rel.clone(),
+                copied: outcome.copied,
+                dry_run,
+            };
+            let human = format_generate_run_human(&name, &dest_rel, outcome.copied, dry_run);
+            Ok(Ready::ok(json_value(&dto)?, human))
+        }
+    }
 }
 
 #[cfg(test)]

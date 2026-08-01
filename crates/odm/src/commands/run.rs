@@ -1,8 +1,11 @@
-//! `odm run` — Action list + run JSON DTOs.
+//! `odm run` — Action list + run handlers and DTOs.
 
-use odm_actions::{list_actions, RunResult};
-use odm_core::Workspace;
+use odm_actions::{list_actions, run_action, CwdTarget, RunOptions, RunResult, StdioMode};
+use odm_core::{OdmError, Workspace};
 use serde::Serialize;
+
+use crate::ctx::Ctx;
+use crate::present::{json_value, Present};
 
 /// `odm run --json` (no action name) envelope.
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
@@ -82,6 +85,73 @@ pub fn format_action_list_human(dto: &ActionListDto) -> String {
         out.push('\n');
     }
     out
+}
+
+impl Present for ActionListDto {
+    fn to_json(&self) -> Result<serde_json::Value, OdmError> {
+        json_value(self)
+    }
+    fn to_human(&self) -> String {
+        format_action_list_human(self)
+    }
+}
+
+/// List actions or run one. JSON run returns Present; inherit returns exit-only via `RunOutcome`.
+pub enum RunOutcome {
+    List(ActionListDto),
+    /// JSON mode: print DTO then exit with action code.
+    JsonRun(ActionRunDto),
+    /// Inherit stdio: child already wrote; return raw exit.
+    Inherit(i32),
+}
+
+pub fn run_cmd(
+    ctx: &Ctx,
+    action: Option<String>,
+    extra: &[String],
+    json: bool,
+) -> Result<RunOutcome, OdmError> {
+    match action {
+        None => Ok(RunOutcome::List(list_actions_dto(&ctx.ws))),
+        Some(name) => {
+            let cwd = CwdTarget::from_flags(ctx.project.as_deref(), ctx.wt.as_deref())?;
+            let stdio = if json {
+                StdioMode::Capture
+            } else {
+                StdioMode::Inherit
+            };
+            let result = run_action(
+                &ctx.ws,
+                &name,
+                RunOptions {
+                    cwd,
+                    extra_args: extra,
+                    stdio,
+                },
+            )?;
+            if json {
+                Ok(RunOutcome::JsonRun(action_run_dto(name, &result)))
+            } else {
+                Ok(RunOutcome::Inherit(result.exit_code))
+            }
+        }
+    }
+}
+
+/// Finish helper for run outcomes (special-case inherit / JSON exit).
+pub fn finish_run(
+    out: &crate::present::GlobalOut,
+    outcome: RunOutcome,
+) -> Result<i32, OdmError> {
+    match outcome {
+        RunOutcome::List(dto) => crate::present::finish(out, &dto),
+        RunOutcome::JsonRun(dto) => {
+            // Always JSON print (out.json is true when this variant is built).
+            crate::present::print_json(&dto)?;
+            Ok(dto.exit_code)
+        }
+        RunOutcome::Inherit(code) => Ok(code),
+    }
 }
 
 #[cfg(test)]

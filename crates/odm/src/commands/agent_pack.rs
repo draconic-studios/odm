@@ -1,7 +1,12 @@
-//! `odm agent pack` — list / install / link / rm DTOs and human formatting.
+//! `odm agent pack` — handlers, list / install / link / rm DTOs and human formatting.
 
-use odm_core::{PackEntry, PackMode};
+use std::path::Path;
+
+use odm_core::{pack_install, pack_link, pack_list, pack_rm, OdmError, PackEntry, PackMode};
 use serde::Serialize;
+
+use crate::ctx::Ctx;
+use crate::present::{json_value, Present, Ready};
 
 /// `odm agent pack list --json` envelope.
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
@@ -77,9 +82,58 @@ pub fn format_pack_rm_human(entry: &PackEntry) -> String {
     format!("removed {} -> {}\n", entry.name, entry.path.display())
 }
 
-/// Single-entry JSON for install/link/rm (same fields as list item).
-pub fn pack_entry_dto(entry: &PackEntry) -> PackEntryDto {
-    PackEntryDto::from(entry)
+impl Present for PackListDto {
+    fn to_json(&self) -> Result<serde_json::Value, OdmError> {
+        json_value(self)
+    }
+    fn to_human(&self) -> String {
+        format_pack_list_human(self)
+    }
+}
+
+impl Present for PackEntryDto {
+    fn to_json(&self) -> Result<serde_json::Value, OdmError> {
+        json_value(self)
+    }
+    fn to_human(&self) -> String {
+        // Prefer install/link/rm-specific formatters in handlers.
+        format!("{}\n", self.name)
+    }
+}
+
+pub fn list_cmd(ctx: &Ctx) -> Result<Ready<PackListDto>, OdmError> {
+    let entries = pack_list(&ctx.ws)?;
+    let dto = pack_list_dto(&entries);
+    let human = format_pack_list_human(&dto);
+    Ok(Ready::ok(dto, human))
+}
+
+pub fn install_cmd(
+    ctx: &Ctx,
+    source: &Path,
+    home: &Path,
+    force: bool,
+) -> Result<Ready<PackEntryDto>, OdmError> {
+    let entry = pack_install(&ctx.ws, source, home, force)?;
+    let human = format_pack_install_human(&entry);
+    Ok(Ready::ok(PackEntryDto::from(&entry), human))
+}
+
+pub fn link_cmd(
+    ctx: &Ctx,
+    source: &Path,
+    home: &Path,
+    force: bool,
+) -> Result<Ready<PackEntryDto>, OdmError> {
+    let entry = pack_link(&ctx.ws, source, home, force)?;
+    let human = format_pack_link_human(&entry);
+    Ok(Ready::ok(PackEntryDto::from(&entry), human))
+}
+
+pub fn rm_cmd(ctx: &Ctx, name: &str) -> Result<Ready<PackEntryDto>, OdmError> {
+    let entry = pack_rm(&ctx.ws, name)?;
+    let human = format_pack_rm_human(&entry);
+    Ok(Ready::ok(PackEntryDto::from(&entry), human))
 }
 
 #[cfg(test)]
@@ -129,7 +183,7 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("pack");
         fs::create_dir_all(&path).unwrap();
-        let v = serde_json::to_value(pack_entry_dto(&entry_at(
+        let v = serde_json::to_value(PackEntryDto::from(&entry_at(
             "a",
             PackMode::Install,
             path,
@@ -142,7 +196,7 @@ mod tests {
     fn missing_true_when_path_absent() {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("no-such");
-        let v = serde_json::to_value(pack_entry_dto(&entry_at(
+        let v = serde_json::to_value(PackEntryDto::from(&entry_at(
             "a",
             PackMode::Install,
             path,
@@ -164,7 +218,7 @@ mod tests {
         }
         assert!(link.symlink_metadata().is_ok());
         assert!(!link.exists());
-        let v = serde_json::to_value(pack_entry_dto(&entry_at(
+        let v = serde_json::to_value(PackEntryDto::from(&entry_at(
             "a",
             PackMode::Link,
             link,
@@ -228,7 +282,7 @@ mod tests {
             format_pack_link_human(&e2),
             "linked skills -> /home/agent/skills\n"
         );
-        let v = serde_json::to_value(pack_entry_dto(&e)).unwrap();
+        let v = serde_json::to_value(PackEntryDto::from(&e)).unwrap();
         assert_eq!(v["name"], "core-desk");
         assert_eq!(v["mode"], "install");
         assert_eq!(v["path"], "/home/agent/core-desk");

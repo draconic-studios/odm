@@ -1,40 +1,22 @@
-mod cli;
-mod output;
-
-use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
 use clap::error::ErrorKind;
 use clap::Parser;
+use odm::cli::{
+    resolve_wt_from_env, AgentCmd, Cli, Commands, PackCmd, PinCmd, ProgenCmd, ProjectCmd,
+    ProjectWorktreeCmd,
+};
 use odm::commands::{
-    action_run_dto, find_notes_dto, format_action_list_human, format_generate_run_human,
-    format_generator_list_human, format_pack_install_human, format_pack_link_human,
-    format_pack_list_human, format_pack_rm_human, format_progen_add_human, format_progen_info_human,
-    format_progen_list_human, format_project_add_human, format_project_info_human,
-    format_project_list_human, format_worktree_add_human, format_worktree_list_human,
-    format_worktree_prune_all_human,
-    format_worktree_prune_human, format_worktree_rm_human, list_actions_dto, list_generators_dto,
-    list_projects, list_progens, materialize_json, materialize_json_opt, materialize_sync_human,
-    pack_entry_dto, pack_list_dto, progen_info, project_info, status_snapshot, worktree_list_dto,
-    worktree_prune_all_dto, worktree_prune_dto, worktree_slot_action_dto, GenerateRunDto,
+    context_cmd, doctor_cmd, finish_run, generate_cmd, init_cmd, pack_install_cmd, pack_link_cmd,
+    pack_list_cmd, pack_rm_cmd, pin_apply_cmd, pin_status_cmd, project_add_cmd, project_git_cmd,
+    project_info_cmd, project_list_cmd, project_rm_cmd, progen_add_cmd, progen_doctor_cmd,
+    progen_info_cmd, progen_list_cmd, progen_rm_cmd, run_cmd, status_cmd, sync_cmd, worktree_add_cmd,
+    worktree_list_cmd, worktree_prune_cmd, worktree_rm_cmd, backlinks_cmd, body_cmd, find_cmd,
+    get_cmd, ls_cmd, reindex_cmd, tree_cmd,
 };
-use odm_actions::{run_action, CwdTarget, RunOptions, StdioMode};
-use odm_core::{
-    discover_root, format_doctor_human, format_status_human, generate_local, init_workspace,
-    load_workspace, pack_install, pack_link, pack_list, pack_rm, path_buf_to_rel, pin_apply,
-    pin_status, project_add, project_git, project_rm, run_doctor, sync_managed, worktree_add,
-    worktree_list, worktree_prune, worktree_prune_all, worktree_rm, InitOptions, OdmError,
-    ProgenEntry, ProjectEntry,
-};
-use odm_git::Git;
-use odm_progen::{
-    add_progen, context_notes, doctor_progens, format_context_human, format_find_human,
-    format_get_human, format_ls_human, get_note, list_notes, one_progen_flag, open_for_id,
-    open_single, reindex_for_cli, rm_progen,
-};
-
-use cli::{AgentCmd, Cli, Commands, PackCmd, PinCmd, ProgenCmd, ProjectCmd, ProjectWorktreeCmd};
-use output::{print_error, print_json, GlobalOut};
+use odm::ctx::Ctx;
+use odm::present::{finish, print_error, GlobalOut};
+use odm_core::OdmError;
 
 fn main() -> ExitCode {
     let cli = match Cli::try_parse() {
@@ -62,8 +44,7 @@ fn exit_clap_error(e: clap::Error) -> ExitCode {
         _ => {
             let json = std::env::args_os().any(|a| a == "--json");
             if json {
-                let msg = e.to_string();
-                let msg = msg.trim().to_string();
+                let msg = e.to_string().trim().to_string();
                 print_error(&GlobalOut { json: true }, &OdmError::usage(msg));
             } else {
                 let _ = e.print();
@@ -73,735 +54,150 @@ fn exit_clap_error(e: clap::Error) -> ExitCode {
     }
 }
 
-/// Collect every `--wt` / `--wt=` before `--` (clap global Append drops split positions).
-fn collect_wt_from_argv(args: impl IntoIterator<Item = String>) -> Vec<String> {
-    let mut out = Vec::new();
-    let mut iter = args.into_iter();
-    // skip argv0
-    let _ = iter.next();
-    while let Some(a) = iter.next() {
-        if a == "--" {
-            break;
-        }
-        if a == "--wt" {
-            if let Some(v) = iter.next() {
-                if v != "--" && !v.starts_with('-') {
-                    out.push(v);
-                }
-            }
-        } else if let Some(rest) = a.strip_prefix("--wt=") {
-            out.push(rest.to_string());
-        }
-    }
-    out
-}
-
-/// Collapse repeated `--wt` flags: none / one / equal repeats OK; differing → usage.
-fn resolve_wt_flags(flags: &[String]) -> Result<Option<String>, OdmError> {
-    match flags {
-        [] => Ok(None),
-        [w] => Ok(Some(w.clone())),
-        [first, rest @ ..] => {
-            if rest.iter().all(|w| w == first) {
-                Ok(Some(first.clone()))
-            } else {
-                Err(OdmError::usage(format!(
-                    "conflicting --wt values: {}",
-                    flags.join(", ")
-                )))
-            }
-        }
-    }
-}
-
 fn run(cli: Cli, out: &GlobalOut) -> Result<i32, OdmError> {
-    let global_project = cli.project.clone();
-    // Prefer argv scan: clap global Append loses values when `--wt` appears both
-    // before and after the subcommand. `cli.wt` is still declared for help surface.
-    let _cli_wt = cli.wt;
-    let global_wt = resolve_wt_flags(&collect_wt_from_argv(std::env::args()))?;
+    // Suppress unused clap help field (execution uses resolve_wt_from_env).
+    let _ = &cli.wt;
+
     match cli.command {
         Commands::Init {
             path,
             no_git,
             interactive,
-        } => {
-            if interactive {
-                return Err(OdmError::not_implemented("init --interactive"));
-            }
-            let target = path.unwrap_or_else(|| PathBuf::from("."));
-            let res = init_workspace(InitOptions {
-                path: target,
-                no_git,
-                name: None,
-            })?;
-            if out.json {
-                print_json(&serde_json::json!({
-                    "root": res.root,
-                    "git": res.git,
-                }))?;
-            } else {
-                println!(
-                    "Initialized Workspace at {} (git: {})",
-                    res.root.display(),
-                    res.git
-                );
-            }
-            Ok(0)
+        } => finish(out, &init_cmd(path, no_git, interactive)?),
+
+        cmd => {
+            let wt = resolve_wt_from_env()?;
+            let mut ctx = Ctx::open(
+                cli.root.as_deref(),
+                cli.project.clone(),
+                wt,
+                cli.progen.clone(),
+                cli.progen_group.clone(),
+            )?;
+            dispatch(&mut ctx, out, cmd)
         }
-        Commands::Sync { names } => {
-            let root = discover_root(cli.root.as_deref(), &std::env::current_dir()?)?;
-            let ws = load_workspace(&root)?;
-            let git = Git::new();
-            let results = sync_managed(&git, &ws.root, &ws.config, &names)?;
-            if out.json {
-                print_json(&serde_json::json!({
-                    "ok": true,
-                    "results": results.iter().map(|r| {
-                        serde_json::json!({
-                            "name": r.name,
-                            "materialized": materialize_json(r.materialized),
-                            "fetched": r.fetched,
-                            "head": r.head,
-                        })
-                    }).collect::<Vec<_>>(),
-                }))?;
-            } else if results.is_empty() {
-                println!("(no managed entries)");
-            } else {
-                for r in &results {
-                    println!(
-                        "{}\t{}\tfetched",
-                        r.name,
-                        materialize_sync_human(r.materialized)
-                    );
+    }
+}
+
+fn dispatch(ctx: &mut Ctx, out: &GlobalOut, cmd: Commands) -> Result<i32, OdmError> {
+    match cmd {
+        Commands::Init { .. } => unreachable!("init handled before context open"),
+        Commands::Sync { names } => finish(out, &sync_cmd(ctx, &names)?),
+        Commands::Pin { cmd } => match cmd {
+            PinCmd::Apply { names, force } => finish(out, &pin_apply_cmd(ctx, &names, force)?),
+            PinCmd::Status { names } => finish(out, &pin_status_cmd(ctx, &names)?),
+        },
+        Commands::Status => finish(out, &status_cmd(ctx)?),
+        Commands::Doctor { fix } => finish(out, &doctor_cmd(ctx, fix)?),
+        Commands::Project { cmd } => match cmd {
+            ProjectCmd::List => finish(out, &project_list_cmd(ctx)?),
+            ProjectCmd::Add {
+                name,
+                path,
+                url,
+                branch,
+                type_,
+                no_clone,
+            } => finish(
+                out,
+                &project_add_cmd(ctx, &name, &path, url, branch, type_, no_clone)?,
+            ),
+            ProjectCmd::Rm {
+                name,
+                delete,
+                force,
+            } => finish(out, &project_rm_cmd(ctx, &name, delete, force)?),
+            ProjectCmd::Info { name } => finish(out, &project_info_cmd(ctx, &name)?),
+            ProjectCmd::Git { name, git_args } => {
+                let status = project_git_cmd(ctx, &name, &git_args)?;
+                Ok(status.code().unwrap_or(1))
+            }
+            ProjectCmd::Worktree { cmd } => match cmd {
+                ProjectWorktreeCmd::List { project } => {
+                    finish(out, &worktree_list_cmd(ctx, &project)?)
                 }
-            }
-            Ok(0)
-        }
-        Commands::Pin { cmd } => {
-            let root = discover_root(cli.root.as_deref(), &std::env::current_dir()?)?;
-            let ws = load_workspace(&root)?;
-            let git = Git::new();
-            match cmd {
-                PinCmd::Apply { names, force } => {
-                    let results = pin_apply(&git, &ws.root, &ws.config, &names, force)?;
-                    if out.json {
-                        print_json(&serde_json::json!({
-                            "results": results.iter().map(|r| {
-                                serde_json::json!({
-                                    "name": r.name,
-                                    "status": r.status,
-                                    "rev": r.rev,
-                                })
-                            }).collect::<Vec<_>>(),
-                        }))?;
-                    } else {
-                        for r in &results {
-                            println!(
-                                "{}\t{}\t{}",
-                                r.name,
-                                r.status,
-                                r.rev.as_deref().unwrap_or("-")
-                            );
-                        }
-                        if results.is_empty() {
-                            println!("(nothing to apply)");
-                        } else {
-                            println!("applied");
-                        }
-                    }
-                    Ok(0)
-                }
-                PinCmd::Status { names } => {
-                    let report = pin_status(&git, &ws.root, &ws.config, &names)?;
-                    if out.json {
-                        print_json(&serde_json::json!({
-                            "pin_file": report.pin_file,
-                            "present": report.present,
-                            "entries": report.entries.iter().map(|e| {
-                                serde_json::json!({
-                                    "name": e.name,
-                                    "pin_rev": e.pin_rev,
-                                    "head": e.head,
-                                    "state": e.state,
-                                })
-                            }).collect::<Vec<_>>(),
-                        }))?;
-                    } else if report.entries.is_empty() {
-                        println!("pin file present: {}", report.present);
-                        println!("(no managed entries)");
-                    } else {
-                        for e in &report.entries {
-                            println!(
-                                "{}\t{}\t{}",
-                                e.name,
-                                e.state,
-                                e.pin_rev.as_deref().unwrap_or("-")
-                            );
-                        }
-                    }
-                    Ok(0)
-                }
-            }
-        }
-        Commands::Status => {
-            let root = discover_root(cli.root.as_deref(), &std::env::current_dir()?)?;
-            let ws = load_workspace(&root)?;
-            let git = Git::new();
-            let snap = status_snapshot(&git, &ws)?;
-            if out.json {
-                print_json(&snap)?;
-            } else {
-                print!("{}", format_status_human(&snap));
-            }
-            Ok(0)
-        }
-        Commands::Doctor { fix } => {
-            let root = discover_root(cli.root.as_deref(), &std::env::current_dir()?)?;
-            let ws = load_workspace(&root)?;
-            let git = Git::new();
-            let report = run_doctor(&git, &ws, fix)?;
-            if out.json {
-                print_json(&report)?;
-            } else {
-                print!("{}", format_doctor_human(&report));
-            }
-            if report.ok {
-                Ok(0)
-            } else {
-                Ok(3)
-            }
-        }
-        Commands::Project { cmd } => {
-            let root = discover_root(cli.root.as_deref(), &std::env::current_dir()?)?;
-            let mut ws = load_workspace(&root)?;
-            let git = Git::new();
-            match cmd {
-                ProjectCmd::List => {
-                    if out.json {
-                        print_json(&list_projects(&git, &ws)?)?;
-                    } else {
-                        let snap = status_snapshot(&git, &ws)?;
-                        print!("{}", format_project_list_human(&ws, &snap));
-                    }
-                    Ok(0)
-                }
-                ProjectCmd::Add {
-                    name,
-                    path,
-                    url,
+                ProjectWorktreeCmd::Add {
+                    project,
+                    slot,
                     branch,
-                    type_,
-                    no_clone,
-                } => {
-                    let rel = path_buf_to_rel(&path)?;
-                    let entry = ProjectEntry {
-                        path: rel,
-                        url,
-                        branch,
-                        type_,
-                    };
-                    let outcome =
-                        project_add(&git, &ws.root, &mut ws.config, &name, entry, no_clone)?;
-                    if out.json {
-                        print_json(&serde_json::json!({
-                            "ok": true,
-                            "name": name,
-                            "materialized": materialize_json_opt(outcome),
-                        }))?;
-                    } else {
-                        println!("{}", format_project_add_human(&name, outcome));
-                    }
-                    Ok(0)
-                }
-                ProjectCmd::Rm {
-                    name,
-                    delete,
+                } => finish(
+                    out,
+                    &worktree_add_cmd(ctx, &project, &slot, branch.as_deref())?,
+                ),
+                ProjectWorktreeCmd::Rm {
+                    project,
+                    slot,
                     force,
-                } => {
-                    project_rm(&git, &ws.root, &mut ws.config, &name, delete, force)?;
-                    if out.json {
-                        print_json(&serde_json::json!({ "ok": true, "name": name }))?;
-                    } else {
-                        println!("removed project {name}");
-                    }
-                    Ok(0)
-                }
-                ProjectCmd::Info { name } => {
-                    let dto = project_info(&git, &ws, &name)?;
-                    if out.json {
-                        print_json(&dto)?;
-                    } else {
-                        print!("{}", format_project_info_human(&dto));
-                    }
-                    Ok(0)
-                }
-                ProjectCmd::Git { name, git_args } => {
-                    let status =
-                        project_git(&git, &ws, &name, &git_args, global_wt.as_deref())?;
-                    Ok(status.code().unwrap_or(1))
-                }
-                ProjectCmd::Worktree { cmd } => match cmd {
-                    ProjectWorktreeCmd::List { project } => {
-                        let outcome = worktree_list(&git, &ws, &project)?;
-                        if out.json {
-                            print_json(&worktree_list_dto(&outcome))?;
-                        } else {
-                            print!("{}", format_worktree_list_human(&outcome));
-                        }
-                        Ok(0)
-                    }
-                    ProjectWorktreeCmd::Add {
-                        project,
-                        slot,
-                        branch,
-                    } => {
-                        let outcome =
-                            worktree_add(&git, &ws, &project, &slot, branch.as_deref())?;
-                        if out.json {
-                            print_json(&worktree_slot_action_dto(&outcome))?;
-                        } else {
-                            println!("{}", format_worktree_add_human(&outcome));
-                        }
-                        Ok(0)
-                    }
-                    ProjectWorktreeCmd::Rm {
-                        project,
-                        slot,
-                        force,
-                    } => {
-                        let outcome = worktree_rm(&git, &ws, &project, &slot, force)?;
-                        if out.json {
-                            print_json(&worktree_slot_action_dto(&outcome))?;
-                        } else {
-                            println!("{}", format_worktree_rm_human(&outcome));
-                        }
-                        Ok(0)
-                    }
-                    ProjectWorktreeCmd::Prune {
-                        project,
-                        all,
-                        force,
-                    } => {
-                        if all {
-                            let outcome = worktree_prune_all(&git, &ws, force)?;
-                            if out.json {
-                                print_json(&worktree_prune_all_dto(&outcome))?;
-                            } else {
-                                println!("{}", format_worktree_prune_all_human(&outcome));
-                            }
-                            if outcome.skipped_nonempty.is_empty() {
-                                Ok(0)
-                            } else {
-                                Ok(3)
-                            }
-                        } else {
-                            let project = project.expect("clap requires project unless --all");
-                            let outcome = worktree_prune(&git, &ws, &project, force)?;
-                            if out.json {
-                                print_json(&worktree_prune_dto(&outcome))?;
-                            } else {
-                                println!("{}", format_worktree_prune_human(&outcome));
-                            }
-                            // Partial: empties removed; non-empty orphans remain → exit 3 after output.
-                            if outcome.skipped_nonempty.is_empty() {
-                                Ok(0)
-                            } else {
-                                Ok(3)
-                            }
-                        }
-                    }
-                },
-            }
-        }
-        Commands::Progen { cmd } => run_progen(cli.root.as_deref(), &cli.progen, out, cmd),
-        Commands::Find { query, limit } => {
-            if limit == 0 {
-                return Err(OdmError::usage("--limit must be at least 1"));
-            }
-            let root = discover_root(cli.root.as_deref(), &std::env::current_dir()?)?;
-            let ws = load_workspace(&root)?;
-            let q = query.unwrap_or_default();
-            let dto = find_notes_dto(&ws, &q, &cli.progen, &cli.progen_group, limit)?;
-            if out.json {
-                print_json(&dto)?;
-            } else {
-                print!("{}", format_find_human(&dto.hits));
-            }
-            Ok(0)
-        }
-        Commands::Context { id } => run_context_prompt(
-            cli.root.as_deref(),
-            &cli.progen,
+                } => finish(out, &worktree_rm_cmd(ctx, &project, &slot, force)?),
+                ProjectWorktreeCmd::Prune {
+                    project,
+                    all,
+                    force,
+                } => finish(out, &worktree_prune_cmd(ctx, project, all, force)?),
+            },
+        },
+        Commands::Progen { cmd } => match cmd {
+            ProgenCmd::List => finish(out, &progen_list_cmd(ctx)?),
+            ProgenCmd::Add {
+                name,
+                path,
+                url,
+                branch,
+                no_clone,
+            } => finish(
+                out,
+                &progen_add_cmd(ctx, &name, &path, url, branch, no_clone)?,
+            ),
+            ProgenCmd::Rm {
+                name,
+                delete,
+                force,
+            } => finish(out, &progen_rm_cmd(ctx, &name, delete, force)?),
+            ProgenCmd::Info { name } => finish(out, &progen_info_cmd(ctx, &name)?),
+            ProgenCmd::Get { id } => finish(out, &get_cmd(ctx, &id)?),
+            ProgenCmd::Body { id } => finish(out, &body_cmd(ctx, &id)?),
+            ProgenCmd::Tree => finish(out, &tree_cmd(ctx)?),
+            ProgenCmd::Backlinks { id } => finish(out, &backlinks_cmd(ctx, &id)?),
+            ProgenCmd::Ls => finish(out, &ls_cmd(ctx)?),
+            ProgenCmd::Reindex => finish(out, &reindex_cmd(ctx)?),
+            ProgenCmd::Doctor => finish(out, &progen_doctor_cmd(ctx)?),
+        },
+        Commands::Find { query, limit } => finish(out, &find_cmd(ctx, query, limit)?),
+        Commands::Context { id } => finish(
             out,
-            &id,
-            "context accepts at most one --progen (or use name:id)",
+            &context_cmd(
+                ctx,
+                &id,
+                "context accepts at most one --progen (or use name:id)",
+            )?,
         ),
-        Commands::Run { action, extra } => {
-            let root = discover_root(cli.root.as_deref(), &std::env::current_dir()?)?;
-            let ws = load_workspace(&root)?;
-            match action {
-                None => {
-                    let dto = list_actions_dto(&ws);
-                    if out.json {
-                        print_json(&dto)?;
-                    } else {
-                        print!("{}", format_action_list_human(&dto));
-                    }
-                    Ok(0)
-                }
-                Some(name) => {
-                    let cwd =
-                        CwdTarget::from_flags(global_project.as_deref(), global_wt.as_deref())?;
-                    let stdio = if out.json {
-                        StdioMode::Capture
-                    } else {
-                        StdioMode::Inherit
-                    };
-                    let result = run_action(
-                        &ws,
-                        &name,
-                        RunOptions {
-                            cwd,
-                            extra_args: &extra,
-                            stdio,
-                        },
-                    )?;
-                    if out.json {
-                        print_json(&action_run_dto(name, &result))?;
-                    }
-                    Ok(result.exit_code)
-                }
-            }
-        }
+        Commands::Run { action, extra } => finish_run(out, run_cmd(ctx, action, &extra, out.json)?),
         Commands::Generate {
             name,
             dest,
             force,
             dry_run,
-        } => {
-            let root = discover_root(cli.root.as_deref(), &std::env::current_dir()?)?;
-            let ws = load_workspace(&root)?;
-            match name {
-                None => {
-                    let dto = list_generators_dto(&ws);
-                    if out.json {
-                        print_json(&dto)?;
-                    } else {
-                        print!("{}", format_generator_list_human(&dto));
-                    }
-                    Ok(0)
-                }
-                Some(name) => {
-                    let dest = dest.ok_or_else(|| {
-                        OdmError::usage("generate requires --dest <path> when a name is given")
-                    })?;
-                    let dest_rel = path_buf_to_rel(&dest)?;
-                    let outcome = generate_local(&ws, &name, &dest_rel, force, dry_run)?;
-                    if out.json {
-                        print_json(&GenerateRunDto {
-                            generator: name,
-                            dest: dest_rel,
-                            copied: outcome.copied,
-                            dry_run,
-                        })?;
-                    } else {
-                        print!(
-                            "{}",
-                            format_generate_run_human(&name, &dest_rel, outcome.copied, dry_run)
-                        );
-                    }
-                    Ok(0)
-                }
-            }
-        }
+        } => finish(out, &generate_cmd(ctx, name, dest, force, dry_run)?),
         Commands::Agent { cmd } => match cmd {
-            AgentCmd::Pack { cmd } => {
-                let root = discover_root(cli.root.as_deref(), &std::env::current_dir()?)?;
-                let ws = load_workspace(&root)?;
-                match cmd {
-                    PackCmd::List => {
-                        let entries = pack_list(&ws)?;
-                        let dto = pack_list_dto(&entries);
-                        if out.json {
-                            print_json(&dto)?;
-                        } else {
-                            print!("{}", format_pack_list_human(&dto));
-                        }
-                        Ok(0)
-                    }
-                    PackCmd::Install { source, home, force } => {
-                        let entry = pack_install(&ws, &source, &home, force)?;
-                        if out.json {
-                            print_json(&pack_entry_dto(&entry))?;
-                        } else {
-                            print!("{}", format_pack_install_human(&entry));
-                        }
-                        Ok(0)
-                    }
-                    PackCmd::Link { source, home, force } => {
-                        let entry = pack_link(&ws, &source, &home, force)?;
-                        if out.json {
-                            print_json(&pack_entry_dto(&entry))?;
-                        } else {
-                            print!("{}", format_pack_link_human(&entry));
-                        }
-                        Ok(0)
-                    }
-                    PackCmd::Rm { name } => {
-                        let entry = pack_rm(&ws, &name)?;
-                        if out.json {
-                            print_json(&pack_entry_dto(&entry))?;
-                        } else {
-                            print!("{}", format_pack_rm_human(&entry));
-                        }
-                        Ok(0)
-                    }
+            AgentCmd::Pack { cmd } => match cmd {
+                PackCmd::List => finish(out, &pack_list_cmd(ctx)?),
+                PackCmd::Install { source, home, force } => {
+                    finish(out, &pack_install_cmd(ctx, &source, &home, force)?)
                 }
-            }
+                PackCmd::Link { source, home, force } => {
+                    finish(out, &pack_link_cmd(ctx, &source, &home, force)?)
+                }
+                PackCmd::Rm { name } => finish(out, &pack_rm_cmd(ctx, &name)?),
+            },
             AgentCmd::Start { .. } => Err(OdmError::not_implemented("agent start")),
-            AgentCmd::Prompt { id } => run_context_prompt(
-                cli.root.as_deref(),
-                &cli.progen,
+            AgentCmd::Prompt { id } => finish(
                 out,
-                &id,
-                "agent prompt accepts at most one --progen (or use name:id)",
+                &context_cmd(
+                    ctx,
+                    &id,
+                    "agent prompt accepts at most one --progen (or use name:id)",
+                )?,
             ),
         },
-    }
-}
-
-/// Shared path for `odm context` and `odm agent prompt` (thin context packaging).
-fn run_context_prompt(
-    root_flag: Option<&Path>,
-    global_progen: &[String],
-    out: &GlobalOut,
-    id: &str,
-    multi_progen_msg: &str,
-) -> Result<i32, OdmError> {
-    let root = discover_root(root_flag, &std::env::current_dir()?)?;
-    let ws = load_workspace(&root)?;
-    let progen = one_progen_flag(global_progen, multi_progen_msg)?;
-    let hit = context_notes(&ws, id, progen)?;
-    if out.json {
-        print_json(&hit)?;
-    } else {
-        print!("{}", format_context_human(&hit));
-    }
-    Ok(0)
-}
-
-fn run_progen(
-    root_flag: Option<&Path>,
-    global_progen: &[String],
-    out: &GlobalOut,
-    cmd: ProgenCmd,
-) -> Result<i32, OdmError> {
-    let root = discover_root(root_flag, &std::env::current_dir()?)?;
-    let mut ws = load_workspace(&root)?;
-    let git = Git::new();
-
-    match cmd {
-        ProgenCmd::List => {
-            if out.json {
-                print_json(&list_progens(&git, &ws)?)?;
-            } else {
-                let snap = status_snapshot(&git, &ws)?;
-                print!("{}", format_progen_list_human(&ws, &snap));
-            }
-            Ok(0)
-        }
-        ProgenCmd::Add {
-            name,
-            path,
-            url,
-            branch,
-            no_clone,
-        } => {
-            let rel = path_buf_to_rel(&path)?;
-            let entry = ProgenEntry {
-                path: rel,
-                url,
-                branch,
-            };
-            let outcome = add_progen(&git, &ws.root, &mut ws.config, &name, entry, no_clone)?;
-            if out.json {
-                print_json(&serde_json::json!({
-                    "ok": true,
-                    "name": name,
-                    "materialized": materialize_json_opt(outcome),
-                }))?;
-            } else {
-                println!("{}", format_progen_add_human(&name, outcome));
-            }
-            Ok(0)
-        }
-        ProgenCmd::Rm {
-            name,
-            delete,
-            force,
-        } => {
-            rm_progen(&git, &ws.root, &mut ws.config, &name, delete, force)?;
-            if out.json {
-                print_json(&serde_json::json!({ "ok": true, "name": name }))?;
-            } else {
-                println!("removed progen {name}");
-            }
-            Ok(0)
-        }
-        ProgenCmd::Info { name } => {
-            let dto = progen_info(&ws, &name)?;
-            if out.json {
-                print_json(&dto)?;
-            } else {
-                print!("{}", format_progen_info_human(&dto));
-            }
-            Ok(0)
-        }
-        ProgenCmd::Get { id } => {
-            let progen = one_progen_flag(
-                global_progen,
-                "progen get accepts at most one --progen (or use name:id)",
-            )?;
-            let g = get_note(&ws, &id, progen)?;
-            if out.json {
-                print_json(&g)?;
-            } else {
-                print!("{}", format_get_human(&g));
-            }
-            Ok(0)
-        }
-        ProgenCmd::Body { id } => {
-            let progen = one_progen_flag(
-                global_progen,
-                "progen body accepts at most one --progen (or use name:id)",
-            )?;
-            // Body is presentation of get (reduced JSON / body stdout).
-            let g = get_note(&ws, &id, progen)?;
-            if out.json {
-                print_json(&serde_json::json!({
-                    "progen": g.progen,
-                    "id": g.id,
-                    "body": g.body,
-                }))?;
-            } else {
-                print!("{}", g.body);
-                if !g.body.ends_with('\n') {
-                    println!();
-                }
-            }
-            Ok(0)
-        }
-        ProgenCmd::Tree => {
-            let progen =
-                one_progen_flag(global_progen, "progen tree accepts at most one --progen")?;
-            let paths = open_single(&ws, progen)?.tree()?;
-            if out.json {
-                print_json(&serde_json::json!({ "paths": paths }))?;
-            } else if paths.is_empty() {
-                println!("(no notes)");
-            } else {
-                for p in paths {
-                    println!("{p}");
-                }
-            }
-            Ok(0)
-        }
-        ProgenCmd::Backlinks { id } => {
-            let progen = one_progen_flag(
-                global_progen,
-                "progen backlinks accepts at most one --progen (or use name:id)",
-            )?;
-            let (store, nid) = open_for_id(&ws, &id, progen)?;
-            let hits = store.backlinks(&nid)?;
-            if out.json {
-                print_json(&serde_json::json!({ "backlinks": hits }))?;
-            } else {
-                print!("{}", format_ls_human(&hits));
-            }
-            Ok(0)
-        }
-        ProgenCmd::Ls => {
-            let progen =
-                one_progen_flag(global_progen, "progen ls accepts at most one --progen")?;
-            let hits = list_notes(&ws, progen)?;
-            if out.json {
-                print_json(&serde_json::json!({ "notes": hits }))?;
-            } else {
-                print!("{}", format_ls_human(&hits));
-            }
-            Ok(0)
-        }
-        ProgenCmd::Reindex => {
-            let stats = reindex_for_cli(&ws, global_progen)?;
-            if out.json {
-                print_json(&serde_json::json!({ "results": stats.iter().map(|s| {
-                    serde_json::json!({
-                        "progen": s.progen,
-                        "notes": s.notes,
-                        "links": s.links,
-                    })
-                }).collect::<Vec<_>>() }))?;
-            } else {
-                for s in stats {
-                    println!("{}\t{} notes\t{} links", s.progen, s.notes, s.links);
-                }
-            }
-            Ok(0)
-        }
-        ProgenCmd::Doctor => {
-            let progen =
-                one_progen_flag(global_progen, "progen doctor accepts at most one --progen")?;
-            let checks = doctor_progens(&ws, progen)?;
-            let ok = checks.iter().all(|c| c.ok);
-            if out.json {
-                print_json(&serde_json::json!({ "ok": ok, "checks": checks }))?;
-            } else if checks.is_empty() {
-                println!("(no progens)");
-            } else {
-                for c in &checks {
-                    let mark = if c.ok { "ok" } else { "FAIL" };
-                    println!("{}\t{}\t{}\t{}", c.progen, c.id, mark, c.message);
-                }
-            }
-            if ok {
-                Ok(0)
-            } else {
-                Ok(3)
-            }
-        }
-    }
-}
-
-#[cfg(test)]
-mod wt_flag_tests {
-    use super::{collect_wt_from_argv, resolve_wt_flags};
-
-    #[test]
-    fn collect_split_and_equals() {
-        let args = vec![
-            "odm".into(),
-            "--wt".into(),
-            "a".into(),
-            "project".into(),
-            "git".into(),
-            "p".into(),
-            "--wt=b".into(),
-            "--".into(),
-            "status".into(),
-        ];
-        assert_eq!(collect_wt_from_argv(args), vec!["a", "b"]);
-    }
-
-    #[test]
-    fn resolve_conflict_and_equal() {
-        assert!(resolve_wt_flags(&[]).unwrap().is_none());
-        assert_eq!(resolve_wt_flags(&["x".into()]).unwrap().as_deref(), Some("x"));
-        assert_eq!(
-            resolve_wt_flags(&["x".into(), "x".into()]).unwrap().as_deref(),
-            Some("x")
-        );
-        assert!(resolve_wt_flags(&["a".into(), "b".into()]).is_err());
     }
 }

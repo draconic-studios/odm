@@ -1,11 +1,22 @@
-//! `odm progen list` / `info` — config ⨝ status / vault → DTO.
+//! `odm progen` handlers — membership + store façade + DTOs.
 
 use std::path::PathBuf;
 
-use odm_core::{build_status, OdmError, PinState, StatusSnapshot, Workspace};
+use odm_core::{
+    build_status, path_buf_to_rel, OdmError, PinState, ProgenEntry, StatusSnapshot, Workspace,
+};
 use odm_git::Git;
-use odm_progen::{scoped_from_config, vault_info};
+use odm_progen::{
+    add_progen, context_notes, doctor_progens, format_context_human, format_get_human,
+    format_ls_human, get_note, list_notes, one_progen_flag, open_for_id, open_single,
+    reindex_for_cli, rm_progen, scoped_from_config, vault_info, ContextHit, GetResult, IndexStats,
+    LsHit, ProgenDoctorCheck,
+};
 use serde::Serialize;
+
+use crate::commands::materialize::{format_progen_add_human, materialize_json_opt};
+use crate::ctx::Ctx;
+use crate::present::{json_value, NamedMaterialize, NamedOk, Present, Ready};
 
 /// `odm progen list --json` envelope.
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
@@ -90,21 +101,18 @@ pub fn progen_info(ws: &Workspace, name: &str) -> Result<ProgenInfoDto, OdmError
     })
 }
 
-/// Human multi-line list (beside DTO).
-pub fn format_progen_list_human(ws: &Workspace, snap: &StatusSnapshot) -> String {
-    if ws.config.progens.is_empty() {
+/// Human multi-line list from the same DTO as JSON (no dual join).
+pub fn format_progen_list_human(dto: &ProgenListDto) -> String {
+    if dto.progens.is_empty() {
         return "(no progens)\n".into();
     }
     let mut out = String::new();
-    for (name, e) in &ws.config.progens {
-        let managed = if e.url.is_some() { "managed" } else { "path" };
-        let st = snap.progens.iter().find(|p| p.name == *name);
-        let on_disk = st.map(|s| s.on_disk).unwrap_or(false);
-        let is_git = st.map(|s| s.is_git).unwrap_or(false);
-        let pin = st.map(|s| s.pin_state.as_str()).unwrap_or("-");
+    for p in &dto.progens {
+        let managed = if p.url.is_some() { "managed" } else { "path" };
+        let pin = p.pin_state.map(|s| s.as_str()).unwrap_or("-");
         out.push_str(&format!(
-            "{name}\t{}\t{managed}\ton_disk={on_disk}\tis_git={is_git}\tpin={pin}\n",
-            e.path
+            "{}\t{}\t{managed}\ton_disk={}\tis_git={}\tpin={pin}\n",
+            p.name, p.path, p.on_disk, p.is_git
         ));
     }
     out
@@ -123,6 +131,245 @@ pub fn format_progen_info_human(dto: &ProgenInfoDto) -> String {
     out.push_str(&format!("obsidian: {}\n", dto.has_obsidian));
     out.push_str(&format!("abs: {}\n", dto.abs_path.display()));
     out
+}
+
+impl Present for ProgenListDto {
+    fn to_json(&self) -> Result<serde_json::Value, OdmError> {
+        json_value(self)
+    }
+    fn to_human(&self) -> String {
+        format_progen_list_human(self)
+    }
+}
+
+impl Present for ProgenInfoDto {
+    fn to_json(&self) -> Result<serde_json::Value, OdmError> {
+        json_value(self)
+    }
+    fn to_human(&self) -> String {
+        format_progen_info_human(self)
+    }
+}
+
+// --- store DTOs ---
+
+#[derive(Debug, Clone, Serialize)]
+pub struct BodyDto {
+    pub progen: String,
+    pub id: String,
+    pub body: String,
+}
+
+#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
+pub struct TreeDto {
+    pub paths: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct BacklinksDto {
+    pub backlinks: Vec<LsHit>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct NotesDto {
+    pub notes: Vec<LsHit>,
+}
+
+#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
+pub struct ReindexDto {
+    pub results: Vec<ReindexItemDto>,
+}
+
+#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
+pub struct ReindexItemDto {
+    pub progen: String,
+    pub notes: usize,
+    pub links: usize,
+}
+
+impl From<&IndexStats> for ReindexItemDto {
+    fn from(s: &IndexStats) -> Self {
+        Self {
+            progen: s.progen.clone(),
+            notes: s.notes,
+            links: s.links,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct ProgenDoctorDto {
+    pub ok: bool,
+    pub checks: Vec<ProgenDoctorCheck>,
+}
+
+// --- handlers ---
+
+pub fn list_cmd(ctx: &Ctx) -> Result<ProgenListDto, OdmError> {
+    list_progens(&ctx.git, &ctx.ws)
+}
+
+pub fn info_cmd(ctx: &Ctx, name: &str) -> Result<ProgenInfoDto, OdmError> {
+    progen_info(&ctx.ws, name)
+}
+
+pub fn add_cmd(
+    ctx: &mut Ctx,
+    name: &str,
+    path: &std::path::Path,
+    url: Option<String>,
+    branch: Option<String>,
+    no_clone: bool,
+) -> Result<Ready<NamedMaterialize>, OdmError> {
+    let rel = path_buf_to_rel(path)?;
+    let entry = ProgenEntry {
+        path: rel,
+        url,
+        branch,
+    };
+    let outcome = add_progen(
+        &ctx.git,
+        &ctx.ws.root,
+        &mut ctx.ws.config,
+        name,
+        entry,
+        no_clone,
+    )?;
+    let dto = NamedMaterialize::new(name, materialize_json_opt(outcome));
+    Ok(Ready::ok(dto, format_progen_add_human(name, outcome)))
+}
+
+pub fn rm_cmd(
+    ctx: &mut Ctx,
+    name: &str,
+    delete: bool,
+    force: bool,
+) -> Result<Ready<NamedOk>, OdmError> {
+    rm_progen(
+        &ctx.git,
+        &ctx.ws.root,
+        &mut ctx.ws.config,
+        name,
+        delete,
+        force,
+    )?;
+    Ok(Ready::ok(
+        NamedOk::new(name),
+        format!("removed progen {name}"),
+    ))
+}
+
+pub fn get_cmd(ctx: &Ctx, id: &str) -> Result<Ready<GetResult>, OdmError> {
+    let progen = one_progen_flag(
+        &ctx.progen,
+        "progen get accepts at most one --progen (or use name:id)",
+    )?;
+    let g = get_note(&ctx.ws, id, progen)?;
+    let human = format_get_human(&g);
+    Ok(Ready::ok(g, human))
+}
+
+pub fn body_cmd(ctx: &Ctx, id: &str) -> Result<Ready<BodyDto>, OdmError> {
+    let progen = one_progen_flag(
+        &ctx.progen,
+        "progen body accepts at most one --progen (or use name:id)",
+    )?;
+    let g = get_note(&ctx.ws, id, progen)?;
+    let mut human = g.body.clone();
+    if !human.ends_with('\n') {
+        human.push('\n');
+    }
+    Ok(Ready::ok(
+        BodyDto {
+            progen: g.progen,
+            id: g.id,
+            body: g.body,
+        },
+        human,
+    ))
+}
+
+pub fn tree_cmd(ctx: &Ctx) -> Result<Ready<TreeDto>, OdmError> {
+    let progen = one_progen_flag(&ctx.progen, "progen tree accepts at most one --progen")?;
+    let paths = open_single(&ctx.ws, progen)?.tree()?;
+    let human = if paths.is_empty() {
+        "(no notes)\n".into()
+    } else {
+        let mut s = String::new();
+        for p in &paths {
+            s.push_str(p);
+            s.push('\n');
+        }
+        s
+    };
+    Ok(Ready::ok(TreeDto { paths }, human))
+}
+
+pub fn backlinks_cmd(ctx: &Ctx, id: &str) -> Result<Ready<BacklinksDto>, OdmError> {
+    let progen = one_progen_flag(
+        &ctx.progen,
+        "progen backlinks accepts at most one --progen (or use name:id)",
+    )?;
+    let (store, nid) = open_for_id(&ctx.ws, id, progen)?;
+    let hits = store.backlinks(&nid)?;
+    let human = format_ls_human(&hits);
+    Ok(Ready::ok(BacklinksDto { backlinks: hits }, human))
+}
+
+pub fn ls_cmd(ctx: &Ctx) -> Result<Ready<NotesDto>, OdmError> {
+    let progen = one_progen_flag(&ctx.progen, "progen ls accepts at most one --progen")?;
+    let hits = list_notes(&ctx.ws, progen)?;
+    let human = format_ls_human(&hits);
+    Ok(Ready::ok(NotesDto { notes: hits }, human))
+}
+
+pub fn reindex_cmd(ctx: &Ctx) -> Result<Ready<ReindexDto>, OdmError> {
+    let stats = reindex_for_cli(&ctx.ws, &ctx.progen)?;
+    let dto = ReindexDto {
+        results: stats.iter().map(ReindexItemDto::from).collect(),
+    };
+    let mut human = String::new();
+    for s in &stats {
+        human.push_str(&format!(
+            "{}\t{} notes\t{} links\n",
+            s.progen, s.notes, s.links
+        ));
+    }
+    Ok(Ready::ok(dto, human))
+}
+
+pub fn doctor_cmd(ctx: &Ctx) -> Result<Ready<ProgenDoctorDto>, OdmError> {
+    let progen = one_progen_flag(&ctx.progen, "progen doctor accepts at most one --progen")?;
+    let checks = doctor_progens(&ctx.ws, progen)?;
+    let ok = checks.iter().all(|c| c.ok);
+    let dto = ProgenDoctorDto { ok, checks };
+    let human = if dto.checks.is_empty() {
+        "(no progens)\n".into()
+    } else {
+        let mut s = String::new();
+        for c in &dto.checks {
+            let mark = if c.ok { "ok" } else { "FAIL" };
+            s.push_str(&format!(
+                "{}\t{}\t{}\t{}\n",
+                c.progen, c.id, mark, c.message
+            ));
+        }
+        s
+    };
+    let exit = if ok { 0 } else { 3 };
+    Ok(Ready::with_exit(dto, human, exit))
+}
+
+/// Shared path for `odm context` and `odm agent prompt`.
+pub fn context_cmd(
+    ctx: &Ctx,
+    id: &str,
+    multi_progen_msg: &str,
+) -> Result<Ready<ContextHit>, OdmError> {
+    let progen = one_progen_flag(&ctx.progen, multi_progen_msg)?;
+    let hit = context_notes(&ctx.ws, id, progen)?;
+    let human = format_context_human(&hit);
+    Ok(Ready::ok(hit, human))
 }
 
 #[cfg(test)]

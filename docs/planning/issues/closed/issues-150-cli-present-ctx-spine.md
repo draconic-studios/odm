@@ -2,7 +2,7 @@
 id: issues-150
 title: "CLI Present/Ctx spine and thin dispatcher"
 description: "One workspace context, one Present/finish path, family dispatch; main stops owning dual print ritual and success json! envelopes."
-status: reviewing
+status: closed
 issue-type: feature-request
 severity: high
 tags:
@@ -77,15 +77,15 @@ See Agent Brief.
 
 **Acceptance criteria:**
 
-- [ ] Main has no pervasive per-arm `if out.json { print_json } else { print human }` ritual for ordinary success paths (one finish/present helper)
-- [ ] Main contains no success-path `serde_json::json!` envelopes for commands that have (or gain) DTOs; pin/sync/init/progen store success payloads are typed
-- [ ] Project and progen list human output is derived from the same DTO (or presentable) as JSON — no dual observation/join
-- [ ] Pure alias command modules/functions that only forward to core without policy are removed or inlined
-- [ ] `--wt` resolved once into context; no second ad-hoc parse inside random arms
-- [ ] Existing CLI integration tests pass without relaxing JSON/exit assertions
-- [ ] `main.rs` complexity reduced (target well under 400 LOC preferred; must stay ≤1000)
-- [ ] No touched `.rs` file >1250 LOC
-- [ ] `cargo test` green; `cargo clippy --workspace --all-targets -- -D warnings` clean
+- [x] Main has no pervasive per-arm `if out.json { print_json } else { print human }` ritual for ordinary success paths (one finish/present helper)
+- [x] Main contains no success-path `serde_json::json!` envelopes for commands that have (or gain) DTOs; pin/sync/init/progen store success payloads are typed
+- [x] Project and progen list human output is derived from the same DTO (or presentable) as JSON — no dual observation/join
+- [x] Pure alias command modules/functions that only forward to core without policy are removed or inlined
+- [x] `--wt` resolved once into context; no second ad-hoc parse inside random arms
+- [x] Existing CLI integration tests pass without relaxing JSON/exit assertions
+- [x] `main.rs` complexity reduced (target well under 400 LOC preferred; must stay ≤1000)
+- [x] No touched `.rs` file >1250 LOC
+- [x] `cargo test` green; `cargo clippy --workspace --all-targets -- -D warnings` clean
 
 **Out of scope:**
 
