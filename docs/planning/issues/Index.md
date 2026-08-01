@@ -7,16 +7,64 @@ See `docs/agents/issue-tracker.md`.
 ## Maps
 
 - [[issues-104-post-v1-pack-list-missing-map]] — Post-v1 pack list `missing` observation (status/doctor parity)
+- [[issues-119-swarm-audit-hardening-map]] — Swarm audit bugs/improvements (path safety, find, CLI honesty)
+- [[issues-120-test-coverage-map]] — Behavior-seam test suite toward full coverage
+- [[issues-121-full-capability-demo-map]] — core-desk full ODM capability demo + verification
 
 ## Frontier (open, unblocked)
 
-- [[issues-105-pack-list-missing-dto]] — pack list DTO includes `missing` (`ready-for-agent`)
+### Pre-existing
+
+- [[issues-105-pack-list-missing-dto]] — pack list DTO includes `missing` (`ready-for-agent`, may be reviewing)
+- [[issues-116-website-playwright-setup]] — Playwright setup for `website/` (`ready-for-agent`)
+
+### Swarm audit — critical / high (prefer first)
+
+- [[issues-122-find-snippet-unicode-panic]] — find snippet UTF-8 panic (`ready-for-agent`)
+- [[issues-123-fts-query-escaping]] — FTS safe queries (`ready-for-agent`)
+- [[issues-124-bundle-path-escape]] — action/generator bundle path escape (`ready-for-agent`)
+- [[issues-125-membership-path-escape]] — membership add path escape (`ready-for-agent`)
+- [[issues-126-action-dir-escape]] — action task dir escape (`ready-for-agent`)
+- [[issues-127-wt-missing-exit-code]] — missing wt/path exit 4 (`ready-for-agent`)
+- [[issues-128-run-json-stdio]] — run --json stdout/stderr (`ready-for-agent`)
+- [[issues-129-clap-usage-exit-json]] — clap exit 1 + JSON (`ready-for-agent`)
+- [[issues-131-progen-index-freshness-dup-ids]] — index stale + dup ids (`ready-for-agent`)
+
+### Swarm audit — medium
+
+- [[issues-130-entity-name-uniqueness]] — unique path-safe entity names (`ready-for-agent`)
+- [[issues-132-cli-json-ux-hardening]] — prune JSON / progen messages / dual wt (`ready-for-agent`)
+- [[issues-133-git-noninteractive]] — git no auth hang (`ready-for-agent`)
+- [[issues-134-wikilink-fence-frontmatter]] — fences + bad FM (`ready-for-agent`)
+- [[issues-135-generate-force-type-conflict]] — generate force type clash (`ready-for-agent`)
+- [[issues-136-docs-honesty-release-policy]] — Releases / AGENTS / progen.md (`ready-for-agent`)
+
+### Test coverage (unblocked)
+
+- [[issues-137-coverage-tooling]] — local llvm-cov script (`ready-for-agent`)
+- [[issues-138-error-io-exit-unit-matrix]] — error/io unit tests (`ready-for-agent`)
+- [[issues-139-cli-pin-sync-rm-integration]] — pin/sync/rm CLI tests (`ready-for-agent`)
+- [[issues-141-progen-unit-edges-ops]] — progen ops/unit edges (`ready-for-agent`)
+- [[issues-142-progen-group-cli-integration]] — --progen-group CLI (`ready-for-agent`)
+- [[issues-143-odm-git-worktree-real-git]] — real-git worktree test (`ready-for-agent`)
+- [[issues-144-core-desk-assets-full-surface]] — core-desk asset expand (`ready-for-agent`)
 
 ## Blocked
+
+### Pre-existing
 
 - [[issues-106-pack-list-missing-cli]] — blocked by 105
 - [[issues-107-pack-list-missing-docs-honesty]] — blocked by 105+106
 - [[issues-108-core-desk-pack-list-missing-dogfood]] — blocked by 105+106
+- [[issues-117-website-playwright-tests]] — blocked by 116
+- [[issues-118-website-playwright-review-improve]] — blocked by 116+117
+
+### Coverage / demo chain
+
+- [[issues-140-cli-exit-code-matrix]] — prefer after 127+129
+- [[issues-145-core-desk-dogfood-script]] — blocked by 144
+- [[issues-146-core-desk-full-tour-gate]] — blocked by 144
+- [[issues-147-demo-gap-followups]] — blocked by 145+146
 
 ## Architecture deepen (post-0.1.0)
 
