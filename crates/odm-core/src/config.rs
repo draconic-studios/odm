@@ -91,10 +91,16 @@ impl ProgenEntry {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub struct ActionDef {
+pub struct ActionTask {
     pub run: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub dir: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ActionDef {
+    pub tasks: Vec<ActionTask>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -263,10 +269,17 @@ fn load_action_bundles(
                     "duplicate action name '{name}' (also in bundle '{bundle_name}')"
                 )));
             }
-            if def.run.trim().is_empty() {
+            if def.tasks.is_empty() {
                 return Err(OdmError::workspace(format!(
-                    "action '{name}' run must not be empty"
+                    "action '{name}' tasks must not be empty"
                 )));
+            }
+            for (i, task) in def.tasks.iter().enumerate() {
+                if task.run.trim().is_empty() {
+                    return Err(OdmError::workspace(format!(
+                        "action '{name}' task {i} run must not be empty"
+                    )));
+                }
             }
             merged.insert(name, def);
         }
@@ -417,18 +430,51 @@ progen_groups:
         let root = dir.path();
         fs::create_dir_all(root.join("actions")).unwrap();
         let mut f = fs::File::create(root.join("actions/core.yaml")).unwrap();
-        writeln!(f, "boot:\n  run: echo hi\n").unwrap();
+        writeln!(
+            f,
+            "boot:\n  tasks:\n    - run: echo hi\nchain:\n  tasks:\n    - run: step1\n    - run: step2\n      dir: sub\n"
+        )
+        .unwrap();
         let yaml = "actions:\n  core: actions/core.yaml\n";
         let c = parse_config_yaml(yaml).unwrap();
         let ws = validate_and_load_bundles(root, c).unwrap();
-        assert_eq!(ws.actions["boot"].run, "echo hi");
+        assert_eq!(ws.actions["boot"].tasks.len(), 1);
+        assert_eq!(ws.actions["boot"].tasks[0].run, "echo hi");
+        assert_eq!(ws.actions["chain"].tasks.len(), 2);
+        assert_eq!(ws.actions["chain"].tasks[1].dir.as_deref(), Some("sub"));
 
         let mut f2 = fs::File::create(root.join("actions/other.yaml")).unwrap();
-        writeln!(f2, "boot:\n  run: other\n").unwrap();
+        writeln!(f2, "boot:\n  tasks:\n    - run: other\n").unwrap();
         let yaml2 = "actions:\n  core: actions/core.yaml\n  other: actions/other.yaml\n";
         let c2 = parse_config_yaml(yaml2).unwrap();
         let err = validate_and_load_bundles(root, c2).unwrap_err();
         assert!(err.to_string().contains("duplicate action"));
+    }
+
+    #[test]
+    fn action_empty_tasks_rejected() {
+        let dir = tempdir().unwrap();
+        let root = dir.path();
+        fs::create_dir_all(root.join("actions")).unwrap();
+        fs::write(root.join("actions/core.yaml"), "empty:\n  tasks: []\n").unwrap();
+        let c = parse_config_yaml("actions:\n  core: actions/core.yaml\n").unwrap();
+        let err = validate_and_load_bundles(root, c).unwrap_err();
+        assert!(err.to_string().contains("tasks must not be empty"));
+    }
+
+    #[test]
+    fn action_empty_run_rejected() {
+        let dir = tempdir().unwrap();
+        let root = dir.path();
+        fs::create_dir_all(root.join("actions")).unwrap();
+        fs::write(
+            root.join("actions/core.yaml"),
+            "bad:\n  tasks:\n    - run: \"  \"\n",
+        )
+        .unwrap();
+        let c = parse_config_yaml("actions:\n  core: actions/core.yaml\n").unwrap();
+        let err = validate_and_load_bundles(root, c).unwrap_err();
+        assert!(err.to_string().contains("run must not be empty"));
     }
 
     #[test]

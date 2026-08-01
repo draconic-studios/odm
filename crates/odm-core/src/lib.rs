@@ -15,8 +15,8 @@ mod url_match;
 
 pub use config::{
     config_path, load_workspace, odm_dir, parse_config_yaml, pin_path, save_config,
-    validate_and_load_bundles, ActionDef, GeneratorDef, ProjectEntry, ProgenEntry, Workspace,
-    WorkspaceConfig,
+    validate_and_load_bundles, ActionDef, ActionTask, GeneratorDef, ProjectEntry, ProgenEntry,
+    Workspace, WorkspaceConfig,
 };
 pub use discover::discover_root;
 pub use doctor::{
