@@ -2,7 +2,7 @@
 id: issues-145
 title: "core-desk scripts/dogfood.sh full tour"
 description: "Fail-fast shell script exercising all shipped odm commands against a temp copy of core-desk."
-status: open
+status: reviewing
 issue-type: feature-request
 severity: high
 tags:
