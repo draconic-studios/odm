@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Thermo-Nuclear Code Quality Review — ODM</title>
+<style>
+  :root {
+    --bg: #0f1419;
+    --panel: #1a2332;
+    --panel2: #243044;
+    --text: #e7ecf3;
+    --muted: #9aa8bc;
+    --line: #2e3b50;
+    --fail: #ff6b6b;
+    --warn: #ffc857;
+    --pass: #5bd6a2;
+    --accent: #6cb6ff;
+    --code: #c8d4e6;
+    --code-bg: #0c1017;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font: 15px/1.55 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  header {
+    padding: 2rem 1.5rem 1.25rem;
+    border-bottom: 1px solid var(--line);
+    background: linear-gradient(180deg, #152033 0%, var(--bg) 100%);
+  }
+  header h1 { margin: 0 0 0.35rem; font-size: 1.65rem; letter-spacing: -0.02em; }
+  header .meta { color: var(--muted); font-size: 0.92rem; max-width: 72rem; }
+  .verdict {
+    display: inline-block;
+    margin-top: 1rem;
+    padding: 0.55rem 0.9rem;
+    border-radius: 8px;
+    background: rgba(255, 107, 107, 0.12);
+    border: 1px solid rgba(255, 107, 107, 0.45);
+    color: var(--fail);
+    font-weight: 650;
+  }
+  main { max-width: 72rem; margin: 0 auto; padding: 1.5rem; }
+  h2 {
+    margin: 2rem 0 0.75rem;
+    font-size: 1.25rem;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 0.35rem;
+  }
+  h3 { margin: 1.35rem 0 0.45rem; font-size: 1.05rem; }
+  p, li { color: var(--text); }
+  .muted { color: var(--muted); }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.75rem;
+    margin: 1rem 0 1.5rem;
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 0.9rem 1rem;
+  }
+  .card strong { display: block; margin-bottom: 0.25rem; }
+  .card .n { font-size: 1.4rem; font-weight: 700; color: var(--accent); }
+  .finding {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--fail);
+    border-radius: 10px;
+    padding: 1rem 1.1rem;
+    margin: 0.85rem 0;
+  }
+  .finding.warn { border-left-color: var(--warn); }
+  .finding h3 { margin-top: 0; }
+  .tag {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 0.15rem 0.45rem;
+    border-radius: 999px;
+    margin-right: 0.35rem;
+    vertical-align: middle;
+  }
+  .tag.p1 { background: rgba(255,107,107,.18); color: var(--fail); }
+  .tag.p2 { background: rgba(255,200,87,.15); color: var(--warn); }
+  .tag.p3 { background: rgba(108,182,255,.15); color: var(--accent); }
+  .tag.good { background: rgba(91,214,162,.15); color: var(--pass); }
+  code, pre {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.86em;
+  }
+  code { color: var(--code); background: var(--code-bg); padding: 0.1em 0.35em; border-radius: 4px; }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 0.85rem 1rem;
+    overflow-x: auto;
+    color: var(--code);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.75rem 0 1.25rem;
+    font-size: 0.92rem;
+  }
+  th, td {
+    border: 1px solid var(--line);
+    padding: 0.55rem 0.7rem;
+    text-align: left;
+    vertical-align: top;
+  }
+  th { background: var(--panel2); color: var(--muted); font-weight: 600; }
+  tr:nth-child(even) td { background: rgba(255,255,255,0.015); }
+  .fail { color: var(--fail); font-weight: 650; }
+  .warnc { color: var(--warn); font-weight: 650; }
+  .pass { color: var(--pass); font-weight: 650; }
+  ul.compact li { margin: 0.25rem 0; }
+  footer {
+    max-width: 72rem;
+    margin: 0 auto;
+    padding: 0 1.5rem 2.5rem;
+    color: var(--muted);
+    font-size: 0.88rem;
+  }
+  a { color: var(--accent); }
+  .remedy { color: var(--pass); }
+  .smell { color: var(--warn); font-size: 0.9em; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Thermo-Nuclear Code Quality Review</h1>
+  <p class="meta">
+    ODM · 2026-08-02 · Scope: current <code>main</code> (clean tree; no feature-branch delta).
+    Focus: Unreleased growth — worktrees, agent packs, generate, status/doctor observation,
+    CLI presentation, membership path safety.
+  </p>
+  <div class="verdict">VERDICT: DO NOT APPROVE — structural bar not met</div>
+</header>
+
+<main>
+  <section>
+    <h2>Executive summary</h2>
+    <p>
+      Product contracts are strong (soft-fail empties, not-fixable doctor warns, shared orphan
+      definition, dry-run parity, path-token uniqueness, JSON exit matrices). Structural disease is different:
+      sampling was <em>forked</em> instead of extended, and the CLI is a presentation monoculture papered over by a half-migrated DTO layer.
+    </p>
+    <div class="grid">
+      <div class="card"><strong>Observation half-layer</strong><span class="n">P0</span><span class="muted">status / doctor×2 / project_info re-sample</span></div>
+      <div class="card"><strong>main.rs density</strong><span class="n">807</span><span class="muted">~38 dual-mode print branches</span></div>
+      <div class="card"><strong>membership.rs</strong><span class="n">993</span><span class="muted">at 1k target wall</span></div>
+      <div class="card"><strong>Pack missing</strong><span class="n">×3</span><span class="muted">status · doctor · CLI DTO</span></div>
+    </div>
+    <p class="muted">
+      Highest leverage: (1) inventory/sample API + <code>PackEntry::is_missing</code>,
+      (2) CLI <code>Ctx</code> + <code>Present</code>/<code>finish</code> + family dispatch,
+      (3) split membership before the next feature. Local polish and more tests alone do not clear the bar.
+    </p>
+  </section>
+
+  <section>
+    <h2>Priority 1 — Structural regressions</h2>
+
+    <article class="finding">
+      <h3><span class="tag p1">P1</span> Observation stopped being the single sample plane</h3>
+      <p class="smell">Smells: Shotgun Surgery · Divergent Change</p>
+      <p>
+        <code>observe_workspace</code> samples Primaries once. Worktrees and packs are a
+        <strong>second sampling pass</strong> bolted onto consumers.
+      </p>
+      <ul class="compact">
+        <li><code>crates/odm-core/src/status.rs:86–113</code> — attach worktree_list + pack_list after observation</li>
+        <li><code>status.rs:117–120</code> — <code>status_from_observation</code> documented incomplete</li>
+        <li><code>crates/odm/src/commands/project.rs:146–156</code> — same attach cloned into CLI</li>
+        <li><code>doctor.rs:106–108</code> + <code>doctor_worktree.rs</code> — <strong>two</strong> full <code>worktree_list</code> passes (orphan + dirty)</li>
+        <li>Prune calls full list (dirty probes) only to take names</li>
+      </ul>
+      <p class="remedy"><strong>Code judo:</strong> <code>observe_project_worktrees</code> (+ names-only) and pack observation.
+        Status, doctor, prune name-set, and project_info all consume one sample. Doctor maps once → orphan warns + dirty warns.
+        Deletes dual loops, CLI clone, and the “pure projection then mutate” lie.</p>
+    </article>
+
+    <article class="finding">
+      <h3><span class="tag p1">P1</span> CLI god-dispatcher — <code>commands/</code> don’t command</h3>
+      <p class="smell">Smells: Duplicated Code · Middle Man · Mysterious Name</p>
+      <p>
+        Lib claims a thin adapter. Reality: <code>main.rs</code> is a command runtime
+        (discover → load → Git → domain → print → exit) with ~38 <code>if out.json</code> branches
+        and leftover success <code>json!</code> envelopes. <code>commands/</code> is mostly DTO mappers
+        and human formatters. Human project/progen list bypasses DTOs and re-joins data.
+      </p>
+      <ul class="compact">
+        <li><code>main.rs</code> ~807 LOC — complexity-dense; next features hit 1k without architecture change</li>
+        <li><code>commands/status.rs</code> (12 LOC) — pure alias of <code>build_status</code></li>
+        <li>Half-migrated contracts: typed DTOs vs ad-hoc <code>json!</code> in main</li>
+      </ul>
+      <p class="remedy"><strong>Code judo:</strong> <code>Ctx::open</code> once; <code>Present</code> + <code>finish</code> (human/JSON/exit on the value);
+        family <code>dispatch</code>; humans format DTOs only; delete pure aliases.
+        Target <code>main.rs</code> ~80–120 LOC. Keep error envelope, clap schema, domain calls.</p>
+    </article>
+
+    <article class="finding">
+      <h3><span class="tag p1">P1</span> <code>membership.rs</code> at the 1k wall (993 LOC)</h3>
+      <p class="smell">Smell: Divergent Change</p>
+      <p>
+        One file owns add/rm, path-policy remap, delete-with-restore, gitignore/pin hooks,
+        <code>project_git</code>, CLI <code>path_buf_to_rel</code>, and ~600 LOC tests.
+        AGENTS.md target ≤1000 / hard 1250.
+      </p>
+      <p class="remedy"><strong>Code judo:</strong> Split now — membership add/rm · <code>project_git</code> · paths/bin helper ·
+        <code>membership_tests.rs</code> + shared ScriptedRunner testsupport.
+        <strong>Do not</strong> land another feature that pushes this file past 1000 without the split.</p>
+    </article>
+  </section>
+
+  <section>
+    <h2>Priority 2 — Missed simplification / duplication</h2>
+
+    <article class="finding warn">
+      <h3><span class="tag p2">P2</span> Pack “missing” rule triplicated</h3>
+      <p class="smell">Smells: Duplicated Code · Primitive Obsession</p>
+      <table>
+        <thead><tr><th>Site</th><th>Rule</th></tr></thead>
+        <tbody>
+          <tr><td><code>status.rs:109</code></td><td><code>symlink_metadata().is_err()</code></td></tr>
+          <tr><td><code>doctor_pack.rs</code></td><td>skip when <code>symlink_metadata().is_ok()</code></td></tr>
+          <tr><td><code>commands/agent_pack.rs</code></td><td>DTO <code>missing</code> probe</td></tr>
+        </tbody>
+      </table>
+      <p class="remedy"><strong>Judo:</strong> <code>PackEntry::is_missing()</code> (or inventory <code>PackObs</code>). Docs already promise one rule — types should own it.</p>
+    </article>
+
+    <article class="finding warn">
+      <h3><span class="tag p2">P2</span> Twin FS engines: generate vs agent_pack</h3>
+      <p class="smell">Smell: Duplicated Code</p>
+      <p>
+        Parallel <code>copy_tree</code> / symlink / type-conflict paths. Pack dest prep
+        (<code>prepare_dest_for_install</code> / <code>link</code>) is the densest branching in recent growth.
+      </p>
+      <p class="remedy"><strong>Judo:</strong> core <code>fsutil</code> — shared copy/remove/empty-dir/dest-prep skeleton.
+        Install vs link become terminal policies, not two ladders.</p>
+    </article>
+
+    <article class="finding warn">
+      <h3><span class="tag p2">P2</span> Path errors remapped by English <code>contains</code></h3>
+      <p>
+        <code>membership</code> / <code>config</code> / actions map <code>resolve_under_root</code> failures via
+        <code>msg.contains("relative")</code>. Exit codes couple to message wording.
+      </p>
+      <p class="remedy"><strong>Judo:</strong> typed <code>PathResolveError { Absolute, Escape }</code> — match enums, not strings.</p>
+    </article>
+
+    <article class="finding warn">
+      <h3><span class="tag p2">P2</span> Prune rows abuse <code>WorktreeSlotInfo { dirty: None }</code></h3>
+      <p>
+        JSON already drops <code>dirty</code> on prune rows; core still builds slot infos with fake null dirty.
+        Prune/orphan-only paths should not pay per-slot <code>is_clean</code>.
+      </p>
+      <p class="remedy"><strong>Judo:</strong> <code>WorktreeNamePath { name, path }</code>; names-only list API for prune/orphan.</p>
+    </article>
+
+    <article class="finding warn">
+      <h3><span class="tag p2">P2</span> Project ↔ progen CLI envelope twinning</h3>
+      <p>
+        Domain split is correct. CLI add/rm <code>json!</code> and list humans are near-isomorphs.
+        <code>materialize.rs</code> already unified labels — membership envelopes did not follow.
+      </p>
+      <p class="remedy"><strong>Judo:</strong> shared <code>NamedOk</code> / <code>NamedMaterialize</code>; one entity-list human template.</p>
+    </article>
+  </section>
+
+  <section>
+    <h2>Priority 3 — Branching / special cases / boundaries</h2>
+    <article class="finding warn">
+      <h3><span class="tag p3">P3</span> Notable smells</h3>
+      <ul class="compact">
+        <li><strong>Doctor double-list locked into tests</strong> — scripted dual porcelain queues encode waste; fix structure then simplify tests.</li>
+        <li><strong><code>--wt</code> argv scan in dispatcher</strong> — clap field help-only; execution re-parses argv. Own next to <code>cli.rs</code>; resolve into <code>Ctx</code> once.</li>
+        <li><strong>Soft-fail <code>Err(_)</code> → empty</strong> — right product spirit, copy-pasted policy. Centralize.</li>
+        <li><strong>Libraries speaking flag names</strong> — <code>odm-actions</code> / <code>odm-progen</code> CLI cardinality helpers. Prefer domain errors mapped at bin edge.</li>
+        <li><strong>Thin wrappers</strong> — delete <code>status_snapshot</code> alias; prefer <code>From</code> over free dto fns that only delegate.</li>
+      </ul>
+    </article>
+  </section>
+
+  <section>
+    <h2>File sizes</h2>
+    <table>
+      <thead><tr><th>File</th><th>LOC</th><th>Call</th></tr></thead>
+      <tbody>
+        <tr><td><code>odm-core/.../membership.rs</code></td><td>993</td><td class="fail">Split before grow</td></tr>
+        <tr><td><code>odm/src/main.rs</code></td><td>807</td><td class="warnc">Complexity wall — Present/Ctx/dispatch</td></tr>
+        <tr><td><code>odm-core/.../agent_pack.rs</code></td><td>781</td><td class="warnc">Extract FS + registry when touched</td></tr>
+        <tr><td><code>odm-core/.../generate.rs</code></td><td>758</td><td class="pass">Prod lean; tests heavy OK</td></tr>
+        <tr><td><code>odm-core/.../config.rs</code></td><td>742</td><td class="pass">OK; typed path errors when touched</td></tr>
+        <tr><td><code>odm-core/.../doctor_worktree.rs</code></td><td>600 (~80 prod)</td><td class="warnc">Shrink after inventory judo</td></tr>
+        <tr><td>Hard limit 1250</td><td>—</td><td class="pass">No breach today</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Approval checklist</h2>
+    <table>
+      <thead><tr><th>Criterion</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>No clear structural regression</td><td class="fail">FAIL — observation half-layer; CLI god-dispatch</td></tr>
+        <tr><td>No obvious missed dramatic simplification</td><td class="fail">FAIL — inventory + Present/Ctx visible</td></tr>
+        <tr><td>No unjustified file-size explosion</td><td class="warnc">WARN — membership 993; main density</td></tr>
+        <tr><td>No spaghetti-growth / special-case branching</td><td class="warnc">WARN — bolt-ons; doctor double-list</td></tr>
+        <tr><td>No hacky/magical abstraction</td><td class="pass">PASS (stringly path remap is brittle, not magical)</td></tr>
+        <tr><td>No unnecessary wrapper / weak contracts</td><td class="warnc">WARN — half-migrated DTOs + thin aliases</td></tr>
+        <tr><td>No boundary leak / helper duplication</td><td class="fail">FAIL — pack×3; copy_tree×2; sample×N</td></tr>
+        <tr><td>No missed obvious decomposition</td><td class="fail">FAIL — membership split overdue</td></tr>
+      </tbody>
+    </table>
+    <p><strong class="fail">Approval: blocked</strong> until remedy sequence items 1–3 have a committed path (landed or explicitly owned/scheduled).</p>
+  </section>
+
+  <section>
+    <h2>Preferred remedy sequence</h2>
+    <ol>
+      <li><strong class="remedy">Inventory sample API</strong> — worktrees (+ names-only) + packs with <code>is_missing()</code>; rewrite status/doctor/info consumers.</li>
+      <li><strong class="remedy">CLI spine</strong> — <code>Ctx</code> + <code>Present</code>/<code>finish</code> + family dispatch; DTO-only humans; no success <code>json!</code> in main.</li>
+      <li><strong class="remedy">Split membership</strong> off the 1k cliff; shared testsupport ScriptedRunner.</li>
+      <li>fsutil shared <code>copy_tree</code> / dest prep; collapse pack install/link ladders.</li>
+      <li>Typed path resolve errors — delete <code>contains("relative")</code>.</li>
+      <li>Prune types without dirty; no dirty probes on prune/orphan-only paths.</li>
+      <li>Opportunistic: human formatters toward bin; flag strings out of deep library APIs when touched.</li>
+    </ol>
+    <p class="muted">Do not rename JSON fields during spine work. Do not redesign domain crates. Do not extract vanity modules that don’t delete concepts.</p>
+  </section>
+
+  <section>
+    <h2><span class="tag good">Keep</span> What is healthy — do not churn</h2>
+    <ul class="compact">
+      <li>Path token policy centralized; escape rejects before config write</li>
+      <li>Orphan definition shared at disk helpers — <em>finish</em> the job for registered+dirty+packs</li>
+      <li>Pin classifier pure; doctor entity checks consume observation</li>
+      <li>Doctor fix allowlist (<code>fixable: false</code>) with tests that <code>--fix</code> does not destroy state</li>
+      <li>Generate dry-run parity + strong tests</li>
+      <li>Error taxonomy + <code>output.rs</code> JSON error envelope</li>
+      <li><code>run_context_prompt</code> (context ≡ agent prompt) — pattern to copy</li>
+      <li><code>materialize.rs</code> label map — finish same for remaining success payloads</li>
+      <li>Integration tests as JSON/exit contract locks</li>
+      <li>Crate split core/git/actions/progen; pack registry atomic write; actions cwd priority</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Fowler smell index</h2>
+    <ul class="compact">
+      <li><strong>Duplicated Code</strong> — pack missing ×3; copy_tree ×2; status/info attach; doctor dual list; dual print ritual; project/progen envelopes</li>
+      <li><strong>Shotgun Surgery</strong> — “add workspace fact” fans out across status + doctor_* + CLI</li>
+      <li><strong>Divergent Change</strong> — membership.rs; main.rs match arms</li>
+      <li><strong>Middle Man</strong> — commands that map DTOs while main orchestrates</li>
+      <li><strong>Primitive Obsession</strong> — path errors as English; dirty on prune rows</li>
+      <li><strong>Feature Envy</strong> — CLI project_info envies core worktree sampling</li>
+      <li><strong>Speculative Generality</strong> — not the main problem (under-extraction is)</li>
+    </ul>
+  </section>
+</main>
+
+<footer>
+  Companion markdown: <code>docs/thermo-nuclear-code-quality-review.md</code>.
+  Working tree was clean on <code>main</code> at review time — codebase health audit of Unreleased implementation, not a PR three-dot diff.
+  Re-run against <code>git diff main...HEAD</code> for a specific change set; the structural bar still applies.
+</footer>
+</body>
+</html>
