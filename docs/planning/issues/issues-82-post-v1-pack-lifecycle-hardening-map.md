@@ -38,6 +38,7 @@ After worktree observation map [[issues-77-post-v1-worktree-observation-map]] cl
 - Child tickets: [[issues-83-worktree-module-split]], [[issues-84-agent-pack-rm-core]], [[issues-85-agent-pack-rm-cli]], [[issues-86-doctor-pack-missing]], [[issues-87-pack-lifecycle-docs-honesty]], [[issues-88-core-desk-pack-rm-dogfood]].
 - Prefer order: 83 and 84 and 86 unblocked in parallel; 85 blocked by 84; 87 blocked by 84+85+86; 88 blocked by 84+85.
 - **83 closed:** test extract — `worktree_tests.rs` via `#[path]`; `worktree.rs` ~384 LOC; public API unchanged.
+- **84 closed:** `pack_rm(ws, name)` — registry drop + best-effort dest delete; missing dest ok; unknown → not_found/4; re-exported; unit tests; no CLI.
 
 ## Not yet specified
 

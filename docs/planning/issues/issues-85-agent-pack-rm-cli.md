@@ -36,7 +36,7 @@ See Agent Brief.
 
 ## Blocked by
 
-- [[issues-84-agent-pack-rm-core]]
+- [[issues-84-agent-pack-rm-core]] (closed)
 
 ## Agent Brief
 

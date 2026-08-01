@@ -2,7 +2,7 @@
 id: issues-84
 title: "Core API: agent pack rm (uninstall)"
 description: "Add odm-core pack_rm to drop registry entry and remove install/link destination."
-status: open
+status: closed
 issue-type: feature-request
 severity: medium
 tags:
@@ -62,14 +62,14 @@ None
 
 **Acceptance criteria:**
 
-- [ ] `pack_rm` public and re-exported from `odm_core`
-- [ ] Removes registry entry by name
-- [ ] Deletes existing dest (install dir or symlink)
-- [ ] Missing dest + present registry → success + registry cleaned
-- [ ] Unknown name → not_found
-- [ ] Unit tests cover above
-- [ ] `cargo test` green
-- [ ] No CLI changes in this ticket
+- [x] `pack_rm` public and re-exported from `odm_core`
+- [x] Removes registry entry by name
+- [x] Deletes existing dest (install dir or symlink)
+- [x] Missing dest + present registry → success + registry cleaned
+- [x] Unknown name → not_found
+- [x] Unit tests cover above
+- [x] `cargo test` green
+- [x] No CLI changes in this ticket
 
 **Out of scope:**
 
@@ -80,4 +80,13 @@ None
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met
+
+## Answer
+
+Added `odm_core::pack_rm(ws, name) -> Result<PackEntry, OdmError>`:
+
+- Empty/whitespace name → usage (exit 1); unknown name → not_found (exit 4)
+- Returns pre-mutation `PackEntry`; drops registry row; best-effort `remove_dest` when path exists; missing dest still succeeds
+- Re-exported from `lib.rs`; six unit tests (install/link/unknown/empty/stale dest/preserve other)
+- No CLI (issues-85). `agent_pack.rs` ~781 LOC.

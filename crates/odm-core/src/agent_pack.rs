@@ -90,6 +90,24 @@ pub fn pack_link(
     Ok(entry)
 }
 
+/// Remove a registered agent pack: drop registry entry and delete destination if present.
+pub fn pack_rm(ws: &Workspace, name: &str) -> Result<PackEntry, OdmError> {
+    let name = name.trim();
+    if name.is_empty() {
+        return Err(OdmError::usage("pack name must not be empty"));
+    }
+    let mut packs = load_registry(&ws.root)?;
+    let idx = packs.iter().position(|p| p.name == name).ok_or_else(|| {
+        OdmError::not_found(format!("agent pack not found: {name}"))
+    })?;
+    let entry = packs.remove(idx);
+    if entry.path.symlink_metadata().is_ok() {
+        remove_dest(&entry.path)?;
+    }
+    save_registry(&ws.root, &packs)?;
+    Ok(entry)
+}
+
 fn path_as_given(path: &Path) -> String {
     path.to_string_lossy().into_owned()
 }
@@ -656,5 +674,108 @@ mod tests {
         let list = pack_list(&ws).unwrap();
         assert_eq!(list.len(), 1);
         assert_eq!(list[0].mode, PackMode::Link);
+    }
+
+    #[test]
+    fn rm_after_install_removes_dest_and_registry() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        write_pack_src(&root.join("packs/core-desk"), &[("SKILL.md", "# skill")]);
+        let home = root.join("home");
+        let ws = empty_ws(root.to_path_buf());
+
+        let installed = pack_install(&ws, Path::new("packs/core-desk"), &home, false).unwrap();
+        assert!(installed.path.is_dir());
+
+        let removed = pack_rm(&ws, "core-desk").unwrap();
+        assert_eq!(removed, installed);
+        assert!(fs::symlink_metadata(&installed.path).is_err());
+        assert!(pack_list(&ws).unwrap().is_empty());
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn rm_after_link_removes_symlink() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        write_pack_src(&root.join("packs/linked"), &[("x.md", "link-me")]);
+        let home = root.join("home");
+        let ws = empty_ws(root.to_path_buf());
+
+        let linked = pack_link(&ws, Path::new("packs/linked"), &home, false).unwrap();
+        assert!(fs::symlink_metadata(&linked.path)
+            .unwrap()
+            .file_type()
+            .is_symlink());
+
+        let removed = pack_rm(&ws, "linked").unwrap();
+        assert_eq!(removed, linked);
+        assert!(fs::symlink_metadata(&linked.path).is_err());
+        // source pack untouched
+        assert!(root.join("packs/linked/x.md").is_file());
+        assert!(pack_list(&ws).unwrap().is_empty());
+    }
+
+    #[test]
+    fn rm_unknown_name_not_found() {
+        let dir = tempfile::tempdir().unwrap();
+        let ws = empty_ws(dir.path().to_path_buf());
+        let err = pack_rm(&ws, "nope").unwrap_err();
+        assert!(matches!(err, OdmError::NotFound(_)));
+        assert_eq!(exit_code(&err), 4);
+        assert!(err.to_string().contains("agent pack not found: nope"));
+    }
+
+    #[test]
+    fn rm_empty_name_usage() {
+        let dir = tempfile::tempdir().unwrap();
+        let ws = empty_ws(dir.path().to_path_buf());
+        for name in ["", "   ", "\t"] {
+            let err = pack_rm(&ws, name).unwrap_err();
+            assert!(matches!(err, OdmError::Usage(_)));
+            assert_eq!(exit_code(&err), 1);
+        }
+    }
+
+    #[test]
+    fn rm_missing_dest_still_cleans_registry() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        write_pack_src(&root.join("packs/stale"), &[("f.txt", "v")]);
+        let home = root.join("home");
+        let ws = empty_ws(root.to_path_buf());
+
+        let installed = pack_install(&ws, Path::new("packs/stale"), &home, false).unwrap();
+        fs::remove_dir_all(&installed.path).unwrap();
+        assert!(fs::symlink_metadata(&installed.path).is_err());
+
+        let removed = pack_rm(&ws, "stale").unwrap();
+        assert_eq!(removed, installed);
+        assert!(pack_list(&ws).unwrap().is_empty());
+    }
+
+    #[test]
+    fn rm_one_pack_preserves_other() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        write_pack_src(&root.join("packs/keep-me"), &[("k.txt", "keep")]);
+        write_pack_src(&root.join("packs/drop-me"), &[("d.txt", "drop")]);
+        let home = root.join("home");
+        let ws = empty_ws(root.to_path_buf());
+
+        let keep = pack_install(&ws, Path::new("packs/keep-me"), &home, false).unwrap();
+        let drop = pack_install(&ws, Path::new("packs/drop-me"), &home, false).unwrap();
+
+        let removed = pack_rm(&ws, "drop-me").unwrap();
+        assert_eq!(removed, drop);
+        assert!(fs::symlink_metadata(&drop.path).is_err());
+        assert_eq!(
+            fs::read_to_string(keep.path.join("k.txt")).unwrap(),
+            "keep"
+        );
+
+        let list = pack_list(&ws).unwrap();
+        assert_eq!(list.len(), 1);
+        assert_eq!(list[0], keep);
     }
 }

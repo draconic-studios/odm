@@ -20,7 +20,7 @@ mod status;
 mod url_match;
 mod worktree;
 
-pub use agent_pack::{pack_install, pack_link, pack_list, PackEntry, PackMode};
+pub use agent_pack::{pack_install, pack_link, pack_list, pack_rm, PackEntry, PackMode};
 pub use checkout::{
     all_managed, materialize, resolve_clone_url, resolve_managed, sort_by_depth, sync_managed,
     ManagedEntity, MaterializeOutcome, SyncResult,
