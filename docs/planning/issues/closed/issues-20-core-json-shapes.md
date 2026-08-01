@@ -2,7 +2,7 @@
 id: issues-20
 title: "Core JSON shapes"
 description: "Lock stable --json object shapes for core verbs agents will parse."
-status: reviewing
+status: closed
 tags:
   - planning
   - issue
@@ -143,3 +143,5 @@ No `schema_version` field day one.
 Parent map: [[issues-14-implement-core-map]]
 
 Recommended decision locked for agent implement 2026-08-01.
+
+Landed 2026-08-01: `init`, `status`, `doctor`, `pin status`/`apply`, `project list`/`info` JSON shapes implemented in bin.

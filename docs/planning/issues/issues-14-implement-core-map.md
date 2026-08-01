@@ -42,7 +42,7 @@ Working **Implement core** in this repo per `docs/reference/phased-delivery.md` 
 - [[issues-17-config-and-pin-serde-model]] — **done** — serde deny-unknown; BTreeMap; eager bundles; atomic write; pin v1 (`odm-core`).
 - [[issues-18-cli-error-and-exit-code-spine]] — **done** — OdmError→exit 1–4; JSON error envelope; bare success JSON.
 - [[issues-19-core-desk-example-layout]] — **done** — fixtures alpha/beta bare + preseeded config; no checkouts committed.
-- [[issues-20-core-json-shapes]] — (partial) init/status/doctor/pin/project list+info JSON shapes landed; leave open only if further field polish needed.
+- [[issues-20-core-json-shapes]] — **done** — init/status/doctor/pin/project list+info JSON shapes in bin.
 - [[issues-21-gitignore-manage-markers]] — **done** — markers; workspace-root + ancestor nested managed blocks; drift helpers for doctor.
 - [[issues-22-doctor-check-matrix]] — **done** — check ids + `--fix` gitignore/dirs only; no pin rewrite.
 - [[issues-23-integration-test-harness]] — (partial) crates/odm/tests + assert_cmd; core-desk temp-copy sync/pin smoke + status/doctor smoke landed; leave open if fuller gate matrix wanted.
@@ -57,7 +57,6 @@ Working **Implement core** in this repo per `docs/reference/phased-delivery.md` 
 - Windows / `file://` fixture path quirks for bare repos
 - Exact MSRV number (if any) and `rust-toolchain.toml` channel pin policy
 - Config/pin file locking under concurrent CLI invocations
-- Whether `doctor --fix` ever touches pin contents vs gitignore/config only
 - CI: repo policy is no GitHub Actions — harness is local/`cargo test` only unless policy changes
 
 ## Out of scope

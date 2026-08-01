@@ -64,3 +64,5 @@ Store-content doctor, worktree slots, agent packs, network checks.
 Parent map: [[issues-14-implement-core-map]]
 
 Recommended decision locked for agent implement 2026-08-01.
+
+Landed 2026-08-01: `odm-core` doctor check matrix + `--fix` (layout dirs + gitignore only); exit 3 on any fail via bin; unit tests for classification / escape / drift fix.
