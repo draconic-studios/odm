@@ -2,7 +2,7 @@
 id: issues-144
 title: "core-desk assets: multi-progen, groups, scoped actions"
 description: "Expand examples/core-desk so all shipped surfaces can be dogfooded offline (second progen, groups, vault ids, project-scoped actions, gitignore)."
-status: open
+status: reviewing
 issue-type: feature-request
 severity: high
 tags:
