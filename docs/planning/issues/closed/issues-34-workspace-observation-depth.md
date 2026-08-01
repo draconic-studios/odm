@@ -2,13 +2,12 @@
 id: issues-34
 title: "Workspace observation depth"
 description: "One observation module for pin/checkout facts shared by status, doctor, and pin status."
-status: open
+status: closed
 issue-type: feature-request
 severity: high
 tags:
   - planning
   - issue
-  - ready-for-agent
   - architecture
   - deepen
 ---
@@ -65,13 +64,13 @@ _(none)_
 - Stable JSON shapes from closed core JSON / doctor matrix decisions — preserve field names and enums
 
 **Acceptance criteria:**
-- [ ] Exactly one implementation path derives pin drift labels used by status and pin status
-- [ ] Status and doctor do not construct a non-injectable git client for entity sampling
-- [ ] `odm status --json` and `odm pin status --json` field names and `pin_state` / `state` enum values remain compatible with locked shapes
-- [ ] Doctor check ids, severities, and `--fix` allowlist unchanged
-- [ ] Unit tests cover pin_state edge cases (missing pin file, missing path, unpinned, in_sync, drift) through the shared classifier
-- [ ] Existing core-desk / CLI integration expectations for status and doctor still pass
-- [ ] `cargo test` and `cargo clippy -- -D warnings` clean for touched crates
+- [x] Exactly one implementation path derives pin drift labels used by status and pin status
+- [x] Status and doctor do not construct a non-injectable git client for entity sampling
+- [x] `odm status --json` and `odm pin status --json` field names and `pin_state` / `state` enum values remain compatible with locked shapes
+- [x] Doctor check ids, severities, and `--fix` allowlist unchanged
+- [x] Unit tests cover pin_state edge cases (missing pin file, missing path, unpinned, in_sync, drift) through the shared classifier
+- [x] Existing core-desk / CLI integration expectations for status and doctor still pass
+- [x] `cargo test` and `cargo clippy -- -D warnings` clean for touched crates
 
 **Out of scope:**
 - Splitting lifecycle membership / materialize (separate issue)
@@ -79,6 +78,18 @@ _(none)_
 - Moving human formatters out of core
 - Worktree slot observation
 - Changing doctor check matrix or JSON schema_version
+
+## Answer
+
+Shipped in `6f6db5c` (`feat(core): workspace observation shared by status, doctor, pin`). Swarm cycle verified ACs; no further product code required.
+
+- **`observe_workspace` / `observe_entity`** (`odm-core::observation`): one sample per declared Project/Progen with injectable `&Git<R: CommandRunner>`
+- **`compute_pin_state` + `PinState`**: sole pin-drift classifier; status `pin_state` and pin status `state` project via serde / `as_str()`
+- **Projections**: `build_status` / `status_from_observation`, `pin_status`, `run_doctor` / entity path checks — no parallel string machines
+- **`Git::new()`** only at CLI boundary and tests; core APIs take `&Git<R>`
+- **Tests**: `pin_state_matrix`, observation pin attach, core-desk / CLI status+doctor smoke green
+
+Residual (YAGNI): CLI `project info` may still re-query origin; `EntityObservation` already carries it for a later polish.
 
 ## Comments
 
