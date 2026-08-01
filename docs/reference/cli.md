@@ -135,13 +135,14 @@ odm project git <name> [--wt <slot>] -- <git-args…>
 odm project worktree list <project>
 odm project worktree add <project> <slot> [--branch <b>]
 odm project worktree rm <project> <slot> [--force]
+odm project worktree prune <project> [--force]
 ```
 
 - **`list` / `info`**: config + disk/git summary; `--json`. `info` includes registered `worktree_slots: [ { "name", "path" } ]` (`path` is `worktrees/<project>/<slot>`; empty array when none / non-git / list soft-fails). Human lists slot names only when non-empty (`worktrees: a, b`).
 - **`add`**: write Project entry; if `url` set, materialize unless `--no-clone` (`multi-git.md`).
 - **`rm`**: un-declare; tree **kept** by default; `--delete` removes tree if clean; dirty → fail unless `--force`. Does **not** delete `worktrees/<project>/`.
 - **`git`**: run `git -C <primary-or-wt> <git-args…>` (argv after `--`, not a shell string). Exit code = git’s. On success, if pin file exists and **HEAD changed** on **Primary**, **auto-maintain** that entity’s pin (not “sync”). `--wt` selects slot working tree (must exist; no auto-create; pin maintain stays Primary-only).
-- **`worktree`**: **v1 implemented** — `list` / `add` / `rm` for slots at `worktrees/<project>/<slot>/`. Primary must be a git repo. Details and deferred items: `worktrees.md`.
+- **`worktree`**: **v1 implemented** — `list` / `add` / `rm` / `prune` for slots at `worktrees/<project>/<slot>/`. Primary must be a git repo. Details and deferred items: `worktrees.md`.
 
 No `project sync` — use top-level `odm sync [name]`.
 
@@ -305,7 +306,7 @@ odm agent start [--project] [--wt] …
 ## Full vs sketch matrix
 
 - **Full**: global flags (including `--wt` path binding); `init` (headless; `--interactive` not implemented); `sync`; `pin apply|status`; `status`; `doctor`; `project list|add|rm|info|git|worktree` (v1); `progen` lifecycle + **partial** store façade (implemented verbs above); `find`; `context`; `run`; `generate` (v1 local template only); `agent pack` (v1 local install/link/list only); `agent prompt` (v1 thin context work-package).
-- **Sketch / deferred**: `init --interactive`; reserved progen store verbs; `agent start`; deferred worktree features (config slots, GC, pin↔slot — `worktrees.md`; doctor orphan **warn** landed); generate remote/templating; pack marketplace/manifest/config declarations (`env-gen-packs.md`).
+- **Sketch / deferred**: `init --interactive`; reserved progen store verbs; `agent start`; deferred worktree features (config slots, pin↔slot, auto-prune on doctor — `worktrees.md`; doctor orphan **warn** + explicit `worktree prune` landed); generate remote/templating; pack marketplace/manifest/config declarations (`env-gen-packs.md`).
 - **Absent**: `serve`, MCP, top-level action verbs, `ops` namespace, path-valued scope flags.
 
 ## Related

@@ -2,7 +2,7 @@
 id: issues-66
 title: "Post-v1 dogfood + worktree slot depth map"
 description: "Wayfinder map: CHANGELOG honesty after find/status slots, core-desk dogfood, project info slots, doctor dirty slots, orphan prune."
-status: open
+status: closed
 issue-type: feature-request
 tags:
   - planning
@@ -42,6 +42,7 @@ After polish map [[issues-60-post-v1-polish-map]] closed (`find --limit`, status
 - **68 closed:** core-desk README + `core_desk_worktree_status_find_gate` dogfood worktree add/list, status `worktree_slots`, and `find --limit` against `DeskUniqueToken`.
 - **69 closed:** `project info` JSON always has registered `worktree_slots` (`name`/`path`); soft-fail to `[]`; human `worktrees: …` when non-empty.
 - **70 closed:** doctor Warn `worktree_dirty:<project>:<slot>` for dirty registered slots (`fixable: false`; soft-skip probe errors; `--fix` does not clean/stash).
+- **71 closed:** `project worktree prune <project> [--force]` removes orphan slot dirs (empty default / recursive force); never registered; exit `3` if non-empty remain without force; doctor `--fix` still does not delete.
 
 ## Not yet specified
 

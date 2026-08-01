@@ -2,7 +2,7 @@
 id: issues-71
 title: "project worktree prune removes orphan slot dirs"
 description: "odm project worktree prune deletes doctor-warned orphan dirs under worktrees/<project>/."
-status: open
+status: closed
 issue-type: feature-request
 severity: medium
 tags:
@@ -86,3 +86,13 @@ None
 ## Acceptance
 
 Mirror Agent Brief checklist.
+
+## Answer
+
+Landed `odm project worktree prune <project> [--force]` for orphan slot GC.
+
+- **Core** `worktree_prune` + `WorktreePruneOutcome`: orphan scan matches doctor (valid slot-name dirs under `worktrees/<project>/` not in `worktree_list`); default `remove_dir` empties only; `--force` `remove_dir_all`; never touches registered slots; best-effort empty parent cleanup; unknown project Usage; non-git Operation.
+- **CLI**: clap `Prune { project, force }`; print JSON/human then exit `3` when `skipped_nonempty` non-empty (partial OK).
+- **JSON**: `{ "project", "pruned": [{ "name", "path" }] }`; human pruned count/names + skipped note.
+- **Docs**: cli.md command tree + deferred honesty; worktrees.md prune as manual GC (doctor `--fix` still does not delete); CHANGELOG Unreleased.
+- **Tests**: core unit + `cli_worktree` integration (empty, partial exit 3, force, registered-safe, unknown/non-git).

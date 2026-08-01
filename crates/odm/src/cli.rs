@@ -208,6 +208,14 @@ pub enum ProjectWorktreeCmd {
         #[arg(long)]
         force: bool,
     },
+    /// Remove orphan slot directories under worktrees/<project>/.
+    Prune {
+        /// Project name.
+        project: String,
+        /// Recursively delete non-empty orphan dirs.
+        #[arg(long)]
+        force: bool,
+    },
 }
 
 #[derive(Debug, Subcommand)]

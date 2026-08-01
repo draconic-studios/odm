@@ -375,3 +375,172 @@ fn worktree_add_non_git_project_fails() {
         .code(3)
         .stderr(predicate::str::contains("not a git repo"));
 }
+
+#[test]
+fn worktree_prune_empty_orphan_and_force_and_registered_safe() {
+    let dir = tempdir().unwrap();
+    let root = dir.path().join("ws");
+    workspace_with_git_project(&root);
+
+    // registered slot
+    odm()
+        .args([
+            "--root",
+            root.to_str().unwrap(),
+            "project",
+            "worktree",
+            "add",
+            "alpha",
+            "live",
+            "--branch",
+            "live",
+        ])
+        .assert()
+        .success();
+    let live = root.join("worktrees/alpha/live");
+    assert!(live.is_dir());
+
+    // empty orphan
+    let empty = root.join("worktrees/alpha/empty-orphan");
+    fs::create_dir_all(&empty).unwrap();
+
+    // non-empty orphan
+    let full = root.join("worktrees/alpha/full-orphan");
+    fs::create_dir_all(&full).unwrap();
+    fs::write(full.join("leftover.txt"), "x").unwrap();
+
+    // default prune: empty gone, full remains, exit 3; JSON still printed
+    let partial = odm()
+        .args([
+            "--root",
+            root.to_str().unwrap(),
+            "--json",
+            "project",
+            "worktree",
+            "prune",
+            "alpha",
+        ])
+        .assert()
+        .failure()
+        .code(3)
+        .get_output()
+        .stdout
+        .clone();
+    let partial: serde_json::Value = serde_json::from_slice(&partial).unwrap();
+    assert_eq!(partial["project"], "alpha");
+    let pruned = partial["pruned"].as_array().unwrap();
+    assert_eq!(pruned.len(), 1);
+    assert_eq!(pruned[0]["name"], "empty-orphan");
+    assert_eq!(pruned[0]["path"], "worktrees/alpha/empty-orphan");
+    assert!(!empty.exists());
+    assert!(full.is_dir());
+    assert!(live.is_dir());
+
+    // force removes non-empty orphan; registered untouched
+    let forced = odm()
+        .args([
+            "--root",
+            root.to_str().unwrap(),
+            "--json",
+            "project",
+            "worktree",
+            "prune",
+            "alpha",
+            "--force",
+        ])
+        .assert()
+        .success()
+        .get_output()
+        .stdout
+        .clone();
+    let forced: serde_json::Value = serde_json::from_slice(&forced).unwrap();
+    assert_eq!(forced["pruned"][0]["name"], "full-orphan");
+    assert!(!full.exists());
+    assert!(live.is_dir());
+    assert!(Command::new("git")
+        .args([
+            "-C",
+            live.to_str().unwrap(),
+            "rev-parse",
+            "--is-inside-work-tree",
+        ])
+        .status()
+        .unwrap()
+        .success());
+
+    // no orphans left
+    odm()
+        .args([
+            "--root",
+            root.to_str().unwrap(),
+            "project",
+            "worktree",
+            "prune",
+            "alpha",
+        ])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("pruned 0 orphan worktree dirs"));
+}
+
+#[test]
+fn worktree_prune_unknown_project_usage() {
+    let dir = tempdir().unwrap();
+    let root = dir.path().join("ws");
+    workspace_with_git_project(&root);
+
+    odm()
+        .args([
+            "--root",
+            root.to_str().unwrap(),
+            "project",
+            "worktree",
+            "prune",
+            "missing",
+        ])
+        .assert()
+        .failure()
+        .code(1)
+        .stderr(predicate::str::contains("unknown project"));
+}
+
+#[test]
+fn worktree_prune_non_git_project_fails() {
+    let dir = tempdir().unwrap();
+    let root = dir.path().join("ws");
+
+    odm()
+        .args(["init", root.to_str().unwrap(), "--no-git"])
+        .assert()
+        .success();
+
+    odm()
+        .args([
+            "--root",
+            root.to_str().unwrap(),
+            "project",
+            "add",
+            "alpha",
+            "--path",
+            "projects/alpha",
+        ])
+        .assert()
+        .success();
+
+    fs::create_dir_all(root.join("projects/alpha")).unwrap();
+    fs::write(root.join("projects/alpha/README"), "not a git repo").unwrap();
+
+    odm()
+        .args([
+            "--root",
+            root.to_str().unwrap(),
+            "project",
+            "worktree",
+            "prune",
+            "alpha",
+        ])
+        .assert()
+        .failure()
+        .code(3)
+        .stderr(predicate::str::contains("not a git repo"));
+}

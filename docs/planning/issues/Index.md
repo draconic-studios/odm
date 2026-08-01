@@ -6,11 +6,11 @@ See `docs/agents/issue-tracker.md`.
 
 ## Maps
 
-- [[issues-66-post-v1-dogfood-slot-depth-map]] — Post-v1 dogfood + worktree slot depth
+_(none open)_
 
 ## Frontier (open, unblocked)
 
-- [[issues-71-worktree-orphan-prune]] — project worktree prune orphans
+_(empty)_
 
 ## Blocked
 
@@ -34,3 +34,4 @@ _(none remaining)_
 - [[issues-50-agent-packs-map]] — Agent packs local install/link/list (post-0.1.0)
 - [[issues-55-post-v1-hardening-map]] — Post-v1 hardening + agent prompt thin
 - [[issues-60-post-v1-polish-map]] — Post-v1 polish (docs honesty, doctor split, find limit, status slots)
+- [[issues-66-post-v1-dogfood-slot-depth-map]] — Post-v1 dogfood + worktree slot depth (CHANGELOG, core-desk, info slots, dirty doctor, orphan prune)

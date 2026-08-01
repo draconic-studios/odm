@@ -1,5 +1,6 @@
-//! Worktree slot lifecycle — list/add/rm under `worktrees/<project>/<slot>/`.
+//! Worktree slot lifecycle — list/add/rm/prune under `worktrees/<project>/<slot>/`.
 
+use std::collections::BTreeSet;
 use std::fs;
 use std::path::{Component, Path, PathBuf};
 
@@ -31,6 +32,16 @@ pub struct WorktreeSlotInfo {
 pub struct WorktreeListOutcome {
     pub project: String,
     pub slots: Vec<WorktreeSlotInfo>,
+}
+
+/// Outcome of pruning orphan slot directories.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct WorktreePruneOutcome {
+    pub project: String,
+    /// Orphans successfully removed.
+    pub pruned: Vec<WorktreeSlotInfo>,
+    /// Non-empty orphans left when `force` was false (caller should exit 3 if non-empty).
+    pub skipped_nonempty: Vec<WorktreeSlotInfo>,
 }
 
 /// Validate a worktree slot name; return trimmed name.
@@ -153,6 +164,91 @@ pub fn worktree_rm<R: odm_git::CommandRunner>(
         slot: slot.clone(),
         path: rel_slot_path(project, &slot),
     })
+}
+
+/// Remove orphan slot directories under `worktrees/<project>/`.
+///
+/// Orphan = valid slot-name directory not in the registered `worktree_list` set
+/// (same definition as doctor). Default removes empty dirs only (`remove_dir`);
+/// `--force` uses `remove_dir_all`. Never deletes registered worktree paths.
+/// Partial progress: empty orphans are removed even if non-empty ones remain
+/// (then `skipped_nonempty` is non-empty for exit 3).
+pub fn worktree_prune<R: odm_git::CommandRunner>(
+    git: &Git<R>,
+    ws: &Workspace,
+    project: &str,
+    force: bool,
+) -> Result<WorktreePruneOutcome, OdmError> {
+    let list = worktree_list(git, ws, project)?;
+    let registered: BTreeSet<String> = list.slots.into_iter().map(|s| s.name).collect();
+    let orphans = orphan_slot_names(ws, project, &registered);
+
+    let mut pruned = Vec::new();
+    let mut skipped_nonempty = Vec::new();
+
+    for slot in orphans {
+        let abs = worktree_slot_path(&ws.root, project, &slot);
+        let info = WorktreeSlotInfo {
+            name: slot.clone(),
+            path: rel_slot_path(project, &slot),
+        };
+        if force {
+            fs::remove_dir_all(&abs).map_err(|e| {
+                OdmError::operation(format!(
+                    "failed to remove orphan worktree dir {}: {e}",
+                    info.path
+                ))
+            })?;
+            pruned.push(info);
+        } else if fs::remove_dir(&abs).is_ok() {
+            pruned.push(info);
+        } else {
+            skipped_nonempty.push(info);
+        }
+    }
+
+    // Best-effort: remove empty worktrees/<project>/ directory.
+    let project_wt = ws.root.join("worktrees").join(project);
+    let _ = fs::remove_dir(&project_wt);
+
+    Ok(WorktreePruneOutcome {
+        project: project.to_string(),
+        pruned,
+        skipped_nonempty,
+    })
+}
+
+/// Disk dirs under `worktrees/<project>/` with valid slot names not in `registered`.
+fn orphan_slot_names(ws: &Workspace, project: &str, registered: &BTreeSet<String>) -> Vec<String> {
+    let project_wt = ws.root.join("worktrees").join(project);
+    if !project_wt.is_dir() {
+        return Vec::new();
+    }
+    let Ok(rd) = fs::read_dir(&project_wt) else {
+        return Vec::new();
+    };
+    let mut names: Vec<String> = Vec::new();
+    for ent in rd.flatten() {
+        let Ok(ft) = ent.file_type() else {
+            continue;
+        };
+        if !ft.is_dir() {
+            continue;
+        }
+        let name = ent.file_name();
+        let Some(s) = name.to_str() else {
+            continue;
+        };
+        if validate_slot_name(s).is_err() {
+            continue;
+        }
+        if registered.contains(s) {
+            continue;
+        }
+        names.push(s.to_string());
+    }
+    names.sort();
+    names
 }
 
 fn rel_slot_path(project: &str, slot: &str) -> String {
@@ -597,5 +693,166 @@ mod tests {
                 slot_path.to_string_lossy().into_owned(),
             ]
         );
+    }
+
+    // --- prune ---
+
+    fn porcelain_primary_only(primary: &Path) -> String {
+        format!(
+            "worktree {}\nHEAD abc\nbranch refs/heads/main\n\n",
+            primary.display()
+        )
+    }
+
+    fn porcelain_with_slot(primary: &Path, slot_path: &Path) -> String {
+        format!(
+            "worktree {}\nHEAD abc\nbranch refs/heads/main\n\n\
+             worktree {}\nHEAD def\nbranch refs/heads/s\n\n",
+            primary.display(),
+            slot_path.display(),
+        )
+    }
+
+    #[test]
+    fn prune_removes_empty_orphan_without_force() {
+        let dir = tempdir().unwrap();
+        let root = dir.path();
+        let primary = ensure_primary(root, "projects/alpha");
+        let orphan = worktree_slot_path(root, "alpha", "stale");
+        fs::create_dir_all(&orphan).unwrap();
+        let ws = ws_with_project(root.to_path_buf(), "alpha", "projects/alpha");
+        let (runner, _) =
+            ScriptedRunner::new(vec![is_repo_true(), out_ok_stdout(&porcelain_primary_only(&primary))]);
+        let g = Git::with_runner(runner);
+        let out = worktree_prune(&g, &ws, "alpha", false).unwrap();
+        assert_eq!(out.project, "alpha");
+        assert_eq!(out.pruned.len(), 1);
+        assert_eq!(out.pruned[0].name, "stale");
+        assert_eq!(out.pruned[0].path, "worktrees/alpha/stale");
+        assert!(out.skipped_nonempty.is_empty());
+        assert!(!orphan.exists());
+    }
+
+    #[test]
+    fn prune_skips_nonempty_without_force_removes_empties() {
+        let dir = tempdir().unwrap();
+        let root = dir.path();
+        let primary = ensure_primary(root, "projects/alpha");
+        let empty = worktree_slot_path(root, "alpha", "empty");
+        let full = worktree_slot_path(root, "alpha", "full");
+        fs::create_dir_all(&empty).unwrap();
+        fs::create_dir_all(&full).unwrap();
+        fs::write(full.join("leftover.txt"), "x").unwrap();
+        let ws = ws_with_project(root.to_path_buf(), "alpha", "projects/alpha");
+        let (runner, _) =
+            ScriptedRunner::new(vec![is_repo_true(), out_ok_stdout(&porcelain_primary_only(&primary))]);
+        let g = Git::with_runner(runner);
+        let out = worktree_prune(&g, &ws, "alpha", false).unwrap();
+        assert_eq!(out.pruned.len(), 1);
+        assert_eq!(out.pruned[0].name, "empty");
+        assert_eq!(out.skipped_nonempty.len(), 1);
+        assert_eq!(out.skipped_nonempty[0].name, "full");
+        assert!(!empty.exists());
+        assert!(full.is_dir());
+        assert!(full.join("leftover.txt").is_file());
+    }
+
+    #[test]
+    fn prune_force_removes_nonempty_orphan() {
+        let dir = tempdir().unwrap();
+        let root = dir.path();
+        let primary = ensure_primary(root, "projects/alpha");
+        let full = worktree_slot_path(root, "alpha", "full");
+        fs::create_dir_all(&full).unwrap();
+        fs::write(full.join("leftover.txt"), "x").unwrap();
+        let ws = ws_with_project(root.to_path_buf(), "alpha", "projects/alpha");
+        let (runner, _) =
+            ScriptedRunner::new(vec![is_repo_true(), out_ok_stdout(&porcelain_primary_only(&primary))]);
+        let g = Git::with_runner(runner);
+        let out = worktree_prune(&g, &ws, "alpha", true).unwrap();
+        assert_eq!(out.pruned.len(), 1);
+        assert_eq!(out.pruned[0].name, "full");
+        assert!(out.skipped_nonempty.is_empty());
+        assert!(!full.exists());
+    }
+
+    #[test]
+    fn prune_never_deletes_registered_slot_even_with_force() {
+        let dir = tempdir().unwrap();
+        let root = dir.path();
+        let primary = ensure_primary(root, "projects/alpha");
+        let registered = worktree_slot_path(root, "alpha", "live");
+        let orphan = worktree_slot_path(root, "alpha", "stale");
+        fs::create_dir_all(&registered).unwrap();
+        fs::write(registered.join("keep.txt"), "reg").unwrap();
+        fs::create_dir_all(&orphan).unwrap();
+        let ws = ws_with_project(root.to_path_buf(), "alpha", "projects/alpha");
+        let porcelain = porcelain_with_slot(&primary, &registered);
+        let (runner, _) = ScriptedRunner::new(vec![is_repo_true(), out_ok_stdout(&porcelain)]);
+        let g = Git::with_runner(runner);
+        let out = worktree_prune(&g, &ws, "alpha", true).unwrap();
+        assert_eq!(out.pruned.len(), 1);
+        assert_eq!(out.pruned[0].name, "stale");
+        assert!(!orphan.exists());
+        assert!(registered.is_dir());
+        assert!(registered.join("keep.txt").is_file());
+    }
+
+    #[test]
+    fn prune_no_orphans_is_empty_ok() {
+        let dir = tempdir().unwrap();
+        let root = dir.path();
+        let primary = ensure_primary(root, "projects/alpha");
+        let ws = ws_with_project(root.to_path_buf(), "alpha", "projects/alpha");
+        let (runner, _) =
+            ScriptedRunner::new(vec![is_repo_true(), out_ok_stdout(&porcelain_primary_only(&primary))]);
+        let g = Git::with_runner(runner);
+        let out = worktree_prune(&g, &ws, "alpha", false).unwrap();
+        assert!(out.pruned.is_empty());
+        assert!(out.skipped_nonempty.is_empty());
+    }
+
+    #[test]
+    fn prune_unknown_project_is_usage() {
+        let dir = tempdir().unwrap();
+        let ws = ws_with_project(dir.path().to_path_buf(), "alpha", "projects/alpha");
+        let (runner, calls) = ScriptedRunner::new(vec![]);
+        let g = Git::with_runner(runner);
+        let err = worktree_prune(&g, &ws, "missing", false).unwrap_err();
+        assert!(matches!(err, OdmError::Usage(_)));
+        assert!(calls.lock().unwrap().is_empty());
+    }
+
+    #[test]
+    fn prune_non_git_primary_is_operation() {
+        let dir = tempdir().unwrap();
+        let root = dir.path();
+        ensure_primary(root, "projects/alpha");
+        let ws = ws_with_project(root.to_path_buf(), "alpha", "projects/alpha");
+        let (runner, _) = ScriptedRunner::new(vec![is_repo_false()]);
+        let g = Git::with_runner(runner);
+        let err = worktree_prune(&g, &ws, "alpha", false).unwrap_err();
+        assert!(matches!(err, OdmError::Operation(_)));
+    }
+
+    #[test]
+    fn prune_skips_invalid_names_and_files() {
+        let dir = tempdir().unwrap();
+        let root = dir.path();
+        let primary = ensure_primary(root, "projects/alpha");
+        let project_wt = root.join("worktrees/alpha");
+        fs::create_dir_all(&project_wt).unwrap();
+        fs::write(project_wt.join("not-a-dir"), "x").unwrap();
+        // ".." is invalid slot name — create via join would escape; skip creating ".."
+        let real = worktree_slot_path(root, "alpha", "real");
+        fs::create_dir_all(&real).unwrap();
+        let ws = ws_with_project(root.to_path_buf(), "alpha", "projects/alpha");
+        let (runner, _) =
+            ScriptedRunner::new(vec![is_repo_true(), out_ok_stdout(&porcelain_primary_only(&primary))]);
+        let g = Git::with_runner(runner);
+        let out = worktree_prune(&g, &ws, "alpha", false).unwrap();
+        assert_eq!(out.pruned.len(), 1);
+        assert_eq!(out.pruned[0].name, "real");
+        assert!(project_wt.join("not-a-dir").is_file());
     }
 }

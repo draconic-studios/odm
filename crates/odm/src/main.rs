@@ -11,17 +11,17 @@ use odm::commands::{
     format_pack_list_human, format_progen_add_human, format_progen_info_human,
     format_progen_list_human, format_project_add_human, format_project_info_human,
     format_project_list_human, format_worktree_add_human, format_worktree_list_human,
-    format_worktree_rm_human, list_actions_dto, list_generators_dto, list_projects, list_progens,
-    materialize_json, materialize_json_opt, materialize_sync_human, pack_entry_dto, pack_list_dto,
-    progen_info, project_info, status_snapshot, worktree_list_dto, worktree_slot_action_dto,
-    GenerateRunDto,
+    format_worktree_prune_human, format_worktree_rm_human, list_actions_dto, list_generators_dto,
+    list_projects, list_progens, materialize_json, materialize_json_opt, materialize_sync_human,
+    pack_entry_dto, pack_list_dto, progen_info, project_info, status_snapshot, worktree_list_dto,
+    worktree_prune_dto, worktree_slot_action_dto, GenerateRunDto,
 };
 use odm_actions::{run_action, CwdTarget, RunOptions, StdioMode};
 use odm_core::{
     discover_root, format_doctor_human, format_status_human, generate_local, init_workspace,
     load_workspace, pack_install, pack_link, pack_list, path_buf_to_rel, pin_apply, pin_status,
     project_add, project_git, project_rm, run_doctor, sync_managed, worktree_add, worktree_list,
-    worktree_rm, InitOptions, OdmError, ProgenEntry, ProjectEntry,
+    worktree_prune, worktree_rm, InitOptions, OdmError, ProgenEntry, ProjectEntry,
 };
 use odm_git::Git;
 use odm_progen::{
@@ -313,6 +313,20 @@ fn run(cli: Cli, out: &GlobalOut) -> Result<i32, OdmError> {
                             println!("{}", format_worktree_rm_human(&outcome));
                         }
                         Ok(0)
+                    }
+                    ProjectWorktreeCmd::Prune { project, force } => {
+                        let outcome = worktree_prune(&git, &ws, &project, force)?;
+                        if out.json {
+                            print_json(&worktree_prune_dto(&outcome))?;
+                        } else {
+                            println!("{}", format_worktree_prune_human(&outcome));
+                        }
+                        // Partial: empties removed; non-empty orphans remain → exit 3 after output.
+                        if outcome.skipped_nonempty.is_empty() {
+                            Ok(0)
+                        } else {
+                            Ok(3)
+                        }
                     }
                 },
             }

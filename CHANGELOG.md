@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`odm agent prompt`** — v1 thin context work-package: packages one note’s Progen neighborhood to stdout (same path/JSON as `odm context`); `agent start` still stubbed.
 - **`odm doctor` worktree orphan warn** — Warn checks `worktree_orphan:<project>:<slot>` for configured-project dirs under `worktrees/` that are not registered git worktrees (`fixable: false`; `--fix` does not delete).
 - **`odm doctor` worktree dirty-slot warn** — Warn checks `worktree_dirty:<project>:<slot>` for registered worktree slots with a dirty working tree (`fixable: false`; `--fix` does not clean or stash).
+- **`odm project worktree prune`** — remove orphan slot dirs under `worktrees/<project>/` (same orphan definition as doctor). Default deletes empty orphans only (exit `3` if any non-empty orphan remains after partial cleanup); `--force` recursive-deletes orphans. Never deletes registered worktrees. Doctor `--fix` still does not delete orphans.
 - **`odm find --limit`** — max hits per Progen store (default **200**); `0` is rejected with usage exit `1`.
 - **`odm status` worktree slots** — each project includes registered `worktree_slots` (`name` + `path`); human output lists slot names when non-empty. Orphan dirs under `worktrees/` remain doctor-only (not status).
 
