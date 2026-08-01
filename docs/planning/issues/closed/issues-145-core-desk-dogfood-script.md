@@ -2,7 +2,7 @@
 id: issues-145
 title: "core-desk scripts/dogfood.sh full tour"
 description: "Fail-fast shell script exercising all shipped odm commands against a temp copy of core-desk."
-status: reviewing
+status: closed
 issue-type: feature-request
 severity: high
 tags:
@@ -53,13 +53,17 @@ See Agent Brief.
 
 **Acceptance criteria:**
 
-- [ ] Script runs green on clean machine with rust+git
-- [ ] Covers all shipped full commands listed above
-- [ ] README points to script
-- [ ] Does not modify the committed core-desk tree (temp copy)
+- [x] Script runs green on clean machine with rust+git
+- [x] Covers all shipped full commands listed above
+- [x] README points to script
+- [x] Does not modify the committed core-desk tree (temp copy)
 
 **Out of scope:** Integration test gate (146); fixing product bugs found (147).
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met
+
+## Answer
+
+Added `examples/core-desk/scripts/dogfood.sh` (fail-fast, temp copy, ODM path discovery/`ODM=`). README quick start + Full tour pointer. Verified green with `ODM=target/debug/odm examples/core-desk/scripts/dogfood.sh`.
