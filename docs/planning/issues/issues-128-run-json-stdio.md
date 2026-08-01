@@ -2,7 +2,7 @@
 id: issues-128
 title: "run --json includes captured stdout/stderr"
 description: "With --json, action stdio is captured then discarded; envelope only has action+exitCode so agents cannot debug failures."
-status: open
+status: reviewing
 issue-type: bug
 severity: high
 tags:
