@@ -76,6 +76,8 @@ odm status --json          # projects[].worktree_slots: [{ "name", "path", "dirt
 
 # Orphan / dirty doctor + prune (empty dirs under worktrees/<project>/ that are not registered)
 mkdir -p worktrees/alpha/stale-orphan
+odm status --json          # projects[alpha].worktree_orphans: [{ "name": "stale-orphan", "path": "worktrees/alpha/stale-orphan" }]
+# optional: odm project info alpha --json  # same worktree_orphans shape (no dirty key)
 odm doctor                 # warn worktree_orphan:alpha:stale-orphan (not fixable)
 # optional dirty registered slot (doctor warn only — does not auto-prune or clean):
 #   echo x > worktrees/alpha/dogfood/dirty.txt
@@ -84,6 +86,7 @@ odm doctor                 # warn worktree_orphan:alpha:stale-orphan (not fixabl
 odm project worktree prune alpha
 # removes empty orphan dirs for one project; non-empty orphans need --force
 # exit 3 when non-empty orphans remain without --force
+# after prune: odm status --json → alpha.worktree_orphans empty (or omits stale-orphan)
 # odm project worktree prune alpha --force
 # workspace-wide orphan GC (every configured project; same empty/--force rules):
 odm project worktree prune --all

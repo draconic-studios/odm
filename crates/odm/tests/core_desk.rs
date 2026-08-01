@@ -465,6 +465,92 @@ fn core_desk_prune_all_and_slot_dirty_gate() {
 }
 
 #[test]
+fn core_desk_status_orphans_gate() {
+    if skip_without_git() {
+        return;
+    }
+    let (_dir, root) = setup_temp_core_desk();
+    let root_s = root.to_str().unwrap();
+
+    odm()
+        .args(["--root", root_s, "sync"])
+        .assert()
+        .success();
+    assert!(root.join("projects/alpha").is_dir());
+
+    // empty orphan under worktrees/alpha/ (not a registered git worktree)
+    let orphan = root.join("worktrees/alpha/stale-orphan");
+    fs::create_dir_all(&orphan).unwrap();
+
+    let st = json_stdout(odm().args(["--root", root_s, "--json", "status"]));
+    let projects = st["projects"].as_array().expect("projects");
+    let alpha = projects
+        .iter()
+        .find(|p| p["name"] == "alpha")
+        .expect("alpha project");
+    let orphans = alpha["worktree_orphans"]
+        .as_array()
+        .expect("worktree_orphans");
+    let stale = orphans
+        .iter()
+        .find(|o| o["name"] == "stale-orphan")
+        .expect("stale-orphan in status worktree_orphans");
+    assert_eq!(stale["path"], "worktrees/alpha/stale-orphan");
+    assert!(
+        stale.get("dirty").is_none(),
+        "orphans must not carry dirty: {stale}"
+    );
+
+    // optional: project info same shape
+    let info = json_stdout(odm().args([
+        "--root",
+        root_s,
+        "--json",
+        "project",
+        "info",
+        "alpha",
+    ]));
+    let info_orphans = info["worktree_orphans"]
+        .as_array()
+        .expect("info worktree_orphans");
+    assert!(
+        info_orphans.iter().any(|o| {
+            o["name"] == "stale-orphan" && o["path"] == "worktrees/alpha/stale-orphan"
+        }),
+        "expected stale-orphan on project info: {info_orphans:?}"
+    );
+    assert!(info_orphans[0].get("dirty").is_none());
+
+    // per-project prune clears empty orphan (no doctor --fix)
+    odm()
+        .args([
+            "--root",
+            root_s,
+            "project",
+            "worktree",
+            "prune",
+            "alpha",
+        ])
+        .assert()
+        .success();
+    assert!(!orphan.exists(), "prune should remove empty orphan on disk");
+
+    let st = json_stdout(odm().args(["--root", root_s, "--json", "status"]));
+    let projects = st["projects"].as_array().expect("projects");
+    let alpha = projects
+        .iter()
+        .find(|p| p["name"] == "alpha")
+        .expect("alpha project");
+    let orphans = alpha["worktree_orphans"]
+        .as_array()
+        .expect("worktree_orphans after prune");
+    assert!(
+        orphans.iter().all(|o| o["name"] != "stale-orphan"),
+        "stale-orphan should be gone after prune: {orphans:?}"
+    );
+}
+
+#[test]
 fn core_desk_agent_pack_rm_gate() {
     if skip_without_git() {
         return;

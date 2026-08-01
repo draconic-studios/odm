@@ -2,7 +2,7 @@
 id: issues-98
 title: "core-desk dogfood status worktree orphans"
 description: "core-desk README + integration gate: status shows orphan then prune clears."
-status: open
+status: closed
 issue-type: feature-request
 severity: low
 tags:
@@ -66,10 +66,10 @@ See Agent Brief.
 
 **Acceptance criteria:**
 
-- [ ] core-desk README documents status orphans + prune clear
-- [ ] Integration gate asserts orphan on status then cleared after prune
-- [ ] Does not require doctor `--fix` to delete orphans
-- [ ] `cargo test` green; core_desk.rs within size limits
+- [x] core-desk README documents status orphans + prune clear
+- [x] Integration gate asserts orphan on status then cleared after prune
+- [x] Does not require doctor `--fix` to delete orphans
+- [x] `cargo test` green; core_desk.rs within size limits
 
 **Out of scope:**
 
@@ -78,4 +78,12 @@ See Agent Brief.
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met
+
+## Answer
+
+core-desk dogfood for status worktree orphans:
+
+- **README** orphan section: after mkdir, `status --json` shows alpha `worktree_orphans` (`stale-orphan`); optional info parity; after prune status orphans empty; doctor `--fix` still does not delete orphans.
+- **Gate** `core_desk_status_orphans_gate`: sync → mkdir orphan → status/info assert `{name,path}` no dirty → prune alpha → disk gone → status without stale-orphan.
+- Docs + tests only (693 LOC core_desk.rs); full `cargo test` green.

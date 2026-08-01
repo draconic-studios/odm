@@ -2,7 +2,7 @@
 id: issues-94
 title: "Post-v1 status worktree orphans map"
 description: "Wayfinder map: odm status (and project info) list orphan worktree slot dirs; docs + core-desk dogfood."
-status: open
+status: closed
 issue-type: feature-request
 tags:
   - planning
@@ -40,10 +40,12 @@ After status packs map [[issues-89-post-v1-status-packs-map]] closed, pull the n
 - **95 closed:** `EntityStatus.worktree_orphans` on projects (`{name,path}`, sorted); soft-fail `[]`; human `orphans: …`; public `worktree_orphans` / `worktree_orphan_infos`; doctor DRY unchanged ids.
 - **96 closed:** `ProjectInfoDto.worktree_orphans` always-present `Vec` (`{name,path}`); fill via list + `worktree_orphan_infos`; human `orphans: …` (unindented info style); registered slots excluded.
 - **97 closed:** docs honesty — worktrees/cli/phased-delivery/CHANGELOG/README record landed status+info `worktree_orphans`; deferred no longer pure-TODO for orphan listing; doctor warn + prune remain cleanup.
+- **98 closed:** core-desk README + `core_desk_status_orphans_gate` — status/info show orphan after mkdir; prune alpha clears; doctor `--fix` not required.
+- **Map complete:** destination met (status + info orphans, docs, dogfood).
 
 ## Not yet specified
 
-- Exact human wording for orphan lines (implementer picks minimal: e.g. `orphans: a, b` under project).
+_(none — map closed)_
 
 ## Out of scope
 
@@ -57,3 +59,7 @@ After status packs map [[issues-89-post-v1-status-packs-map]] closed, pull the n
 ## Blocked by
 
 None
+
+## Answer
+
+Map destination delivered via children 95–98. Status and project info list `worktree_orphans` (`{name,path}`); docs honest; core-desk dogfoods observation + prune clear. Cleanup remains explicit prune; doctor warn-only for orphans.
