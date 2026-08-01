@@ -226,6 +226,27 @@ fn validate_rel_path(kind: &str, name: &str, path: &str) -> Result<(), OdmError>
     Ok(())
 }
 
+fn validate_action_task_dir(action: &str, task_i: usize, dir: &str) -> Result<(), OdmError> {
+    if dir.trim().is_empty() {
+        return Err(OdmError::workspace(format!(
+            "action '{action}' task {task_i} dir must not be empty"
+        )));
+    }
+    resolve_under_root(Path::new("/__odm_ws__"), dir).map_err(|e| {
+        let msg = e.to_string();
+        if msg.contains("relative") {
+            OdmError::workspace(format!(
+                "action '{action}' task {task_i} dir must be relative, got '{dir}'"
+            ))
+        } else {
+            OdmError::workspace(format!(
+                "action '{action}' task {task_i} dir must not escape Workspace root, got '{dir}'"
+            ))
+        }
+    })?;
+    Ok(())
+}
+
 fn validate_progen_groups(config: &WorkspaceConfig) -> Result<(), OdmError> {
     for (group, members) in &config.progen_groups {
         for m in members {
@@ -297,6 +318,9 @@ fn load_action_bundles(
                     return Err(OdmError::workspace(format!(
                         "action '{name}' task {i} run must not be empty"
                     )));
+                }
+                if let Some(ref dir) = task.dir {
+                    validate_action_task_dir(&name, i, dir)?;
                 }
             }
             merged.insert(name, def);
@@ -563,6 +587,58 @@ progen_groups:
         let c = parse_config_yaml("actions:\n  core: actions/core.yaml\n").unwrap();
         let err = validate_and_load_bundles(root, c).unwrap_err();
         assert!(err.to_string().contains("run must not be empty"));
+    }
+
+    #[test]
+    fn action_task_dir_escape_rejected() {
+        let dir = tempdir().unwrap();
+        let root = dir.path();
+        fs::create_dir_all(root.join("actions")).unwrap();
+        fs::write(
+            root.join("actions/core.yaml"),
+            "bad:\n  tasks:\n    - run: true\n      dir: ../outside\n",
+        )
+        .unwrap();
+        let c = parse_config_yaml("actions:\n  core: actions/core.yaml\n").unwrap();
+        let err = validate_and_load_bundles(root, c).unwrap_err();
+        assert!(err.to_string().contains("escape"), "{err}");
+        assert!(matches!(err, OdmError::Workspace(_)));
+        assert_eq!(crate::error::exit_code(&err), 2);
+    }
+
+    #[test]
+    fn action_task_dir_absolute_rejected() {
+        let dir = tempdir().unwrap();
+        let root = dir.path();
+        fs::create_dir_all(root.join("actions")).unwrap();
+        fs::write(
+            root.join("actions/core.yaml"),
+            "bad:\n  tasks:\n    - run: true\n      dir: /tmp/abs\n",
+        )
+        .unwrap();
+        let c = parse_config_yaml("actions:\n  core: actions/core.yaml\n").unwrap();
+        let err = validate_and_load_bundles(root, c).unwrap_err();
+        assert!(err.to_string().contains("relative"), "{err}");
+        assert!(matches!(err, OdmError::Workspace(_)));
+        assert_eq!(crate::error::exit_code(&err), 2);
+    }
+
+    #[test]
+    fn action_task_dir_in_workspace_ok() {
+        let dir = tempdir().unwrap();
+        let root = dir.path();
+        fs::create_dir_all(root.join("actions")).unwrap();
+        fs::write(
+            root.join("actions/core.yaml"),
+            "ok:\n  tasks:\n    - run: true\n      dir: projects/alpha\n",
+        )
+        .unwrap();
+        let c = parse_config_yaml("actions:\n  core: actions/core.yaml\n").unwrap();
+        let ws = validate_and_load_bundles(root, c).unwrap();
+        assert_eq!(
+            ws.actions["ok"].tasks[0].dir.as_deref(),
+            Some("projects/alpha")
+        );
     }
 
     #[test]

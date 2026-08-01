@@ -3,7 +3,9 @@
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use odm_core::{abs_checkout, worktree_slot_path, ActionTask, OdmError, Workspace};
+use odm_core::{
+    abs_checkout, resolve_under_root, worktree_slot_path, ActionTask, OdmError, Workspace,
+};
 
 /// How task stdio is handled during Action execution.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -73,7 +75,16 @@ pub fn resolve_cwd(
     task_dir: Option<&str>,
 ) -> Result<PathBuf, OdmError> {
     if let Some(dir) = task_dir {
-        let cwd = ws.root.join(dir);
+        let cwd = resolve_under_root(ws.root.as_path(), dir).map_err(|e| {
+            let msg = e.to_string();
+            if msg.contains("relative") {
+                OdmError::usage(format!("action task dir must be relative, got '{dir}'"))
+            } else {
+                OdmError::usage(format!(
+                    "action task dir must not escape Workspace root, got '{dir}'"
+                ))
+            }
+        })?;
         if !cwd.is_dir() {
             return Err(OdmError::usage(format!(
                 "action task dir does not exist: {dir}"
@@ -391,6 +402,34 @@ mod tests {
         let ws = ws_with_actions(dir.path().to_path_buf(), actions);
         let err = run_action(&ws, "x", inherit_root(&[])).unwrap_err();
         assert!(err.to_string().contains("does not exist"));
+    }
+
+    #[test]
+    fn resolve_cwd_rejects_escape_dir() {
+        let dir = tempdir().unwrap();
+        let root = dir.path();
+        fs::create_dir_all(root.parent().unwrap().join("outside")).unwrap();
+        let ws = ws_with_actions(root.to_path_buf(), BTreeMap::new());
+        let err = resolve_cwd(&ws, CwdTarget::Root, Some("../outside")).unwrap_err();
+        assert!(err.to_string().contains("escape"), "{err}");
+    }
+
+    #[test]
+    fn resolve_cwd_rejects_absolute_dir() {
+        let dir = tempdir().unwrap();
+        let ws = ws_with_actions(dir.path().to_path_buf(), BTreeMap::new());
+        let err = resolve_cwd(&ws, CwdTarget::Root, Some("/tmp")).unwrap_err();
+        assert!(err.to_string().contains("relative"), "{err}");
+    }
+
+    #[test]
+    fn resolve_cwd_in_workspace_dir() {
+        let dir = tempdir().unwrap();
+        let root = dir.path();
+        fs::create_dir_all(root.join("projects/alpha")).unwrap();
+        let ws = ws_with_actions(root.to_path_buf(), BTreeMap::new());
+        let cwd = resolve_cwd(&ws, CwdTarget::Root, Some("projects/alpha")).unwrap();
+        assert_eq!(cwd, root.join("projects/alpha"));
     }
 
     #[test]

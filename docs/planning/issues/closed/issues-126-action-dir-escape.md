@@ -2,7 +2,7 @@
 id: issues-126
 title: "Action task dir must stay under Workspace root"
 description: "task.dir uses root.join without resolve_under_root; actions can run with cwd outside the Workspace."
-status: reviewing
+status: closed
 issue-type: bug
 severity: high
 tags:
@@ -54,13 +54,13 @@ None (can land with or after 124)
 
 **Acceptance criteria:**
 
-- [ ] Escaping/absolute `dir` rejected
-- [ ] In-workspace relative `dir` still works
-- [ ] Tests cover escape + happy path
-- [ ] `cargo test -p odm-core -p odm-actions` green
+- [x] Escaping/absolute `dir` rejected
+- [x] In-workspace relative `dir` still works
+- [x] Tests cover escape + happy path
+- [x] `cargo test -p odm-core -p odm-actions` green
 
 **Out of scope:** Windows shell portability; run --json stdio (128).
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met
