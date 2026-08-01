@@ -2,7 +2,7 @@
 id: issues-104
 title: "Post-v1 pack list missing observation map"
 description: "Wayfinder map: odm agent pack list includes missing (status/doctor parity); docs + core-desk dogfood."
-status: open
+status: closed
 issue-type: feature-request
 tags:
   - planning

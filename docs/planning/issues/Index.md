@@ -6,7 +6,6 @@ See `docs/agents/issue-tracker.md`.
 
 ## Maps
 
-- [[issues-104-post-v1-pack-list-missing-map]] — Post-v1 pack list `missing` observation (status/doctor parity)
 - [[issues-119-swarm-audit-hardening-map]] — Swarm audit bugs/improvements (path safety, find, CLI honesty)
 - [[issues-120-test-coverage-map]] — Behavior-seam test suite toward full coverage
 - [[issues-121-full-capability-demo-map]] — core-desk full ODM capability demo + verification
@@ -15,7 +14,6 @@ See `docs/agents/issue-tracker.md`.
 
 ### Pre-existing
 
-- [[issues-106-pack-list-missing-cli]] — pack list CLI missing coverage (`ready-for-agent`; blocked by 105)
 - [[issues-118-website-playwright-review-improve]] — website Playwright review/improve (`ready-for-agent`; unblocked by 117)
 
 ### Swarm audit — critical / high (prefer first)
@@ -51,11 +49,6 @@ See `docs/agents/issue-tracker.md`.
 
 ## Blocked
 
-### Pre-existing
-
-- [[issues-107-pack-list-missing-docs-honesty]] — blocked by 106
-- [[issues-108-core-desk-pack-list-missing-dogfood]] — blocked by 106
-
 ### Coverage / demo chain
 
 - [[issues-140-cli-exit-code-matrix]] — prefer after 127+129
@@ -88,4 +81,5 @@ _(none remaining)_
 - [[issues-89-post-v1-status-packs-map]] — Post-v1 status packs + pack observation dogfood
 - [[issues-94-post-v1-status-orphans-map]] — Post-v1 status/info worktree orphans + dogfood
 - [[issues-99-post-v1-generate-dry-run-map]] — Post-v1 generate `--dry-run` (local template preview)
+- [[issues-104-post-v1-pack-list-missing-map]] — Post-v1 pack list `missing` observation (status/doctor parity)
 - [[issues-109-project-website-github-pages-map]] — Project website (`website/` on main, Actions Pages)
