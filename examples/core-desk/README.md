@@ -1,6 +1,6 @@
 # core-desk
 
-Offline dogfood Workspace for ODM **core**, path-only **Progen** vault, and shell **Actions**. No generators.
+Offline dogfood Workspace for ODM **core**, path-only **Progen** vault, shell **Actions**, and a tiny local **Generator**.
 
 ## Layout
 
@@ -15,6 +15,10 @@ examples/core-desk/
     notes/        # path-only Progen = Obsidian vault (plain Markdown)
   actions/
     core.yaml     # hello / fail / chain
+  generators/
+    core.yaml     # hello → templates/hello
+  templates/
+    hello/        # local generate template
   .odm/
     odm.config.yaml
 ```
@@ -66,6 +70,11 @@ odm run hello           # prints hello-desk
 odm run chain           # step1 then step2
 odm run fail            # exit 7
 odm --json run hello    # {"action":"hello","exitCode":0}
+
+# Generators (local template copy)
+odm generate            # list: hello
+odm generate hello --dest out/hello
+# out/hello/hello.txt
 ```
 
 ## Fixtures

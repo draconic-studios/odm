@@ -148,7 +148,7 @@ Rules:
 
 - **Depend inward** — `odm` → feature crates → `odm-core`. Progen crates never depend on ODM.
 - **One product binary** — crates are boundaries, not multiple distributeables.
-- **Sketch features** (`agent`, `generate`) may live as thin modules until they earn a crate.
+- **Thin modules until crate earned** — `generate` (v1 local template in `odm-core`) and sketch `agent` stay in-tree until depth demands a crate.
 - **Non-goal** — deep Serve/MCP (`odm serve`) is out of the v1 design package.
 
 ## Related

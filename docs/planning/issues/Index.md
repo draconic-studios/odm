@@ -6,12 +6,11 @@ See `docs/agents/issue-tracker.md`.
 
 ## Maps
 
-- [[issues-45-generators-map]] — Generators (local template materialize)
+_(none open)_
 
 ## Frontier (open, unblocked)
 
 - [[issues-46-clippy-clean-tests]] — Clippy clean test code (`ready-for-agent`)
-- [[issues-49-generate-integration-and-docs]] — Generate integration + docs (`ready-for-agent`, wayfinder-task)
 
 ## Blocked
 
@@ -31,3 +30,4 @@ _(none remaining)_
 - [[issues-26-actions-map]] — Actions (phase 4)
 - [[issues-27-ship-map]] — Ship (phase 5)
 - [[issues-40-worktree-slots-map]] — Worktree slots (post-0.1.0)
+- [[issues-45-generators-map]] — Generators local template v1 (post-0.1.0)

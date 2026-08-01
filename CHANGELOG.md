@@ -5,6 +5,18 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **`odm generate`** — v1 local template materialize: list Generators from bundles; `generate <name> --dest <path> [--force]` copies a local template tree under the Workspace (remote/url-only run deferred with a clear error).
+- **`odm project worktree`** — Worktree slot add/list/rm and `--wt` path binding (no longer a not-implemented stub).
+
+### Changed
+
+- `examples/core-desk` includes a sample Generator (`hello` → `templates/hello`).
+- Reference docs: `generate` documented as v1 local template (not a pure sketch); remote/templating still deferred in `env-gen-packs.md`.
+
 ## [0.1.0] - 2026-08-01
 
 First public spine release: core multi-git Workspace, Progen integration, and Actions behind one `odm` binary.
@@ -25,7 +37,7 @@ First public spine release: core multi-git Workspace, Progen integration, and Ac
   - Shell-out model; cwd via task dir / `--project` / `--wt`; exit-code passthrough
 - **CLI**
   - Globals: `--root`, `--json`, `--project`, `--wt`, `--progen`, `--progen-group`
-  - Sketch stubs: `generate`, `agent`, `project worktree` (exit 1 not-implemented)
+  - Sketch stubs at release: `generate`, `agent`, `project worktree` (exit 1 not-implemented) — see [Unreleased] for generate + worktree landing after 0.1.0
 - **Dogfood**
   - `examples/core-desk` — offline Workspace exercising core, path-only Progen, groups, and shell Actions
 - **Ship**

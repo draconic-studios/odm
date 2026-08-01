@@ -24,23 +24,26 @@
 
 **Config (already locked):** `generators` map → bundle files; each Generator has `template` and/or `url`; names merge across bundles; duplicates error (`config.md`).
 
-**CLI name reserved:**
+**CLI (v1 local template landed):**
 
 ```text
-odm generate <generator-name> [generator-flags…]
+odm generate                                    # list
+odm generate <generator-name> --dest <rel-path> [--force]
 ```
 
-- Resolve `<generator-name>` from merged bundles; unknown → usage error.
-- **Behavior one-liner:** materialize the template into a target path (default/flags at implement time).
-- No interactive wizard spec in this design package.
+- Resolve `<generator-name>` from merged bundles; unknown → exit `1`.
+- **v1 behavior:** recursive copy of a local `template` directory (relative to Workspace root) into `--dest` under the Workspace. No variable substitution, no interactive wizard.
+- **`--force`:** overwrite when dest is non-empty; without force → exit `3`.
+- **Url-only** entries may appear in list; run fails with a clear deferred-remote message (exit `1`). Both set → prefer `template`.
+- JSON list/run shapes: `cli.md`.
 
-**Deferred:**
+**Deferred (still explicit):**
 
 - `template.toml` (or equivalent) schema
 - Prompt / variable contract
 - Remote fetch and cache layout
 - Nx / schematics interop
-- Dry-run and overwrite policy
+- Dry-run mode
 - Inline generator bodies in Workspace config (still forbidden)
 
 ---

@@ -2,7 +2,7 @@
 id: issues-45
 title: "Generators map"
 description: "Wayfinder map: implement odm generate from local template bundles (v1 copy materialize)."
-status: open
+status: closed
 issue-type: feature-request
 tags:
   - planning
@@ -47,6 +47,7 @@ Productize **Generators** per `docs/reference/config.md`, `cli.md`, and `env-gen
 - Empty template dir → success `copied: 0` (confirmed in core).
 - Symlink in template → copy as symlink when platform allows (unix tested).
 - **[[issues-48-generate-cli]] closed:** `odm generate` list + run via core; `--dest`/`--force`; JSON list/run shapes; stub test no longer expects generate exit 1.
+- **[[issues-49-generate-integration-and-docs]] closed:** CLI integration matrix (`cli_generate.rs`); core-desk `hello` generator dogfood; reference docs promote generate to v1 local template (remote still deferred).
 
 ## Out of scope
 
@@ -62,3 +63,15 @@ None — worktree map closed; generator config load exists.
 ## Comments
 
 Seeded by swarm 2026-08-01 after empty frontier post worktree map close.
+
+## Answer
+
+**Destination met for v1 local template Generators.**
+
+Vertical slice complete:
+
+1. **Core** (47) — `generate_local` recursive copy, force/escape/url-only
+2. **CLI** (48) — list + run, `--dest`/`--force`, JSON DTOs
+3. **Proof + docs** (49) — `cli_generate` integration tests, core-desk dogfood, docs/CHANGELOG honest about v1 vs deferred remote
+
+**Still deferred (explicit):** remote fetch/cache, `template.toml` / prompts / vars, dry-run, Nx/schematics, inline generators, agent packs, graph.

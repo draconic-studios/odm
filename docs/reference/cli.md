@@ -49,7 +49,7 @@ odm project …
 odm progen …
 odm find | context
 odm run
-odm generate …          # sketch
+odm generate …          # v1 local template
 odm agent …             # sketch
 ```
 
@@ -232,13 +232,22 @@ odm run <action-name> [--project <name>] [--wt <slot>] [--json] [--] [extra-args
 
 ---
 
-### `odm generate` — **sketch**
+### `odm generate` — **v1 local template**
 
 ```text
-odm generate <generator-name> [generator-flags…]
+odm generate                                    # list Generators
+odm generate <name> --dest <rel-path> [--force]
 ```
 
-Resolve Generator by name from bundles; template/package behavior deferred (`config.md`, `env-gen-packs.md`).
+- Resolve `<name>` from merged Generator bundles (`config.md`); unknown → exit `1`.
+- **List** (no name): human one name per line (sorted); empty → `(no generators)`. `--json`: `{ "generators": [ { "name", "template", "url" } ] }` (missing fields `null`).
+- **Run**: materialize a **local** `template` directory (path relative to Workspace root) into `--dest` (also relative to root; must not escape). Recursive copy; no variable substitution.
+- **`--dest`**: required when a name is given; creates parent dirs as needed. Destination is the root of the copied tree.
+- **`--force`**: required when dest exists and is non-empty; overwrites files in place (does not delete unrelated extras). Without force → exit `3` (operation).
+- **Url-only** generators (no usable `template`): list shows them; run → exit `1` with message that remote generators are deferred. If both `template` and `url` are set, prefer `template`.
+- **`--json` run**: `{ "generator", "dest", "copied" }` (`copied` = files written).
+- Human success: `generated <name> -> <dest> (<n> files)`.
+- Deferred: remote fetch/cache, `template.toml` / prompts / vars, dry-run, Nx/schematics — `env-gen-packs.md`.
 
 ---
 
@@ -260,8 +269,8 @@ odm agent prompt <id> --progen …     # thin wrap of progen prompt when specifi
 
 ## Full vs sketch matrix
 
-- **Full**: global flags (including `--wt` path binding); `init`; `sync`; `pin apply|status`; `status`; `doctor`; `project list|add|rm|info|git|worktree` (v1); `progen` lifecycle + store façade mapping; `find`; `context`; `run`.
-- **Sketch**: `generate …`; `agent …`; deferred worktree features (config slots, GC, pin↔slot, doctor orphans — `worktrees.md`).
+- **Full**: global flags (including `--wt` path binding); `init`; `sync`; `pin apply|status`; `status`; `doctor`; `project list|add|rm|info|git|worktree` (v1); `progen` lifecycle + store façade mapping; `find`; `context`; `run`; `generate` (v1 local template only).
+- **Sketch**: `agent …`; deferred worktree features (config slots, GC, pin↔slot, doctor orphans — `worktrees.md`); generate remote/templating (`env-gen-packs.md`).
 - **Absent**: `serve`, MCP, top-level action verbs, `ops` namespace, path-valued scope flags.
 
 ## Related

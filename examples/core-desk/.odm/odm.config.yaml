@@ -16,3 +16,5 @@ progen_groups:
     - notes
 actions:
   core: actions/core.yaml
+generators:
+  core: generators/core.yaml

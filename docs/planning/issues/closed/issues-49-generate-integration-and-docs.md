@@ -2,7 +2,7 @@
 id: issues-49
 title: "Generate integration tests and docs"
 description: "CLI integration tests, optional core-desk generator fixture, promote generate from sketch in reference docs."
-status: open
+status: closed
 issue-type: feature-request
 severity: medium
 tags:
@@ -10,7 +10,6 @@ tags:
   - issue
   - wayfinder
   - wayfinder-task
-  - ready-for-agent
 ---
 
 # Generate integration tests and docs
@@ -68,11 +67,11 @@ See Agent Brief.
 
 **Acceptance criteria:**
 
-- [ ] Integration test covers list, generate, force, unknown name
-- [ ] Reference docs no longer call generate a pure unimplemented sketch
-- [ ] Deferred remote/templating still explicit
-- [ ] Map 45 closed with Answer when this ticket completes
-- [ ] `cargo test` green
+- [x] Integration test covers list, generate, force, unknown name
+- [x] Reference docs no longer call generate a pure unimplemented sketch
+- [x] Deferred remote/templating still explicit
+- [x] Map 45 closed with Answer when this ticket completes
+- [x] `cargo test` green
 
 **Out of scope:**
 
@@ -82,4 +81,15 @@ See Agent Brief.
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met
+
+## Answer
+
+Landed local `odm generate` v1 proof + docs:
+
+- **`crates/odm/tests/cli_generate.rs`** — list (human + JSON), materialize nested template, force/non-empty (exit 3), unknown name (exit 1), url-only (exit 1)
+- **core-desk dogfood** — `generators/core.yaml` + `templates/hello/hello.txt`, config pointer, README commands
+- **Docs** — `cli.md` / `env-gen-packs.md` / `architecture.md` promote generate to v1 local template; remote/templating deferred kept honest; `CHANGELOG.md` Unreleased + 0.1.0 stub note corrected for generate + worktree
+- **Map [[issues-45-generators-map]]** closed with this ticket
+
+`cargo test` green.
