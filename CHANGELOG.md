@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **odm-progen unit edges** — direct tests for `format_find_human` / `format_context_human`, `doctor_progens` (missing vault / index present), vault walk nested + dot-dir skip, note title/wikilink edges.
 - **odm-git worktree real-git test** — tempfile round-trip (`worktree_add` / `worktree_list` / `worktree_remove`) against real git at the crate seam; mock argv tests unchanged.
 - **Local coverage script** — `./scripts/coverage.sh` runs `cargo llvm-cov --workspace` (HTML + lcov under `target/coverage/`); install hint if missing; not wired to CI.
 - **Website Playwright** — local e2e harness under `website/` (`npm run test:e2e`; chromium).

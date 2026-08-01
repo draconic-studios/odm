@@ -268,4 +268,40 @@ See [[Target]].
         let n = parse_markdown("e.md", &PathBuf::from("/v/e.md"), text).unwrap();
         assert_eq!(n.wikilinks, vec!["X"]);
     }
+
+    #[test]
+    fn title_from_heading_fallback() {
+        let text = "Intro\n\n# Heading Title\n\nMore.\n";
+        let n = parse_markdown("notes/x.md", &PathBuf::from("/v/notes/x.md"), text).unwrap();
+        assert_eq!(n.title.as_deref(), Some("Heading Title"));
+        assert_eq!(n.id.as_str(), "notes/x");
+    }
+
+    #[test]
+    fn title_from_path_stem_when_no_heading() {
+        let n = parse_markdown(
+            "folder/My Note.md",
+            &PathBuf::from("/v/folder/My Note.md"),
+            "plain body no heading\n",
+        )
+        .unwrap();
+        assert_eq!(n.title.as_deref(), Some("My Note"));
+    }
+
+    #[test]
+    fn wikilink_strips_header_and_alias() {
+        let body = "See [[Target#Section]] and [[Other|display name]] and [[Target]].\n";
+        assert_eq!(
+            parse_wikilinks(body),
+            vec!["Target".to_string(), "Other".to_string()]
+        );
+    }
+
+    #[test]
+    fn empty_id_in_frontmatter_falls_back_to_path() {
+        let text = "---\nid: \"\"\ntitle: T\n---\nBody\n";
+        let n = parse_markdown("p/q.md", &PathBuf::from("/v/p/q.md"), text).unwrap();
+        assert_eq!(n.id.as_str(), "p/q");
+        assert_eq!(n.title.as_deref(), Some("T"));
+    }
 }

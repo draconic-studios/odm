@@ -141,4 +141,44 @@ mod tests {
         let notes = walk_notes(&v).unwrap();
         assert!(notes.iter().any(|n| n.id.as_str() == "x"));
     }
+
+    #[test]
+    fn walk_nested_dirs() {
+        let d = tempdir().unwrap();
+        let v = d.path().join("vault");
+        fs::create_dir_all(v.join("deep/nested")).unwrap();
+        fs::write(v.join("root.md"), "---\nid: root\n---\nR\n").unwrap();
+        fs::write(v.join("deep/nested/leaf.md"), "---\nid: leaf\n---\nL\n").unwrap();
+        let notes = walk_notes(&v).unwrap();
+        let ids: Vec<_> = notes.iter().map(|n| n.id.as_str()).collect();
+        assert!(ids.contains(&"root"));
+        assert!(ids.contains(&"leaf"));
+        assert!(notes.iter().any(|n| n.rel_path == "deep/nested/leaf.md"));
+    }
+
+    #[test]
+    fn walk_skips_dot_dirs() {
+        let d = tempdir().unwrap();
+        let v = d.path().join("vault");
+        fs::create_dir_all(v.join(".obsidian")).unwrap();
+        fs::create_dir_all(v.join(".git/objects")).unwrap();
+        fs::create_dir_all(v.join(".trash")).unwrap();
+        fs::create_dir_all(v.join("keep")).unwrap();
+        fs::write(v.join(".obsidian/secret.md"), "---\nid: obs\n---\n\n").unwrap();
+        fs::write(v.join(".git/objects/g.md"), "---\nid: git\n---\n\n").unwrap();
+        fs::write(v.join(".trash/t.md"), "---\nid: trash\n---\n\n").unwrap();
+        fs::write(v.join("keep/k.md"), "---\nid: keep\n---\n\n").unwrap();
+        fs::write(v.join("visible.md"), "---\nid: vis\n---\n\n").unwrap();
+        let notes = walk_notes(&v).unwrap();
+        let ids: Vec<_> = notes.iter().map(|n| n.id.as_str()).collect();
+        assert_eq!(ids, vec!["keep", "vis"]);
+        assert!(!ids.iter().any(|id| *id == "obs" || *id == "git" || *id == "trash"));
+    }
+
+    #[test]
+    fn walk_missing_vault_errors() {
+        let d = tempdir().unwrap();
+        let err = walk_notes(&d.path().join("nope")).unwrap_err();
+        assert!(err.to_string().contains("missing"));
+    }
 }

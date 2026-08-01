@@ -2,7 +2,7 @@
 id: issues-141
 title: "Progen unit tests: index/note/vault/ops edges"
 description: "ops.rs untested; index/note/vault thin — add unit coverage for formatters, doctor_progens, vault walk, note edges."
-status: reviewing
+status: closed
 issue-type: feature-request
 severity: medium
 tags:
@@ -49,12 +49,12 @@ None (coordinate with 122/123/131 so tests don’t duplicate)
 
 **Acceptance criteria:**
 
-- [ ] ops.rs has direct unit tests
-- [ ] vault/note edge cases covered
-- [ ] `cargo test -p odm-progen` green
+- [x] ops.rs has direct unit tests
+- [x] vault/note edge cases covered
+- [x] `cargo test -p odm-progen` green
 
 **Out of scope:** CLI progen-group (142); full FTS product changes.
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met
