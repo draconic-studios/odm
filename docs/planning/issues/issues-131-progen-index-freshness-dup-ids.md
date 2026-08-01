@@ -2,7 +2,7 @@
 id: issues-131
 title: "Progen index freshness and duplicate id errors"
 description: "Index rebuilds only when missing (stale after edits); duplicate note ids abort whole reindex with opaque SQL error."
-status: open
+status: reviewing
 issue-type: bug
 severity: high
 tags:
