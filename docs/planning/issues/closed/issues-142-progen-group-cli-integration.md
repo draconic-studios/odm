@@ -2,7 +2,7 @@
 id: issues-142
 title: "CLI integration: --progen-group on find"
 description: "Shipped --progen-group is unit-tested in scope.rs only; zero binary integration coverage."
-status: reviewing
+status: closed
 issue-type: feature-request
 severity: medium
 tags:
@@ -19,8 +19,8 @@ Flag wired in cli.rs/main.rs; scope unit-tested; `crates/odm/tests/**` has no pr
 
 ## Affected
 
-- `crates/odm/tests/progen_vault.rs` (or new file)
-- Multi-progen fixture (synthetic or extended)
+- `crates/odm/tests/cli_progen_group.rs` (new)
+- Multi-progen fixture (synthetic)
 
 ## Proposed Fix
 
@@ -50,12 +50,12 @@ None (pairs with [[issues-144-core-desk-assets-full-surface]] later for dogfood)
 
 **Acceptance criteria:**
 
-- [ ] Group narrows hits at CLI
-- [ ] Unknown group fails with stable exit
-- [ ] `cargo test -p odm` green
+- [x] Group narrows hits at CLI
+- [x] Unknown group fails with stable exit
+- [x] `cargo test -p odm` green
 
 **Out of scope:** core-desk asset changes (144).
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met

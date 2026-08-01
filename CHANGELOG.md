@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`find --progen-group` CLI integration tests** — multi-progen fixture: group narrows hits, unknown group exit `1`, `--progen` ∪ `--progen-group`, JSON `progen` field (`crates/odm/tests/cli_progen_group.rs`).
 - **odm-progen unit edges** — direct tests for `format_find_human` / `format_context_human`, `doctor_progens` (missing vault / index present), vault walk nested + dot-dir skip, note title/wikilink edges.
 - **odm-git worktree real-git test** — tempfile round-trip (`worktree_add` / `worktree_list` / `worktree_remove`) against real git at the crate seam; mock argv tests unchanged.
 - **Local coverage script** — `./scripts/coverage.sh` runs `cargo llvm-cov --workspace` (HTML + lcov under `target/coverage/`); install hint if missing; not wired to CI.
@@ -36,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`odm run --json` stdout/stderr** — envelope always includes captured `stdout` and `stderr` strings (concatenated across tasks in order) so agents can debug failures without a second non-JSON run; capture still keeps process stdout clean JSON.
 - **Entity name uniqueness / path safety** — Project and Progen names must be unique across both maps and path-safe tokens (no `/` `\` `.` `..`); enforced on config load and membership add.
 - **`odm run` missing cwd paths** — known project path or `--wt` slot missing on disk now exits `4` (`not_found`); unknown project names still exit `1` (`usage`).
 - **Docs honesty** — install leads with build-from-source (Releases = when published); `AGENTS.md` allows Pages-only Actions; `progen.md` / `cli.md` federation = `find` only; README docs links; guide-actions HTML paren.
@@ -53,6 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - `examples/core-desk` includes a sample Generator (`hello` → `templates/hello`) and a tiny demo agent pack (`agent-packs/demo`).
+- `examples/core-desk` assets expand: second Progen `ops` + `all-docs` group, vault note ids (`readme` / `ops-note`), project-scoped `in-alpha` actions, gitignore for dogfood debris.
 - `examples/core-desk` README + `core_desk_pack_list_missing_gate` dogfood pack list `missing` (install → dest delete → rm).
 - Reference docs: `generate`, `agent pack`, and `agent prompt` documented as landed v1 (local / thin); remote/marketplace and `agent start` still deferred in `env-gen-packs.md`.
 
