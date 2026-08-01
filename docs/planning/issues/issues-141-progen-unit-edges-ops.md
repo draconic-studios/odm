@@ -2,7 +2,7 @@
 id: issues-141
 title: "Progen unit tests: index/note/vault/ops edges"
 description: "ops.rs untested; index/note/vault thin — add unit coverage for formatters, doctor_progens, vault walk, note edges."
-status: open
+status: reviewing
 issue-type: feature-request
 severity: medium
 tags:
