@@ -11,7 +11,7 @@ use crate::config::{
 };
 use crate::error::OdmError;
 use crate::gitignore::apply_managed_gitignore;
-use crate::paths::{abs_checkout, progen_index_dir, worktree_slot_path};
+use crate::paths::{abs_checkout, progen_index_dir, resolve_under_root, worktree_slot_path};
 use crate::pin_maintain::{maintain_pins_after, prune_pin_file_if_present};
 use crate::worktree::validate_slot_name;
 
@@ -93,12 +93,20 @@ pub fn membership_add<R: odm_git::CommandRunner>(
     if entry.path().trim().is_empty() {
         return Err(OdmError::usage(format!("{label} path must not be empty")));
     }
-    if Path::new(entry.path()).is_absolute() {
-        return Err(OdmError::usage(format!(
-            "{label} path must be relative, got '{}'",
-            entry.path()
-        )));
-    }
+    resolve_under_root(root, entry.path()).map_err(|e| {
+        let msg = e.to_string();
+        if msg.contains("relative") {
+            OdmError::usage(format!(
+                "{label} path must be relative, got '{}'",
+                entry.path()
+            ))
+        } else {
+            OdmError::usage(format!(
+                "{label} path must not escape Workspace root, got '{}'",
+                entry.path()
+            ))
+        }
+    })?;
 
     let managed = entry.url().map(|url| ManagedEntity {
         name: name.to_string(),
@@ -373,7 +381,7 @@ mod tests {
         save_config, ProjectEntry, ProgenEntry, Workspace, WorkspaceConfig,
     };
     use crate::init::{init_workspace, InitOptions};
-    use crate::paths::{pin_path, progen_index_dir, worktree_slot_path};
+    use crate::paths::{config_path, pin_path, progen_index_dir, worktree_slot_path};
     use crate::pin::{load_pin, PinEntry, PinFile};
     use std::collections::BTreeMap;
     use std::ffi::{OsStr, OsString};
@@ -614,6 +622,99 @@ mod tests {
         let err = path_buf_to_rel(Path::new("/abs")).unwrap_err();
         assert!(err.to_string().contains("relative"));
         assert_eq!(path_buf_to_rel(Path::new("vaults/desk")).unwrap(), "vaults/desk");
+    }
+
+    #[test]
+    fn project_add_rejects_path_escape_without_writing_config() {
+        let dir = tempdir().unwrap();
+        let res = init_workspace(InitOptions {
+            path: dir.path().to_path_buf(),
+            no_git: true,
+            name: None,
+        })
+        .unwrap();
+        let root = res.root;
+        let before = fs::read(config_path(&root)).unwrap();
+        let g = Git::new();
+        let mut cfg = WorkspaceConfig::default();
+        let err = project_add(
+            &g,
+            &root,
+            &mut cfg,
+            "evil",
+            ProjectEntry {
+                path: "../outside".into(),
+                url: None,
+                branch: None,
+                type_: None,
+            },
+            true,
+        )
+        .unwrap_err();
+        assert!(err.to_string().contains("escape"), "{err}");
+        assert!(!cfg.projects.contains_key("evil"));
+        assert_eq!(fs::read(config_path(&root)).unwrap(), before);
+    }
+
+    #[test]
+    fn progen_add_rejects_path_escape_without_writing_config() {
+        let dir = tempdir().unwrap();
+        let res = init_workspace(InitOptions {
+            path: dir.path().to_path_buf(),
+            no_git: true,
+            name: None,
+        })
+        .unwrap();
+        let root = res.root;
+        let before = fs::read(config_path(&root)).unwrap();
+        let g = Git::new();
+        let mut cfg = WorkspaceConfig::default();
+        let err = progen_add(
+            &g,
+            &root,
+            &mut cfg,
+            "evil",
+            ProgenEntry {
+                path: "a/../../outside".into(),
+                url: None,
+                branch: None,
+            },
+            true,
+        )
+        .unwrap_err();
+        assert!(err.to_string().contains("escape"), "{err}");
+        assert!(!cfg.progens.contains_key("evil"));
+        assert_eq!(fs::read(config_path(&root)).unwrap(), before);
+    }
+
+    #[test]
+    fn project_add_still_rejects_absolute_path() {
+        let dir = tempdir().unwrap();
+        let res = init_workspace(InitOptions {
+            path: dir.path().to_path_buf(),
+            no_git: true,
+            name: None,
+        })
+        .unwrap();
+        let root = res.root;
+        let g = Git::new();
+        let mut cfg = WorkspaceConfig::default();
+        let err = project_add(
+            &g,
+            &root,
+            &mut cfg,
+            "abs",
+            ProjectEntry {
+                path: "/abs".into(),
+                url: None,
+                branch: None,
+                type_: None,
+            },
+            true,
+        )
+        .unwrap_err();
+        assert!(err.to_string().contains("relative"), "{err}");
+        assert!(!cfg.projects.contains_key("abs"));
     }
 
     // --- project_git --wt ---

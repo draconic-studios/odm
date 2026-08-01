@@ -2,7 +2,7 @@
 id: issues-125
 title: "membership_add validates path escape before save"
 description: "project/progen add accepts ../ paths, writes config, then load_workspace fails — bricks the Workspace."
-status: reviewing
+status: closed
 issue-type: bug
 severity: high
 tags:
@@ -54,12 +54,12 @@ None
 
 **Acceptance criteria:**
 
-- [ ] Escaping path never written to config
-- [ ] Unit tests prove config unchanged on reject
-- [ ] `cargo test -p odm-core` green
+- [x] Escaping path never written to config
+- [x] Unit tests prove config unchanged on reject
+- [x] `cargo test -p odm-core` green
 
 **Out of scope:** clone rollback on materialize failure; name uniqueness (130).
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met
