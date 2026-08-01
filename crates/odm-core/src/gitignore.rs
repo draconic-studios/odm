@@ -336,8 +336,10 @@ mod tests {
     #[test]
     fn disabled_noop() {
         let dir = tempdir().unwrap();
-        let mut cfg = WorkspaceConfig::default();
-        cfg.manage_gitignore = Some(false);
+        let cfg = WorkspaceConfig {
+            manage_gitignore: Some(false),
+            ..Default::default()
+        };
         update_workspace_gitignore(dir.path(), &cfg).unwrap();
         assert!(!dir.path().join(".gitignore").exists());
     }

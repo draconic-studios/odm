@@ -10,7 +10,7 @@ _(none open)_
 
 ## Frontier (open, unblocked)
 
-- [[issues-46-clippy-clean-tests]] — Clippy clean test code (`ready-for-agent`)
+_(none)_
 
 ## Blocked
 

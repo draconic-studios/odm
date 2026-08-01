@@ -2,7 +2,7 @@
 id: issues-46
 title: "Clippy clean test code"
 description: "Fix workspace clippy -D warnings failures (field_reassign_with_default, useless_format in tests)."
-status: open
+status: closed
 issue-type: bug
 severity: low
 tags:
@@ -57,9 +57,9 @@ None
 
 **Acceptance criteria:**
 
-- [ ] `cargo clippy --workspace --all-targets -- -D warnings` exits 0
-- [ ] `cargo test` still green
-- [ ] Diff limited to lint fixes (no drive-by refactors)
+- [x] `cargo clippy --workspace --all-targets -- -D warnings` exits 0
+- [x] `cargo test` still green
+- [x] Diff limited to lint fixes (no drive-by refactors)
 
 **Out of scope:**
 
@@ -69,4 +69,13 @@ None
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met
+
+## Answer
+
+Fixed four clippy `-D warnings` in odm-core tests only:
+
+- `config.rs` / `gitignore.rs`: `WorkspaceConfig { field, ..Default::default() }` instead of mut reassign after `default()`
+- `pin.rs`: plain string literal instead of useless `format!`
+
+`cargo clippy --workspace --all-targets -- -D warnings` and `cargo test` both green. No production logic changes.

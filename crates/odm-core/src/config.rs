@@ -391,8 +391,10 @@ mod tests {
 
     #[test]
     fn manage_gitignore_false_written() {
-        let mut c = WorkspaceConfig::default();
-        c.manage_gitignore = Some(false);
+        let c = WorkspaceConfig {
+            manage_gitignore: Some(false),
+            ..Default::default()
+        };
         let yaml = serde_yaml::to_string(&c).unwrap();
         assert!(yaml.contains("manage_gitignore: false"));
     }
@@ -509,8 +511,10 @@ progen_groups:
     fn save_load_atomic() {
         let dir = tempdir().unwrap();
         let root = dir.path();
-        let mut c = WorkspaceConfig::default();
-        c.name = Some("t".into());
+        let c = WorkspaceConfig {
+            name: Some("t".into()),
+            ..Default::default()
+        };
         save_config(root, &c).unwrap();
         let ws = load_workspace(root).unwrap();
         assert_eq!(ws.config.name.as_deref(), Some("t"));

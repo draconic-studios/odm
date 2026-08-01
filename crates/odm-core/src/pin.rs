@@ -128,10 +128,8 @@ mod tests {
     #[test]
     fn bad_version_and_rev() {
         assert!(parse_pin_yaml("version: 2\npins: {}\n").is_err());
-        let yaml = format!(
-            "version: 1\npins:\n  x:\n    rev: abcd\n    url: u\n"
-        );
-        assert!(parse_pin_yaml(&yaml).is_err());
+        let yaml = "version: 1\npins:\n  x:\n    rev: abcd\n    url: u\n";
+        assert!(parse_pin_yaml(yaml).is_err());
     }
 
     #[test]
