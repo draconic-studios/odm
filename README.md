@@ -1,21 +1,99 @@
 # ODM (Orchestrated Development Management)
 
-Rust poly-repo workspace manager for humans and AI agents: declarative layout, plain git clones (no submodules), multi-**progen** docs/memory stores, worktrees, and a single `odm` CLI.
+Poly-repo workspace OS for humans and AI agents: one config, one CLI, and orchestrated Projects + Progens without submodules or a second brain product.
 
-> **Status:** Design phase. Implementation removed; the product is being redesigned and will be rebuilt as a Rust workspace in this repo.
+**Status:** v0.1.0 spine — core multi-git, Progen integration, and Actions in a single `odm` binary.
+
+## Install
+
+### GitHub Releases (primary)
+
+Download the tarball for your platform from [GitHub Releases](https://github.com/hembrow-innovations/odm/releases), extract `odm` onto your `PATH`, and verify:
+
+```bash
+tar xzf odm-0.1.0-<target>.tar.gz
+# move ./odm somewhere on PATH
+odm --version
+```
+
+See [docs/reference/install.md](docs/reference/install.md) for details.
+
+### Build from source
+
+Requirements: **Rust 1.70+**, **git** on `PATH`. Actions (`odm run`) need a Unix shell.
+
+```bash
+git clone https://github.com/hembrow-innovations/odm.git
+cd odm
+cargo build -p odm --release
+# binary: target/release/odm
+
+# or install into cargo's bin dir:
+cargo install --path crates/odm
+```
+
+Release packaging (local tarball under `dist/`):
+
+```bash
+./scripts/release-build.sh
+```
+
+## Quickstart
+
+```bash
+odm init
+odm project add alpha --path projects/alpha --url <git-url>
+odm sync
+odm pin status
+odm status
+odm doctor
+```
+
+Progen (docs/memory stores) and Actions:
+
+```bash
+odm progen list
+odm find <query>
+odm context <id>
+odm run            # list actions
+odm run <name>
+```
+
+Dogfood Workspace (offline fixtures):
+
+```bash
+cargo build -p odm
+cd examples/core-desk
+# see examples/core-desk/README.md
+odm --root . sync
+odm progen reindex
+odm find DeskUniqueToken
+odm run hello
+```
 
 ## Docs
 
-- Design wayfinder map: [`docs/planning/issues/issues-1-odm-design-docs-map.md`](docs/planning/issues/issues-1-odm-design-docs-map.md)
-- Legacy Go research (pre-removal): [`docs/reference/research/legacy-go-odm.md`](docs/reference/research/legacy-go-odm.md)
-- Progenitor integration research: [`docs/reference/research/progenitor-surface.md`](docs/reference/research/progenitor-surface.md)
+- **Install**: [docs/reference/install.md](docs/reference/install.md)
+- **Vision**: [docs/reference/vision.md](docs/reference/vision.md)
+- **CLI**: [docs/reference/cli.md](docs/reference/cli.md)
+- **Architecture**: [docs/reference/architecture.md](docs/reference/architecture.md)
+- **Config**: [docs/reference/config.md](docs/reference/config.md)
+- **Multi-git**: [docs/reference/multi-git.md](docs/reference/multi-git.md)
+- **Progen**: [docs/reference/progen.md](docs/reference/progen.md)
+- **Phased delivery**: [docs/reference/phased-delivery.md](docs/reference/phased-delivery.md)
+- **Changelog**: [CHANGELOG.md](CHANGELOG.md)
+- **Domain terms**: [CONTEXT.md](CONTEXT.md)
 
-Reference design docs land under `docs/reference/` as the map is worked.
+## Development
+
+```bash
+cargo test
+```
 
 ## Legacy Go
 
-The previous Go CLI (`src/`, build scripts) was removed. Full tree: git tag `legacy-go-archive` or history before this change. Do not treat old README/submodule behavior as the product contract.
+The previous Go CLI was removed. Recoverable as git tag `legacy-go-archive` (or history before that change). Not a compatibility baseline — see [docs/reference/research/legacy-go-odm.md](docs/reference/research/legacy-go-odm.md).
 
-## Install / build
+## License
 
-Not available yet. Target: single static binary via GitHub Releases once the Rust workspace ships.
+MIT
