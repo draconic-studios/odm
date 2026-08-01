@@ -2,7 +2,7 @@
 id: issues-130
 title: "Entity names unique and path-safe"
 description: "Projects and Progens may share names (pin/managed collision); names may contain / breaking worktree paths."
-status: open
+status: reviewing
 issue-type: bug
 severity: medium
 tags:
