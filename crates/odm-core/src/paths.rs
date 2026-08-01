@@ -19,6 +19,11 @@ pub fn pin_path(root: &Path) -> PathBuf {
     odm_dir(root).join("odm.lock.yaml")
 }
 
+/// Agent pack registry path: `<root>/.odm/agent-packs.json`.
+pub fn agent_packs_path(root: &Path) -> PathBuf {
+    odm_dir(root).join("agent-packs.json")
+}
+
 /// Resolve config-relative `rel` under Workspace `root`.
 /// Err if absolute or escapes via `..`.
 pub fn resolve_under_root(root: &Path, rel: &str) -> Result<PathBuf, OdmError> {
@@ -133,5 +138,9 @@ mod tests {
         assert_eq!(odm_dir(root), PathBuf::from("/ws/.odm"));
         assert_eq!(config_path(root), PathBuf::from("/ws/.odm/odm.config.yaml"));
         assert_eq!(pin_path(root), PathBuf::from("/ws/.odm/odm.lock.yaml"));
+        assert_eq!(
+            agent_packs_path(root),
+            PathBuf::from("/ws/.odm/agent-packs.json")
+        );
     }
 }

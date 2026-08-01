@@ -1,5 +1,6 @@
 //! `odm-core` — Workspace config, pin, discovery, and path policy.
 
+mod agent_pack;
 mod checkout;
 mod config;
 mod discover;
@@ -18,6 +19,7 @@ mod status;
 mod url_match;
 mod worktree;
 
+pub use agent_pack::{pack_install, pack_link, pack_list, PackEntry, PackMode};
 pub use checkout::{
     all_managed, materialize, resolve_clone_url, resolve_managed, sort_by_depth, sync_managed,
     ManagedEntity, MaterializeOutcome, SyncResult,
@@ -45,8 +47,8 @@ pub use observation::{
     observe_entity, observe_workspace, EntityObservation, WorkspaceObservation,
 };
 pub use paths::{
-    abs_checkout, config_path, odm_dir, pin_path, progen_index_dir, resolve_under_root,
-    worktree_slot_path,
+    abs_checkout, agent_packs_path, config_path, odm_dir, pin_path, progen_index_dir,
+    resolve_under_root, worktree_slot_path,
 };
 pub use pin::{
     is_full_sha, load_pin, parse_pin_yaml, prune_pins, save_pin, PinEntry, PinFile,

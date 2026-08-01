@@ -6,15 +6,16 @@ See `docs/agents/issue-tracker.md`.
 
 ## Maps
 
-_(none open)_
+- [[issues-50-agent-packs-map]] — Agent packs local install/link/list (post-0.1.0)
 
 ## Frontier (open, unblocked)
 
-_(none)_
+- [[issues-52-agent-pack-cli]] — CLI list/install/link over core (`ready-for-agent`)
+- [[issues-54-readme-post-010-docs-drift]] — README + phased-delivery honesty (`ready-for-agent`)
 
 ## Blocked
 
-_(none)_
+- [[issues-53-agent-pack-integration-and-docs]] — blocked by [[issues-52-agent-pack-cli]]
 
 ## Architecture deepen (post-0.1.0)
 
