@@ -2,7 +2,7 @@
 id: issues-132
 title: "CLI JSON/UX hardening batch"
 description: "Prune JSON skipped_nonempty; neutral single-progen errors; name:id vs --progen conflict; dual --wt hard error; prune DTO dirty null."
-status: open
+status: reviewing
 issue-type: bug
 severity: medium
 tags:
