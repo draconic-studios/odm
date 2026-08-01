@@ -5,7 +5,7 @@ Command tree and global flags for the `odm` binary. Domain terms: root `CONTEXT.
 Depth markers:
 
 - **Full** — behavior locked here (enough to implement without reopening).
-- **Sketch** — name reserved + one-liner; depth in `worktrees.md`, `graph.md`, `env-gen-packs.md`.
+- **Sketch** — name reserved + one-liner; depth in `graph.md`, `env-gen-packs.md` (worktree v1 is full; deferred items still in `worktrees.md`).
 
 ## Binary and non-goals
 
@@ -23,7 +23,7 @@ Available on commands that need them (parser-global; unknown entity names → ha
 - **`--project <name>`**: Target **Project** by config name (not a path).
 - **`--progen <name>`**: Include/select **Progen** by config name; **repeatable**; union with other scope flags (`progen.md`).
 - **`--progen-group <name>`**: Include members of a **Progen group**; **repeatable**; union (`progen.md`).
-- **`--wt <slot>`**: **Worktree slot** name → tree at `worktrees/<project>/<slot>/`. Requires a Project context (`--project` or a `project` subcommand). **Sketch** behavior beyond path binding — see worktrees.md.
+- **`--wt <slot>`**: **Worktree slot** name → tree at `worktrees/<project>/<slot>/`. Requires a Project context (`--project` or a `project` subcommand). Path binding implemented for `project git` and `run`; missing slot → exit `4` (no auto-create). See `worktrees.md`.
 
 Rules:
 
@@ -122,22 +122,24 @@ odm doctor [--fix]
 
 ---
 
-### `odm project` — **full** (worktree **sketch**)
+### `odm project` — **full** (worktree **v1**)
 
 ```text
 odm project list
 odm project add <name> --path <rel> [--url <url>] [--branch <b>] [--type <t>] [--no-clone]
 odm project rm <name> [--delete] [--force]
 odm project info <name>
-odm project git <name> -- <git-args…> [--wt <slot>]
-odm project worktree …          # sketch
+odm project git <name> [--wt <slot>] -- <git-args…>
+odm project worktree list <project>
+odm project worktree add <project> <slot> [--branch <b>]
+odm project worktree rm <project> <slot> [--force]
 ```
 
 - **`list` / `info`**: config + disk/git summary; `--json`.
 - **`add`**: write Project entry; if `url` set, materialize unless `--no-clone` (`multi-git.md`).
-- **`rm`**: un-declare; tree **kept** by default; `--delete` removes tree if clean; dirty → fail unless `--force`.
-- **`git`**: run `git -C <primary-or-wt> <git-args…>` (argv after `--`, not a shell string). Exit code = git’s. On success, if pin file exists and **HEAD changed**, **auto-maintain** that entity’s pin (not “sync”). `--wt` selects slot working tree.
-- **`worktree`**: sketch — list/add/rm (etc.) one-liners only; full behavior in `worktrees.md`.
+- **`rm`**: un-declare; tree **kept** by default; `--delete` removes tree if clean; dirty → fail unless `--force`. Does **not** delete `worktrees/<project>/`.
+- **`git`**: run `git -C <primary-or-wt> <git-args…>` (argv after `--`, not a shell string). Exit code = git’s. On success, if pin file exists and **HEAD changed** on **Primary**, **auto-maintain** that entity’s pin (not “sync”). `--wt` selects slot working tree (must exist; no auto-create; pin maintain stays Primary-only).
+- **`worktree`**: **v1 implemented** — `list` / `add` / `rm` for slots at `worktrees/<project>/<slot>/`. Primary must be a git repo. Details and deferred items: `worktrees.md`.
 
 No `project sync` — use top-level `odm sync [name]`.
 
@@ -258,8 +260,8 @@ odm agent prompt <id> --progen …     # thin wrap of progen prompt when specifi
 
 ## Full vs sketch matrix
 
-- **Full**: global flags (with `--wt` reserved); `init`; `sync`; `pin apply|status`; `status`; `doctor`; `project list|add|rm|info|git`; `progen` lifecycle + store façade mapping; `find`; `context`; `run`.
-- **Sketch**: `project worktree …`; `generate …`; `agent …`; `--wt` deep behavior.
+- **Full**: global flags (including `--wt` path binding); `init`; `sync`; `pin apply|status`; `status`; `doctor`; `project list|add|rm|info|git|worktree` (v1); `progen` lifecycle + store façade mapping; `find`; `context`; `run`.
+- **Sketch**: `generate …`; `agent …`; deferred worktree features (config slots, GC, pin↔slot, doctor orphans — `worktrees.md`).
 - **Absent**: `serve`, MCP, top-level action verbs, `ops` namespace, path-valued scope flags.
 
 ## Related
@@ -269,4 +271,5 @@ odm agent prompt <id> --progen …     # thin wrap of progen prompt when specifi
 - Clone / sync / pin semantics: `multi-git.md`
 - Federation and scope: `progen.md`
 - Upstream command inventory: `research/progenitor-surface.md`
-- Sketch depth: `worktrees.md`, `graph.md`, `env-gen-packs.md`
+- Worktrees (v1 + deferred): `worktrees.md`
+- Sketch depth: `graph.md`, `env-gen-packs.md`

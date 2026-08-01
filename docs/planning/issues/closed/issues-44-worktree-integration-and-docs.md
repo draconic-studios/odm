@@ -2,7 +2,7 @@
 id: issues-44
 title: "Worktree integration tests and docs"
 description: "End-to-end git worktree tests plus reference doc updates for implemented slot CLI."
-status: open
+status: closed
 issue-type: feature-request
 severity: low
 tags:
@@ -68,10 +68,10 @@ Skip or `#[ignore]` only if environment lacks git — prefer require git like ot
 - No markdown tables (AGENTS.md)
 
 **Acceptance criteria:**
-- [ ] Integration test file (or module) covers add/list/rm + git --wt happy path and missing-slot failure
-- [ ] `cargo test` green including new tests
-- [ ] `worktrees.md` and `cli.md` describe implemented commands; deferred items still explicit
-- [ ] Map [[issues-40-worktree-slots-map]] Decisions/Notes updated if anything drifted; close map only if all child tickets closed (this ticket may close the map in `## Answer` / Comments when done)
+- [x] Integration test file (or module) covers add/list/rm + git --wt happy path and missing-slot failure
+- [x] `cargo test` green including new tests
+- [x] `worktrees.md` and `cli.md` describe implemented commands; deferred items still explicit
+- [x] Map [[issues-40-worktree-slots-map]] Decisions/Notes updated if anything drifted; close map only if all child tickets closed (this ticket may close the map in `## Answer` / Comments when done)
 
 **Out of scope:**
 - Generators, agent packs, graph
@@ -80,7 +80,17 @@ Skip or `#[ignore]` only if environment lacks git — prefer require git like ot
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met
+
+## Answer
+
+Landed real-git integration tests in `crates/odm/tests/cli_worktree.rs`:
+
+- Roundtrip add (`--branch slot1`) / list human+JSON / `project git --wt` toplevel / rm
+- Missing slot → exit 4, no path created
+- Non-git primary → worktree add exit 3
+
+Docs: `worktrees.md` retitled v1 implemented + deferred; `cli.md` marks `project worktree` full v1 and `--wt` path binding. Closed parent map [[issues-40-worktree-slots-map]] (all children done). No CHANGELOG Unreleased; no core-desk change.
 
 ## Comments
 

@@ -2,7 +2,7 @@
 id: issues-40
 title: "Worktree slots map"
 description: "Wayfinder map: implement Project worktree slot lifecycle and --wt resolution beyond path binding."
-status: open
+status: closed
 issue-type: feature-request
 tags:
   - planning
@@ -46,10 +46,12 @@ Productize **Worktree slots** per `docs/reference/worktrees.md` and `cli.md`: na
 - **issues-41 closed:** `odm-git` exposes `worktree_add` / `worktree_list` / `worktree_remove` + `WorktreeEntry` (porcelain); fake-runner unit tests lock argv and parse.
 - **issues-42 closed:** core `worktree_list`/`add`/`rm` + slot name validation; CLI `odm project worktree list|add|rm` with JSON DTOs; unit tests via fake git runner.
 - **issues-43 closed:** `project_git` honors `--wt` (command or global) via slot path + validation; pin auto-maintain stays Primary-only; CLI no longer not-implemented.
+- **issues-44 closed:** integration tests `crates/odm/tests/cli_worktree.rs` (add/list/git --wt/rm roundtrip, missing slot exit 4, non-git primary exit 3); `worktrees.md` retitled v1+deferred; `cli.md` marks `project worktree` full v1 and `--wt` path binding.
+- **Map complete:** all child tickets closed; destination met for v1 (deferred items remain explicit in docs).
 
 ## Not yet specified
 
-- Exact human list columns beyond name + path (keep minimal).
+- Exact human list columns beyond name + path (v1: name only per line; path in JSON).
 - Whether `list` without project name is ever supported (v1: **require** project name).
 
 ## Out of scope
@@ -63,6 +65,17 @@ Productize **Worktree slots** per `docs/reference/worktrees.md` and `cli.md`: na
 ## Blocked by
 
 None — phases 1–5 closed; path policy and actions `--wt` landed.
+
+## Answer
+
+Worktree slots v1 delivered end-to-end:
+
+1. `odm-git` worktree ops (41)
+2. Core + CLI lifecycle list/add/rm (42)
+3. `project git --wt` path binding (43)
+4. Real-git integration tests + reference docs (44)
+
+Deferred features stay documented in `worktrees.md`. Map closed with issues-44.
 
 ## Comments
 

@@ -6,11 +6,11 @@ See `docs/agents/issue-tracker.md`.
 
 ## Maps
 
-- [[issues-40-worktree-slots-map]] — Worktree slots (post-0.1.0)
+_(none open)_
 
 ## Frontier (open, unblocked)
 
-- [[issues-44-worktree-integration-and-docs]] — integration tests + docs (`ready-for-agent`)
+_(empty)_
 
 ## Blocked
 
@@ -29,3 +29,4 @@ _(none remaining)_
 - [[issues-25-progen-integration-map]] — Progen integration (phase 3)
 - [[issues-26-actions-map]] — Actions (phase 4)
 - [[issues-27-ship-map]] — Ship (phase 5)
+- [[issues-40-worktree-slots-map]] — Worktree slots (post-0.1.0)

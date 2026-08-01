@@ -1,6 +1,6 @@
-# Worktree slots (sketch)
+# Worktree slots (v1 implemented + deferred)
 
-**Sketch** — not a Ship gate. Depth bar: intent, placement/ownership, CLI names reserved, explicit deferred. Full behavior is a later implement slice. Domain terms: root `CONTEXT.md`. Placement: `architecture.md`. CLI stubs: `cli.md`. Primary checkouts: `multi-git.md`.
+**v1 implemented** — slot lifecycle (`list` / `add` / `rm`) and `--wt` path binding for `project git` (and actions cwd). Items under **Deferred** remain out of scope. Domain terms: root `CONTEXT.md`. Placement: `architecture.md`. CLI: `cli.md`. Primary checkouts: `multi-git.md`.
 
 ## Intent
 
@@ -15,24 +15,25 @@ Parallel human or agent working trees on one **Project** without touching that P
 - **Git owns:** worktree and branch mechanics.
 - **User owns:** commits and branch policy inside the slot.
 
-## CLI names reserved
+## CLI (v1)
 
 ```text
-odm project worktree list
-odm project worktree add <slot> …
-odm project worktree rm <slot> …
+odm project worktree list <project>
+odm project worktree add <project> <slot> [--branch <b>]
+odm project worktree rm <project> <slot> [--force]
 ```
 
-- **`list` / `add` / `rm`:** names only in this design package — no flag tables.
-- **`add`:** create a git worktree at the slot path; branch is caller-supplied or plain git default. **No** ODM branch-naming template in the sketch.
-- **`--wt <slot>`** (global): resolve working tree to `worktrees/<project>/<slot>/` for `project git`, `run`, and sketch `agent start`. Requires Project context. **Does not** auto-create a missing slot.
+- **`list <project>`:** slots under `worktrees/<project>/` that are registered git worktrees (from `git worktree list`, filtered to the slot prefix). Human: one slot name per line. `--json`: `{ "project", "slots": [ { "name", "path" } ] }` where `path` is `worktrees/<project>/<slot>`.
+- **`add <project> <slot> [--branch <b>]`:** create a git worktree at the slot path from the Project primary. Optional `--branch` creates and checks out a new branch (`git worktree add -b`). Prefer `--branch` when the primary already has the default branch checked out (plain `worktree add` without a new branch fails in that case). Fails if slot path exists or primary is not a git repo. `--json`: `{ "project", "slot", "path" }`.
+- **`rm <project> <slot> [--force]`:** `git worktree remove` on the slot; `--force` maps to git force. Best-effort remove of empty `worktrees/<project>/`. `--json`: `{ "project", "slot", "path" }`.
+- **`--wt <slot>`** on `project git` (and `run` with `--project`): resolve working tree to `worktrees/<project>/<slot>/`. Requires Project context. **Does not** auto-create a missing slot (missing → exit `4`). Pin auto-maintain stays **Primary-only**.
 
 ## Rules
 
-- Slot only on a **Project** whose Primary checkout is a **git** repo. Non-git Project → hard error on `worktree add` / `--wt`.
-- Slot name: name token (no path separators); charset aligned with Project names at implement time.
+- Slot only on a **Project** whose Primary checkout is a **git** repo. Non-git Project → hard error on `worktree add` / list / rm (exit `3` operation).
+- Slot name: non-empty name token (no path separators, no `.` / `..`); names only, not filesystem paths.
 - **Primary checkout is never a slot.** Omit `--wt` → Primary.
-- `project rm` does **not** delete `worktrees/<project>/` by default (same keep-tree spirit as Project trees). Orphan slot dirs are possible; cleanup is manual or a later `doctor` concern — **not** required of core `status`/`doctor` in this package.
+- `project rm` does **not** delete `worktrees/<project>/` by default (same keep-tree spirit as Project trees). Orphan slot dirs are possible; cleanup is manual or a later `doctor` concern — **not** required of core `status`/`doctor` in v1.
 
 ## Deferred
 
@@ -42,9 +43,9 @@ odm project worktree rm <slot> …
 - Pin file interaction with slots (pin stays Primary-oriented unless later decided)
 - Multi-Project or Workspace-level slots
 - `status` / `doctor` obligations for orphans or dirty slots
-- Full flag tables and JSON shapes
+- Global `--wt` deep behavior beyond path binding on `project git` / `run`
 
-## Non-goals (sketch-wide)
+## Non-goals
 
 - Not a substitute for Primary checkout lifecycle (`multi-git.md`)
 - Not under `.odm/`
