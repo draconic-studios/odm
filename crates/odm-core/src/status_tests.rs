@@ -269,7 +269,110 @@ fn build_status_includes_registered_worktree_slots() {
     assert_eq!(v["projects"][0]["worktree_slots"][0]["name"], "a-slot");
     assert_eq!(v["projects"][0]["worktree_slots"][0]["dirty"], false);
     assert!(v["progens"][0].get("worktree_slots").is_none());
+    assert!(v["progens"][0].get("worktree_orphans").is_none());
     assert!(v["agent_packs"].is_array());
+    // no orphan dirs on disk → empty array present
+    assert_eq!(
+        p.worktree_orphans.as_ref().expect("project orphans").as_slice(),
+        &[]
+    );
+    assert_eq!(v["projects"][0]["worktree_orphans"], serde_json::json!([]));
+}
+
+#[test]
+fn build_status_lists_orphan_slot_dirs() {
+    let dir = tempdir().unwrap();
+    let root = dir.path();
+    let primary = ensure_primary(root, "projects/alpha");
+    fs::create_dir_all(root.join("progens/notes")).unwrap();
+    let ws = ws_project_and_progen(root.to_path_buf());
+    let s_reg = worktree_slot_path(root, "alpha", "keep");
+    let s_orphan = worktree_slot_path(root, "alpha", "stale");
+    fs::create_dir_all(&s_orphan).unwrap();
+    // also a second orphan to prove sort
+    fs::create_dir_all(worktree_slot_path(root, "alpha", "other")).unwrap();
+    // file under worktrees prefix ignored (not a dir)
+    fs::write(root.join("worktrees/alpha/not-a-dir"), b"x").unwrap();
+    let porcelain = format!(
+        "worktree {}\nHEAD abc\nbranch refs/heads/main\n\n\
+         worktree {}\nHEAD def\nbranch refs/heads/k\n\n",
+        primary.display(),
+        s_reg.display(),
+    );
+    let mut outs = observe_git_ok();
+    outs.push(is_repo_false()); // progen
+    outs.push(is_repo_true());
+    outs.push(out_ok_stdout(&porcelain));
+    let (runner, _) = ScriptedRunner::new(outs);
+    let g = Git::with_runner(runner);
+    let snap = build_status(&g, &ws).unwrap();
+    let p = &snap.projects[0];
+    let slots = p.worktree_slots.as_ref().expect("slots");
+    assert_eq!(slots.len(), 1);
+    assert_eq!(slots[0].name, "keep");
+    let orphans = p.worktree_orphans.as_ref().expect("orphans");
+    assert_eq!(orphans.len(), 2);
+    assert_eq!(orphans[0].name, "other");
+    assert_eq!(orphans[0].path, "worktrees/alpha/other");
+    assert_eq!(orphans[1].name, "stale");
+    assert_eq!(orphans[1].path, "worktrees/alpha/stale");
+    // registered slot must not appear as orphan
+    assert!(orphans.iter().all(|o| o.name != "keep"));
+    let v = serde_json::to_value(&snap).unwrap();
+    assert_eq!(
+        v["projects"][0]["worktree_orphans"],
+        serde_json::json!([
+            {"name": "other", "path": "worktrees/alpha/other"},
+            {"name": "stale", "path": "worktrees/alpha/stale"}
+        ])
+    );
+    // no dirty key on orphans
+    assert!(v["projects"][0]["worktree_orphans"][0].get("dirty").is_none());
+    assert!(v["progens"][0].get("worktree_orphans").is_none());
+}
+
+#[test]
+fn build_status_empty_orphans_when_missing_worktrees_dir() {
+    let dir = tempdir().unwrap();
+    let root = dir.path();
+    let primary = ensure_primary(root, "projects/alpha");
+    let mut projects = BTreeMap::new();
+    projects.insert(
+        "alpha".into(),
+        ProjectEntry {
+            path: "projects/alpha".into(),
+            url: None,
+            branch: None,
+            type_: None,
+        },
+    );
+    let ws = Workspace {
+        root: root.to_path_buf(),
+        config: WorkspaceConfig {
+            projects,
+            ..Default::default()
+        },
+        actions: BTreeMap::new(),
+        generators: BTreeMap::new(),
+    };
+    let porcelain = format!(
+        "worktree {}\nHEAD abc\nbranch refs/heads/main\n\n",
+        primary.display(),
+    );
+    let mut outs = observe_git_ok();
+    outs.push(is_repo_true());
+    outs.push(out_ok_stdout(&porcelain));
+    let (runner, _) = ScriptedRunner::new(outs);
+    let g = Git::with_runner(runner);
+    let snap = build_status(&g, &ws).unwrap();
+    assert_eq!(
+        snap.projects[0]
+            .worktree_orphans
+            .as_ref()
+            .unwrap()
+            .as_slice(),
+        &[]
+    );
 }
 
 #[test]
@@ -297,12 +400,16 @@ fn build_status_empty_slots_when_list_errors_or_non_git() {
         generators: BTreeMap::new(),
     };
     // non-git primary: observe is_repo false; list is_repo false → Err → []
+    // orphan dir on disk must not surface when list soft-fails
+    fs::create_dir_all(worktree_slot_path(root, "alpha", "stale")).unwrap();
     let (runner, _) = ScriptedRunner::new(vec![is_repo_false(), is_repo_false()]);
     let g = Git::with_runner(runner);
     let snap = build_status(&g, &ws).unwrap();
     assert_eq!(snap.projects[0].worktree_slots.as_ref().unwrap().len(), 0);
+    assert_eq!(snap.projects[0].worktree_orphans.as_ref().unwrap().len(), 0);
     let v = serde_json::to_value(&snap).unwrap();
     assert_eq!(v["projects"][0]["worktree_slots"], serde_json::json!([]));
+    assert_eq!(v["projects"][0]["worktree_orphans"], serde_json::json!([]));
 }
 
 #[test]
@@ -310,6 +417,7 @@ fn build_status_soft_fails_worktree_list_error() {
     let dir = tempdir().unwrap();
     let root = dir.path();
     ensure_primary(root, "projects/alpha");
+    fs::create_dir_all(worktree_slot_path(root, "alpha", "stale")).unwrap();
     let mut projects = BTreeMap::new();
     projects.insert(
         "alpha".into(),
@@ -337,6 +445,14 @@ fn build_status_soft_fails_worktree_list_error() {
     let snap = build_status(&g, &ws).unwrap();
     assert_eq!(
         snap.projects[0].worktree_slots.as_ref().unwrap().as_slice(),
+        &[]
+    );
+    assert_eq!(
+        snap.projects[0]
+            .worktree_orphans
+            .as_ref()
+            .unwrap()
+            .as_slice(),
         &[]
     );
 }
@@ -368,6 +484,7 @@ fn format_status_human_shows_slots_when_non_empty() {
                     dirty: Some(true),
                 },
             ]),
+            worktree_orphans: Some(vec![]),
         }],
         progens: vec![],
         agent_packs: vec![],
@@ -392,6 +509,7 @@ fn format_status_human_silent_when_slots_empty() {
             pin_state: PinState::None,
             dirty: None,
             worktree_slots: Some(vec![]),
+            worktree_orphans: Some(vec![]),
         }],
         progens: vec![EntityStatus {
             name: "notes".into(),
@@ -405,11 +523,56 @@ fn format_status_human_silent_when_slots_empty() {
             pin_state: PinState::None,
             dirty: None,
             worktree_slots: None,
+            worktree_orphans: None,
         }],
         agent_packs: vec![],
     };
     let human = format_status_human(&snap);
     assert!(!human.contains("worktrees"), "{human}");
+    assert!(!human.contains("orphans"), "{human}");
+}
+
+#[test]
+fn format_status_human_shows_orphans_when_non_empty() {
+    let snap = StatusSnapshot {
+        root: "/ws".into(),
+        projects: vec![EntityStatus {
+            name: "alpha".into(),
+            path: "projects/alpha".into(),
+            url: None,
+            managed: false,
+            on_disk: true,
+            is_git: true,
+            head: None,
+            pin_rev: None,
+            pin_state: PinState::None,
+            dirty: Some(false),
+            worktree_slots: Some(vec![WorktreeSlotInfo {
+                name: "keep".into(),
+                path: "worktrees/alpha/keep".into(),
+                dirty: Some(false),
+            }]),
+            worktree_orphans: Some(vec![
+                crate::worktree::WorktreeOrphanInfo {
+                    name: "other".into(),
+                    path: "worktrees/alpha/other".into(),
+                },
+                crate::worktree::WorktreeOrphanInfo {
+                    name: "stale".into(),
+                    path: "worktrees/alpha/stale".into(),
+                },
+            ]),
+        }],
+        progens: vec![],
+        agent_packs: vec![],
+    };
+    let human = format_status_human(&snap);
+    assert!(human.contains("worktrees: keep"), "{human}");
+    assert!(human.contains("orphans: other, stale"), "{human}");
+    // orphans line after worktrees
+    let wt = human.find("worktrees:").expect("worktrees line");
+    let or = human.find("orphans:").expect("orphans line");
+    assert!(wt < or, "{human}");
 }
 
 #[test]

@@ -1,3 +1,5 @@
+use std::collections::BTreeSet;
+
 use odm_git::Git;
 use serde::Serialize;
 
@@ -5,7 +7,7 @@ use crate::agent_pack::{pack_list, PackMode};
 use crate::config::Workspace;
 use crate::error::OdmError;
 use crate::pin::load_pin;
-use crate::worktree::{worktree_list, WorktreeSlotInfo};
+use crate::worktree::{worktree_list, worktree_orphan_infos, WorktreeOrphanInfo, WorktreeSlotInfo};
 
 /// `odm status --json` snapshot.
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
@@ -43,6 +45,9 @@ pub struct EntityStatus {
     /// Registered worktree slots for Projects only (`None` on Progens → omitted from JSON).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub worktree_slots: Option<Vec<WorktreeSlotInfo>>,
+    /// Orphan slot dirs for Projects only (`None` on Progens → omitted from JSON).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub worktree_orphans: Option<Vec<WorktreeOrphanInfo>>,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, PartialEq, Eq)]
@@ -79,10 +84,19 @@ pub fn build_status<R: odm_git::CommandRunner>(
     let obs = crate::observation::observe_workspace(git, &ws.root, &ws.config, pin.as_ref())?;
     let mut snap = status_from_observation(&obs);
     for p in &mut snap.projects {
-        p.worktree_slots = Some(match worktree_list(git, ws, &p.name) {
-            Ok(out) => out.slots,
-            Err(_) => vec![],
-        });
+        match worktree_list(git, ws, &p.name) {
+            Ok(out) => {
+                let registered: BTreeSet<String> =
+                    out.slots.iter().map(|s| s.name.clone()).collect();
+                p.worktree_orphans =
+                    Some(worktree_orphan_infos(ws, &p.name, &registered));
+                p.worktree_slots = Some(out.slots);
+            }
+            Err(_) => {
+                p.worktree_slots = Some(vec![]);
+                p.worktree_orphans = Some(vec![]);
+            }
+        }
     }
     snap.agent_packs = match pack_list(ws) {
         Ok(entries) => entries
@@ -102,7 +116,8 @@ pub fn build_status<R: odm_git::CommandRunner>(
 
 /// Pure projection: observation → status snapshot.
 ///
-/// `worktree_slots` stays `None` and `agent_packs` empty here; [`build_status`] fills both.
+/// `worktree_slots` / `worktree_orphans` stay `None` and `agent_packs` empty here;
+/// [`build_status`] fills them.
 pub fn status_from_observation(obs: &crate::observation::WorkspaceObservation) -> StatusSnapshot {
     StatusSnapshot {
         root: obs.root.clone(),
@@ -125,6 +140,7 @@ fn entity_status_from_obs(e: &crate::observation::EntityObservation) -> EntitySt
         pin_state: e.pin_state,
         dirty: e.dirty,
         worktree_slots: None,
+        worktree_orphans: None,
     }
 }
 
@@ -233,6 +249,12 @@ fn format_entity_line(e: &EntityStatus) -> String {
                 })
                 .collect();
             line.push_str(&format!("    worktrees: {}\n", names.join(", ")));
+        }
+    }
+    if let Some(orphans) = &e.worktree_orphans {
+        if !orphans.is_empty() {
+            let names: Vec<&str> = orphans.iter().map(|o| o.name.as_str()).collect();
+            line.push_str(&format!("    orphans: {}\n", names.join(", ")));
         }
     }
     line

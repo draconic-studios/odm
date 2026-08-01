@@ -1,12 +1,11 @@
 use std::collections::BTreeSet;
-use std::fs;
 
 use odm_git::Git;
 
 use crate::config::Workspace;
 use crate::doctor::{CheckStatus, DoctorCheck};
 use crate::paths::abs_checkout;
-use crate::worktree::{validate_slot_name, worktree_list};
+use crate::worktree::{worktree_list, worktree_orphan_infos};
 
 /// Warn on `worktrees/<project>/<slot>/` dirs that are not registered git worktrees.
 /// Never fails; swallows git/path errors. Does not scan unknown project names under `worktrees/`.
@@ -23,6 +22,7 @@ pub(crate) fn worktree_orphan_checks<R: odm_git::CommandRunner>(
             continue;
         }
 
+        // No disk prefix → nothing to scan (skip git; same as pre-shared-helper).
         let project_wt = ws.root.join("worktrees").join(project);
         if !project_wt.is_dir() {
             continue;
@@ -35,38 +35,13 @@ pub(crate) fn worktree_orphan_checks<R: odm_git::CommandRunner>(
             Err(_) => continue,
         };
 
-        let Ok(rd) = fs::read_dir(&project_wt) else {
-            continue;
-        };
-        let mut disk_slots: Vec<String> = Vec::new();
-        for ent in rd.flatten() {
-            let Ok(ft) = ent.file_type() else {
-                continue;
-            };
-            if !ft.is_dir() {
-                continue;
-            }
-            let name = ent.file_name();
-            let Some(s) = name.to_str() else {
-                continue;
-            };
-            if validate_slot_name(s).is_err() {
-                continue;
-            }
-            disk_slots.push(s.to_string());
-        }
-        disk_slots.sort();
-
-        for slot in disk_slots {
-            if registered.contains(&slot) {
-                continue;
-            }
-            let rel = format!("worktrees/{project}/{slot}");
+        for orphan in worktree_orphan_infos(ws, project, &registered) {
             checks.push(DoctorCheck {
-                id: format!("worktree_orphan:{project}:{slot}"),
+                id: format!("worktree_orphan:{project}:{}", orphan.name),
                 status: CheckStatus::Warn,
                 message: format!(
-                    "orphan worktree slot directory (not a registered git worktree): {rel}"
+                    "orphan worktree slot directory (not a registered git worktree): {}",
+                    orphan.path
                 ),
                 fixable: false,
             });
@@ -108,6 +83,7 @@ mod tests {
     use super::*;
     use std::collections::BTreeMap;
     use std::ffi::{OsStr, OsString};
+    use std::fs;
     use std::io;
     use std::path::{Path, PathBuf};
     use std::process::ExitStatus;

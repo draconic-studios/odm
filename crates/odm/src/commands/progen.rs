@@ -168,6 +168,7 @@ mod tests {
                 pin_state: PinState::None,
                 dirty: None,
                 worktree_slots: None,
+                worktree_orphans: None,
             }],
             agent_packs: vec![],
         };

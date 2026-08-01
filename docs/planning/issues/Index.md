@@ -6,15 +6,16 @@ See `docs/agents/issue-tracker.md`.
 
 ## Maps
 
-_(none open)_
+- [[issues-94-post-v1-status-orphans-map]] — Post-v1 status/info worktree orphans + dogfood
 
 ## Frontier (open, unblocked)
 
-_(empty)_
+- [[issues-96-project-info-worktree-orphans]] — project info `worktree_orphans` parity (`ready-for-agent`)
 
 ## Blocked
 
-_(none)_
+- [[issues-97-status-orphans-docs-honesty]] — blocked by 96
+- [[issues-98-core-desk-status-orphans-dogfood]] — blocked by 96
 
 ## Architecture deepen (post-0.1.0)
 

@@ -249,6 +249,7 @@ mod tests {
                 pin_state: PinState::MissingPinFile,
                 dirty: Some(false),
                 worktree_slots: None,
+                worktree_orphans: None,
             }],
             progens: vec![],
             agent_packs: vec![],

@@ -29,6 +29,16 @@ pub struct WorktreeSlotInfo {
     pub dirty: Option<bool>,
 }
 
+/// Orphan slot directory under `worktrees/<project>/` (not a registered git worktree).
+///
+/// No `dirty` — orphans are not registered worktrees.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+pub struct WorktreeOrphanInfo {
+    pub name: String,
+    /// Relative to workspace root: `worktrees/<project>/<slot>`.
+    pub path: String,
+}
+
 /// List outcome for a project.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct WorktreeListOutcome {
@@ -282,6 +292,38 @@ pub fn worktree_prune_all<R: odm_git::CommandRunner>(
         pruned,
         skipped_nonempty,
     })
+}
+
+/// List orphan slot dirs under `worktrees/<project>/` (sorted by name).
+///
+/// Orphan = valid slot-name directory not in the registered `worktree_list` set
+/// (same definition as doctor/prune). List/primary errors propagate; callers that
+/// soft-fail should map `Err` to `[]`.
+pub fn worktree_orphans<R: odm_git::CommandRunner>(
+    git: &Git<R>,
+    ws: &Workspace,
+    project: &str,
+) -> Result<Vec<WorktreeOrphanInfo>, OdmError> {
+    let list = worktree_list(git, ws, project)?;
+    let registered: BTreeSet<String> = list.slots.into_iter().map(|s| s.name).collect();
+    Ok(worktree_orphan_infos(ws, project, &registered))
+}
+
+/// Orphan infos from disk vs a precomputed registered-name set (sorted by name).
+///
+/// Missing `worktrees/<project>/`, unreadable dir, files, and invalid names → ignored.
+pub fn worktree_orphan_infos(
+    ws: &Workspace,
+    project: &str,
+    registered: &BTreeSet<String>,
+) -> Vec<WorktreeOrphanInfo> {
+    orphan_slot_names(ws, project, registered)
+        .into_iter()
+        .map(|name| WorktreeOrphanInfo {
+            path: rel_slot_path(project, &name),
+            name,
+        })
+        .collect()
 }
 
 /// Disk dirs under `worktrees/<project>/` with valid slot names not in `registered`.
