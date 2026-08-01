@@ -2,7 +2,7 @@
 id: issues-143
 title: "odm-git real-git worktree integration test"
 description: "worktree_ops.rs is mock-only; add one real-git tempfile test for add/list/remove at the git crate seam."
-status: open
+status: reviewing
 issue-type: feature-request
 severity: low
 tags:
