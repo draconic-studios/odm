@@ -2,13 +2,12 @@
 id: issues-118
 title: "Website Playwright review and improve"
 description: "Use Playwright (and manual pass) to review website UX/a11y/content gaps; fix issues found."
-status: open
+status: closed
 issue-type: feature-request
 severity: medium
 tags:
   - planning
   - issue
-  - ready-for-agent
   - wayfinder
   - wayfinder-task
 ---
@@ -72,11 +71,11 @@ See Agent Brief.
 
 **Acceptance criteria:**
 
-- [ ] Written or commit-summarized review against checklist above
-- [ ] Material improvements merged for issues found (not “no issues” without evidence)
-- [ ] A11y serious/critical addressed on home + install (+ one guide)
-- [ ] Playwright suite green
-- [ ] Product claims still match README/reference
+- [x] Written or commit-summarized review against checklist above
+- [x] Material improvements merged for issues found (not “no issues” without evidence)
+- [x] A11y serious/critical addressed on home + install (+ one guide)
+- [x] Playwright suite green
+- [x] Product claims still match README/reference
 
 **Out of scope:**
 
@@ -87,4 +86,8 @@ See Agent Brief.
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met
+
+## Log
+
+- 2026-08-02: Closed. Fixed IA (What is ODM + Start here path; install verify CTA; quickstart first-success), a11y (toc contrast, focus-visible, skip link), guide meta/crumbs, axe scans + internal link crawl; 33 e2e green.

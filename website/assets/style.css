@@ -4,14 +4,15 @@
   --bg-soft: #1a222d;
   --border: #2a3544;
   --text: #e8eef6;
-  --muted: #9aabbd;
-  --faint: #6b7c90;
+  --muted: #a3b4c6;
+  --faint: #8a9bb0;
   --accent: #5b9fd4;
   --accent-2: #7dd3a7;
   --warn: #e0b35a;
   --danger: #e07a7a;
   --code-bg: #0a0d12;
   --link: #7eb8e8;
+  --focus: #9ec9f0;
   --radius: 10px;
   --max: 52rem;
   --nav-w: 15rem;
@@ -49,18 +50,32 @@ a:hover {
   color: #a8d4f5;
 }
 
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
 .skip {
   position: absolute;
   left: -999px;
-  top: 0;
+  top: 0.5rem;
   background: var(--accent);
-  color: #000;
-  padding: 0.5rem 1rem;
+  color: #0a0d12;
+  padding: 0.55rem 1rem;
   z-index: 100;
+  border-radius: 6px;
+  font-weight: 700;
+  text-decoration: none;
 }
 
 .skip:focus {
-  left: 0;
+  left: 0.5rem;
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
 }
 
 .shell {
@@ -78,6 +93,10 @@ a:hover {
   padding: 1.25rem 1rem 2rem;
   background: linear-gradient(180deg, #10161e 0%, var(--bg) 100%);
   border-right: 1px solid var(--border);
+}
+
+.side nav a:focus-visible {
+  outline-offset: 0;
 }
 
 .brand {
@@ -188,6 +207,7 @@ a:hover {
   font-size: 0.95rem;
   text-decoration: none;
   border: 1px solid transparent;
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
 }
 
 .btn-primary {
@@ -210,6 +230,73 @@ a:hover {
   border-color: var(--accent);
   color: var(--accent);
   background: var(--bg-elev);
+}
+
+.path-steps {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0 0 1.5rem;
+  padding: 0;
+  list-style: none;
+  counter-reset: path;
+}
+
+.path-steps li {
+  display: grid;
+  grid-template-columns: 1.75rem 1fr;
+  gap: 0.75rem;
+  align-items: start;
+  margin: 0;
+  padding: 0.85rem 1rem;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.path-steps li::before {
+  counter-increment: path;
+  content: counter(path);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 999px;
+  background: rgba(91, 159, 212, 0.18);
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.path-steps strong {
+  display: block;
+  margin-bottom: 0.15rem;
+}
+
+.path-steps span {
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.crumb {
+  font-size: 0.88rem;
+  color: var(--muted);
+  margin: 0 0 0.75rem;
+}
+
+.crumb a {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.crumb a:hover {
+  color: var(--link);
+  text-decoration: underline;
+}
+
+.crumb span {
+  color: var(--text);
+  font-weight: 600;
 }
 
 .status {
@@ -304,6 +391,8 @@ pre {
   margin: 0 0 1.25rem;
   padding: 1rem 1.1rem;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
   background: var(--code-bg);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -311,6 +400,10 @@ pre {
   font-size: 0.86rem;
   line-height: 1.5;
   color: #d7e6f5;
+}
+
+.callout pre {
+  margin-bottom: 0;
 }
 
 pre code {
@@ -333,6 +426,11 @@ pre code {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 1rem 1.1rem;
+  transition: border-color 0.12s ease;
+}
+
+.card:hover {
+  border-color: #3a4a5e;
 }
 
 .card h3 {
@@ -355,6 +453,10 @@ pre code {
 
 .card a:hover {
   text-decoration: underline;
+}
+
+.card a:focus-visible {
+  border-radius: 2px;
 }
 
 .callout {
@@ -438,7 +540,7 @@ pre code {
   display: block;
   margin-bottom: 0.4rem;
   font-size: 0.85rem;
-  color: var(--faint);
+  color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -483,6 +585,7 @@ footer.site-foot a {
     height: auto;
     border-right: 0;
     border-bottom: 1px solid var(--border);
+    padding-bottom: 1rem;
   }
 
   .side nav {
@@ -491,12 +594,43 @@ footer.site-foot a {
     gap: 0.25rem;
   }
 
+  .side nav a {
+    padding: 0.45rem 0.7rem;
+  }
+
   .side .group {
     width: 100%;
     margin-top: 0.75rem;
   }
 
+  .side .ext {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+
   .main {
     padding: 1.25rem 1rem 3rem;
+  }
+
+  .hero h1 {
+    font-size: clamp(1.65rem, 7vw, 2.2rem);
+  }
+
+  .cta-row .btn {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .btn,
+  .card {
+    transition: none;
   }
 }

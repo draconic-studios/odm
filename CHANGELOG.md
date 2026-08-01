@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Website Playwright** — local e2e harness under `website/` (`npm run test:e2e`; chromium).
 - **Website Playwright smoke suite** — `website/e2e/smoke.spec.ts` covers all `website/*.html` pages (load, nav, install/quickstart/concepts/features content, CSS asset, mobile viewport).
+- **Website a11y + link crawl** — `@axe-core/playwright` scans (home/install/guide-workspace) plus internal link/anchor crawl; site UX polish (start-here path, contrast, focus-visible, guide meta/crumbs).
 - **`odm generate`** — v1 local template materialize: list Generators from bundles; `generate <name> --dest <path> [--force]` copies a local template tree under the Workspace (remote/url-only run deferred with a clear error).
 - **`odm generate --dry-run`** — no-write preview: same validation as a real run; reports file count that would be copied; human `would generate …`; JSON includes `dry_run: true` (real runs emit `dry_run: false`).
 

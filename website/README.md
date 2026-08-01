@@ -27,8 +27,10 @@ Config: `playwright.config.ts` (serves `.` on port 4173 via `serve`). Tests live
 
 - **`e2e/home.spec.ts`** — harness smoke (title)
 - **`e2e/smoke.spec.ts`** — all `website/*.html` pages, nav, install/quickstart/concepts/features content, CSS asset, mobile viewport
+- **`e2e/a11y.spec.ts`** — `@axe-core/playwright` on home + install + one guide (serious/critical clean); skip-link + start-here assertions
+- **`e2e/links.spec.ts`** — crawl internal `a[href]` targets and in-page anchors
 
-Artifacts (`test-results/`, `playwright-report/`, etc.) are gitignored. No live github.io dependency.
+Artifacts (`test-results/`, `playwright-report/`, etc.) are gitignored. No live github.io dependency. DevDependencies only — the published static site needs no Node runtime.
 
 ## GitHub Pages
 

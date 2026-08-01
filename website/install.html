@@ -42,8 +42,12 @@
         <p class="kicker">Start</p>
         <h1>Install</h1>
         <p class="muted">Get the <code>odm</code> binary on your PATH, then verify. Product overview is on the <a href="index.html">home page</a>.</p>
+        <div class="callout ok">
+          <p><strong>Success looks like:</strong> <code>odm --version</code> prints a version, then
+          <a href="quickstart.html">Quickstart</a> bootstraps your first Workspace.</p>
+        </div>
 
-        <div class="toc">
+        <nav class="toc" aria-label="On this page">
           <strong>On this page</strong>
           <ul>
             <li><a href="#requirements">Requirements</a></li>
@@ -52,7 +56,7 @@
             <li><a href="#verify">Verify</a></li>
             <li><a href="#non-goals">Not in this release</a></li>
           </ul>
-        </div>
+        </nav>
 
         <h2 id="requirements">Requirements</h2>
         <ul>
@@ -99,7 +103,11 @@ cargo install --path crates/odm
         <h2 id="verify">Verify</h2>
         <pre><code>odm --version
 odm init --help</code></pre>
-        <p>Next: <a href="quickstart.html">Quickstart</a> — bootstrap a Workspace and run your first sync.</p>
+        <p>If the shell cannot find <code>odm</code>, the binary is not on <code>PATH</code> yet — move it (or symlink) and open a new shell.</p>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="quickstart.html">Next: Quickstart</a>
+          <a class="btn btn-ghost" href="https://github.com/hembrow-innovations/odm/releases">Open Releases</a>
+        </div>
 
         <h2 id="non-goals">Not in this release</h2>
         <ul>
