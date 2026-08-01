@@ -2,7 +2,7 @@
 id: issues-117
 title: "Website Playwright smoke tests"
 description: "E2E coverage for website/ pages: nav, key content, internal links, no broken assets."
-status: open
+status: closed
 issue-type: feature-request
 severity: medium
 tags:
@@ -68,10 +68,10 @@ See Agent Brief.
 
 **Acceptance criteria:**
 
-- [ ] Every `website/*.html` page covered by at least one load assertion
-- [ ] Nav + install + quickstart + concepts + features critical content asserted
-- [ ] CSS asset check; suite documented and green locally
-- [ ] No dependency on live github.io for CI/local default
+- [x] Every `website/*.html` page covered by at least one load assertion
+- [x] Nav + install + quickstart + concepts + features critical content asserted
+- [x] CSS asset check; suite documented and green locally
+- [x] No dependency on live github.io for CI/local default
 
 **Out of scope:**
 
@@ -82,4 +82,4 @@ See Agent Brief.
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met

@@ -23,7 +23,12 @@ npm run test:e2e
 npm run test:e2e:ui
 ```
 
-Config: `playwright.config.ts` (serves `.` on port 4173 via `serve`). Tests live in `e2e/`. Artifacts (`test-results/`, `playwright-report/`, etc.) are gitignored.
+Config: `playwright.config.ts` (serves `.` on port 4173 via `serve`). Tests live in `e2e/`:
+
+- **`e2e/home.spec.ts`** — harness smoke (title)
+- **`e2e/smoke.spec.ts`** — all `website/*.html` pages, nav, install/quickstart/concepts/features content, CSS asset, mobile viewport
+
+Artifacts (`test-results/`, `playwright-report/`, etc.) are gitignored. No live github.io dependency.
 
 ## GitHub Pages
 
