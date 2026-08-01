@@ -2,7 +2,7 @@
 id: issues-88
 title: "core-desk dogfood: agent pack rm"
 description: "Document and integration-gate odm agent pack rm on examples/core-desk demo pack."
-status: open
+status: closed
 issue-type: feature-request
 severity: low
 tags:
@@ -62,9 +62,9 @@ See Agent Brief.
 
 **Acceptance criteria:**
 
-- [ ] core-desk README documents pack rm dogfood
-- [ ] Integration test covers install → rm → empty list
-- [ ] `cargo test` green
+- [x] core-desk README documents pack rm dogfood
+- [x] Integration test covers install → rm → empty list
+- [x] `cargo test` green
 
 **Out of scope:**
 
@@ -74,4 +74,13 @@ See Agent Brief.
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met
+
+## Answer
+
+core-desk dogfood for pack rm:
+
+- **README:** install → list (`# demo`) → `odm agent pack rm demo` → list (`# (no agent packs)`).
+- **Integration:** `core_desk_agent_pack_rm_gate` in `crates/odm/tests/core_desk.rs` — temp core-desk copy, install `agent-packs/demo` with temp `--home`, list contains demo, rm exit 0 + `removed demo`, list `(no agent packs)` + JSON packs empty, dest gone.
+- Optional doctor `pack_missing` assert skipped (rm dogfood alone meets brief).
+- `cargo test` green. Docs/tests only.

@@ -465,6 +465,53 @@ fn core_desk_prune_all_and_slot_dirty_gate() {
 }
 
 #[test]
+fn core_desk_agent_pack_rm_gate() {
+    if skip_without_git() {
+        return;
+    }
+    let (dir, root) = setup_temp_core_desk();
+    let root_s = root.to_str().unwrap();
+    let home = dir.path().join("agent-home");
+    let home_s = home.to_str().unwrap();
+
+    odm()
+        .args([
+            "--root",
+            root_s,
+            "agent",
+            "pack",
+            "install",
+            "agent-packs/demo",
+            "--home",
+            home_s,
+        ])
+        .assert()
+        .success();
+
+    odm()
+        .args(["--root", root_s, "agent", "pack", "list"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("demo"));
+
+    odm()
+        .args(["--root", root_s, "agent", "pack", "rm", "demo"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("removed demo"));
+
+    odm()
+        .args(["--root", root_s, "agent", "pack", "list"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("(no agent packs)"));
+
+    let v = json_stdout(odm().args(["--root", root_s, "--json", "agent", "pack", "list"]));
+    assert_eq!(v["packs"].as_array().unwrap().len(), 0);
+    assert!(!home.join("demo").exists());
+}
+
+#[test]
 fn core_desk_unknown_project_exit_1() {
     if skip_without_git() {
         return;

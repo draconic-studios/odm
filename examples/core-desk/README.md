@@ -116,6 +116,9 @@ mkdir -p /tmp/odm-agent-home
 odm agent pack install agent-packs/demo --home /tmp/odm-agent-home
 odm agent pack list
 # demo
+odm agent pack rm demo
+odm agent pack list
+# (no agent packs)
 ```
 
 ## Fixtures

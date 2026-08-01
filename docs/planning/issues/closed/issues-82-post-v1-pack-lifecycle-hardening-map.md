@@ -2,7 +2,7 @@
 id: issues-82
 title: "Post-v1 pack lifecycle + worktree module hardening map"
 description: "Wayfinder map: agent pack rm, doctor pack_missing warn, worktree.rs LOC split, docs + core-desk dogfood."
-status: open
+status: closed
 issue-type: feature-request
 tags:
   - planning
@@ -42,10 +42,12 @@ After worktree observation map [[issues-77-post-v1-worktree-observation-map]] cl
 - **85 closed:** CLI `odm agent pack rm <name>` — human + `--json` entry DTO; unknown → exit 4; integration tests (install/link→rm).
 - **86 closed:** `pack_missing_checks` in `doctor_pack.rs` — warn `pack_missing:<name>` when registry path absent (lexists via symlink_metadata); fixable false; `--fix` no-op; unit tests.
 - **87 closed:** docs honesty — cli/env-gen-packs/phased-delivery/CHANGELOG/README cover pack rm + doctor pack_missing; README worktree quick includes `prune --all`; architecture untouched.
+- **88 closed:** core-desk dogfood — README install→list→rm→empty; `core_desk_agent_pack_rm_gate` integration; cargo test green.
+- **Map complete:** all child tickets 83–88 closed.
 
 ## Not yet specified
 
-- _(none for this map — further deferred product stays out of scope)_
+- _(none — map complete)_
 
 ## Out of scope
 
