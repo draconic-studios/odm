@@ -2,7 +2,7 @@
 id: issues-93
 title: "core-desk dogfood: status packs + doctor pack_missing"
 description: "examples/core-desk README + gate test for status agent_packs and doctor pack_missing."
-status: open
+status: closed
 issue-type: feature-request
 severity: medium
 tags:
@@ -66,9 +66,9 @@ See Agent Brief.
 
 **Acceptance criteria:**
 
-- [ ] core-desk README covers status packs + doctor pack_missing + rm cleanup
-- [ ] Integration gate asserts status missing false→true and doctor pack_missing, then rm clears
-- [ ] `cargo test` green
+- [x] core-desk README covers status packs + doctor pack_missing + rm cleanup
+- [x] Integration gate asserts status missing false→true and doctor pack_missing, then rm clears
+- [x] `cargo test` green
 
 **Out of scope:**
 
@@ -78,4 +78,12 @@ See Agent Brief.
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met
+
+## Answer
+
+core-desk dogfood for status packs + doctor pack_missing:
+
+- **README** pack section: `odm status` / `status --json` after install; optional missing-dest comments (`pack_missing:demo`, `missing: true`); rm cleanup note.
+- **Gate** `core_desk_status_packs_doctor_gate`: install → `agent_packs` demo `missing: false` → delete dest → doctor `pack_missing:demo` warn + status `missing: true` → `agent pack rm demo` clears list and doctor check.
+- Docs + tests only; full `cargo test` green.

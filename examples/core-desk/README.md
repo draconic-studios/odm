@@ -116,9 +116,16 @@ mkdir -p /tmp/odm-agent-home
 odm agent pack install agent-packs/demo --home /tmp/odm-agent-home
 odm agent pack list
 # demo
+odm status                 # lists agent packs (demo)
+odm status --json          # agent_packs: [{ "name": "demo", …, "missing": false }]
+# optional missing-dest demo (then clean up):
+#   rm -rf /tmp/odm-agent-home/demo
+#   odm doctor             # warn pack_missing:demo (not fixable)
+#   odm status --json      # demo.missing == true
 odm agent pack rm demo
 odm agent pack list
 # (no agent packs)
+# after rm: doctor has no pack_missing:demo
 ```
 
 ## Fixtures

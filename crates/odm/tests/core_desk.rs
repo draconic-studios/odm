@@ -512,6 +512,81 @@ fn core_desk_agent_pack_rm_gate() {
 }
 
 #[test]
+fn core_desk_status_packs_doctor_gate() {
+    if skip_without_git() {
+        return;
+    }
+    let (dir, root) = setup_temp_core_desk();
+    let root_s = root.to_str().unwrap();
+    let home = dir.path().join("agent-home");
+    let home_s = home.to_str().unwrap();
+    let dest = home.join("demo");
+
+    odm()
+        .args([
+            "--root",
+            root_s,
+            "agent",
+            "pack",
+            "install",
+            "agent-packs/demo",
+            "--home",
+            home_s,
+        ])
+        .assert()
+        .success();
+    assert!(dest.is_dir());
+
+    let st = json_stdout(odm().args(["--root", root_s, "--json", "status"]));
+    let packs = st["agent_packs"].as_array().expect("agent_packs");
+    let demo = packs
+        .iter()
+        .find(|p| p["name"] == "demo")
+        .expect("demo in agent_packs after install");
+    assert_eq!(demo["missing"].as_bool(), Some(false));
+
+    fs::remove_dir_all(&dest).unwrap();
+    assert!(!dest.exists());
+
+    let doc = json_stdout(odm().args(["--root", root_s, "--json", "doctor"]));
+    assert_eq!(doc["ok"].as_bool(), Some(true));
+    let checks = doc["checks"].as_array().expect("checks");
+    let missing = checks
+        .iter()
+        .find(|c| c["id"] == "pack_missing:demo")
+        .expect("pack_missing:demo after deleted dest");
+    assert_eq!(missing["status"], "warn");
+    assert_eq!(missing["fixable"].as_bool(), Some(false));
+
+    let st = json_stdout(odm().args(["--root", root_s, "--json", "status"]));
+    let packs = st["agent_packs"].as_array().expect("agent_packs");
+    let demo = packs
+        .iter()
+        .find(|p| p["name"] == "demo")
+        .expect("demo still in agent_packs when dest missing");
+    assert_eq!(demo["missing"].as_bool(), Some(true));
+
+    odm()
+        .args(["--root", root_s, "agent", "pack", "rm", "demo"])
+        .assert()
+        .success();
+
+    let v = json_stdout(odm().args(["--root", root_s, "--json", "agent", "pack", "list"]));
+    assert_eq!(v["packs"].as_array().unwrap().len(), 0);
+
+    let doc = json_stdout(odm().args(["--root", root_s, "--json", "doctor"]));
+    let checks = doc["checks"].as_array().expect("checks");
+    assert!(
+        checks.iter().all(|c| c["id"] != "pack_missing:demo"),
+        "after pack rm, no pack_missing:demo: {:?}",
+        checks
+            .iter()
+            .map(|c| c["id"].as_str())
+            .collect::<Vec<_>>()
+    );
+}
+
+#[test]
 fn core_desk_unknown_project_exit_1() {
     if skip_without_git() {
         return;

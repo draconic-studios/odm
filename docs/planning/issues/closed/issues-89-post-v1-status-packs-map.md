@@ -2,7 +2,7 @@
 id: issues-89
 title: "Post-v1 status packs + pack observation dogfood map"
 description: "Wayfinder map: odm status agent_packs inventory, doctor pack_missing CLI coverage, docs + core-desk dogfood."
-status: open
+status: closed
 issue-type: feature-request
 tags:
   - planning
@@ -39,10 +39,11 @@ After pack lifecycle map [[issues-82-post-v1-pack-lifecycle-hardening-map]] clos
 - **90 closed:** `StatusSnapshot.agent_packs` always present; each row name/source/path/mode/missing via `pack_list` + `symlink_metadata` (doctor-aligned); soft-fail `[]`; human `Agent packs:` section; packs-only not swallowed.
 - **91 closed:** bin integration `doctor_pack_missing_after_deleted_dest` in `cli_agent_pack.rs` — install→no pack_missing→delete dest→`pack_missing:core-desk` warn fixable false; `--fix` leaves registry; pack rm clears.
 - **92 closed:** docs honesty — cli/env-gen-packs/phased-delivery/CHANGELOG/README document status `agent_packs`; deferred lists no longer claim status pack reports unimplemented; marketplace/manifest/config/`agent start` still deferred.
+- **93 closed:** core-desk README + `core_desk_status_packs_doctor_gate` — install→status missing false→delete dest→doctor pack_missing:demo + missing true→rm clears.
 
 ## Not yet specified
 
-- core-desk dogfood steps (93).
+- _(map complete — all child tickets closed)_
 
 ## Out of scope
 

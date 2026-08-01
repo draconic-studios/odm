@@ -6,11 +6,11 @@ See `docs/agents/issue-tracker.md`.
 
 ## Maps
 
-- [[issues-89-post-v1-status-packs-map]] — Post-v1 status packs + pack observation dogfood
+_(none open)_
 
 ## Frontier (open, unblocked)
 
-- [[issues-93-core-desk-status-packs-dogfood]] — core-desk status packs + pack_missing dogfood (unblocked after 90+91)
+_(empty)_
 
 ## Blocked
 
@@ -38,3 +38,4 @@ _(none remaining)_
 - [[issues-72-post-v1-honesty-dogfood-map]] — Post-v1 honesty + dogfood after slot depth (phased-delivery/CHANGELOG, core-desk prune/dirty, clippy, README)
 - [[issues-77-post-v1-worktree-observation-map]] — Post-v1 worktree multi-prune + slot dirty observation
 - [[issues-82-post-v1-pack-lifecycle-hardening-map]] — Post-v1 pack rm + doctor pack_missing + worktree module split
+- [[issues-89-post-v1-status-packs-map]] — Post-v1 status packs + pack observation dogfood
