@@ -43,4 +43,4 @@ _(none remaining)_
 - [[issues-89-post-v1-status-packs-map]] — Post-v1 status packs + pack observation dogfood
 - [[issues-94-post-v1-status-orphans-map]] — Post-v1 status/info worktree orphans + dogfood
 - [[issues-99-post-v1-generate-dry-run-map]] — Post-v1 generate `--dry-run` (local template preview)
-- [[issues-109-project-website-github-pages-map]] — Project website via GitHub Pages (static `website/`, no Actions)
+- [[issues-109-project-website-github-pages-map]] — Project website via GitHub Pages (static site in `docs/`, main only)

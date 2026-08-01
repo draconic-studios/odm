@@ -41,7 +41,8 @@ Ship a **public project website** for ODM that can be the repo’s GitHub Pages 
 - Child tickets: [[issues-110-website-shell-landing]], [[issues-111-website-install-quickstart]], [[issues-112-website-concepts-features]], [[issues-113-website-pages-publish]], [[issues-114-website-docs-honesty]], [[issues-115-enable-github-pages-settings]].
 - Prefer order: 110 first; 111 and 112 blocked by 110 (parallel after); 113 blocked by 110 (can land before full content); 114 blocked by 113; 115 human blocked by 113.
 - **115 closed early:** human enabled Pages deploy folder **`/` (root)**.
-- **110–114 closed:** full static site under `website/` (home, install, quickstart, concepts, features, guides, CLI, config); `scripts/pages-publish.sh`; README/install honesty. Local `gh-pages` built; push with `ODM_PAGES_PUSH=1 ./scripts/pages-publish.sh`.
+- **110–114 closed:** full static site (home, install, quickstart, concepts, features, guides, CLI, config); README/install honesty.
+- **Single branch:** site lives at `docs/*.html` + `docs/assets/`; GitHub Pages = `main` + `/docs`; `gh-pages` branch removed; no publish script.
 
 ## Not yet specified
 
