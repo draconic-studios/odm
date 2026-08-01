@@ -313,7 +313,7 @@ fn clap_parse_error_json_envelope() {
     let v: serde_json::Value = serde_json::from_str(&stdout).unwrap();
     assert_eq!(v["ok"], false);
     assert_eq!(v["error"]["code"], "usage");
-    assert!(v["error"]["message"].as_str().unwrap().len() > 0);
+    assert!(!v["error"]["message"].as_str().unwrap().is_empty());
 }
 
 
