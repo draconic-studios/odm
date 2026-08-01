@@ -66,6 +66,19 @@ impl<R: CommandRunner> Git<R> {
         Ok(trim_output(out.stdout_str()) == "true")
     }
 
+    /// True when `path` is the root of its own git worktree/repo (has a `.git`
+    /// entry — directory or worktree file), not merely nested inside an ancestor.
+    ///
+    /// Used for entity observation (`is_git` / dirty): path-only vaults under a
+    /// git Workspace must not inherit the parent repo's dirtiness.
+    pub fn is_repo_root(&self, path: &Path) -> Result<bool, GitError> {
+        require_absolute(path)?;
+        if !path.join(".git").exists() {
+            return Ok(false);
+        }
+        self.is_repo(path)
+    }
+
     pub fn init(&self, path: &Path) -> Result<(), GitError> {
         require_absolute(path)?;
         let out = self.capture(

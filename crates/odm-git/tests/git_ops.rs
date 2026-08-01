@@ -81,6 +81,23 @@ fn init_and_is_repo() {
     let g = Git::new();
     g.init(&path).unwrap();
     assert!(g.is_repo(&path).unwrap());
+    assert!(g.is_repo_root(&path).unwrap());
+}
+
+#[test]
+fn is_repo_root_false_for_nested_path_without_own_git() {
+    let t = TempDir::new().unwrap();
+    let root = abs(&t, "ws");
+    fs::create_dir(&root).unwrap();
+    let g = Git::new();
+    g.init(&root).unwrap();
+    let nested = root.join("vault");
+    fs::create_dir(&nested).unwrap();
+    assert!(g.is_repo(&nested).unwrap(), "nested path is inside work tree");
+    assert!(
+        !g.is_repo_root(&nested).unwrap(),
+        "nested path is not its own repo root"
+    );
 }
 
 #[test]

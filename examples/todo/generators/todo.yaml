@@ -1,0 +1,4 @@
+note:
+  template: templates/note
+remote-deferred:
+  url: https://github.com/jared-hembrow/cheat-key-sheets.git

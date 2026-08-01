@@ -1,0 +1,28 @@
+hello:
+  tasks:
+    - run: echo hello-todo
+status-all:
+  tasks:
+    - run: echo "tip-top"
+    - run: echo "cheat-key"
+    - run: echo "portfolio"
+    - run: echo "rss-td-game"
+fail:
+  tasks:
+    - run: "sh -c 'exit 7'"
+chain:
+  tasks:
+    - run: echo step1
+    - run: echo step2
+in-tip-top:
+  tasks:
+    # worktree slots use a .git file, not a directory
+    - run: test -e .git && git rev-parse --is-inside-work-tree
+in-tip-top-dir:
+  tasks:
+    - run: test -e .git && git rev-parse --short HEAD
+      dir: projects/tip-top
+read-only-log:
+  tasks:
+    - run: git log -1 --oneline
+      dir: projects/cheat-key

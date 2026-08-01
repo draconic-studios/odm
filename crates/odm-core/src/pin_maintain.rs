@@ -30,6 +30,8 @@ pub struct PinApplyResult {
     pub name: String,
     pub status: String,
     pub rev: Option<String>,
+    /// Always true on success — apply checks out detached HEAD by design.
+    pub detached: bool,
 }
 
 /// Create/update pin file for managed entities that have a defined HEAD.
@@ -187,6 +189,7 @@ pub fn pin_apply<R: odm_git::CommandRunner>(
             name,
             status: "applied".into(),
             rev: Some(entry.rev.clone()),
+            detached: true,
         });
     }
     Ok(results)
@@ -314,6 +317,7 @@ mod tests {
 
         let applied = pin_apply(&g, &root, &cfg, &[], false).unwrap();
         assert_eq!(applied[0].status, "applied");
+        assert!(applied[0].detached);
         assert_eq!(applied[0].rev.as_deref(), Some(rev.as_str()));
     }
 

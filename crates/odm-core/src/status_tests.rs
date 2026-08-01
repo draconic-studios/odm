@@ -121,7 +121,16 @@ fn observe_git_ok() -> Vec<CommandOutput> {
     ]
 }
 
+/// Primary checkout dir with a `.git` marker so [`Git::is_repo_root`] runs the
+/// scripted `is_repo` probe (own checkout, not ancestor-only).
 fn ensure_primary(root: &Path, rel: &str) -> PathBuf {
+    let p = root.join(rel);
+    fs::create_dir_all(&p).unwrap();
+    fs::write(p.join(".git"), "gitdir: mock\n").unwrap();
+    p
+}
+
+fn ensure_primary_plain(root: &Path, rel: &str) -> PathBuf {
     let p = root.join(rel);
     fs::create_dir_all(&p).unwrap();
     p
@@ -246,8 +255,7 @@ fn build_status_includes_registered_worktree_slots() {
         s_a.display(),
     );
     let mut outs = observe_git_ok();
-    // progen on disk, not git
-    outs.push(is_repo_false());
+    // path-only progen: no .git → is_repo_root short-circuits (no scripted call)
     // worktree_list for project
     outs.push(is_repo_true());
     outs.push(out_ok_stdout(&porcelain));
@@ -257,6 +265,7 @@ fn build_status_includes_registered_worktree_slots() {
     let p = &snap.projects[0];
     let slots = p.worktree_slots.as_ref().expect("project slots");
     assert_eq!(slots.len(), 2);
+    assert!(!snap.progens[0].is_git);
     assert_eq!(slots[0].name, "a-slot");
     assert_eq!(slots[0].path, "worktrees/alpha/a-slot");
     // ScriptedRunner empty queue → is_clean ok/empty → dirty false
@@ -300,7 +309,7 @@ fn build_status_lists_orphan_slot_dirs() {
         s_reg.display(),
     );
     let mut outs = observe_git_ok();
-    outs.push(is_repo_false()); // progen
+    // path-only progen: no .git marker → no observe git call
     outs.push(is_repo_true());
     outs.push(out_ok_stdout(&porcelain));
     let (runner, _) = ScriptedRunner::new(outs);
@@ -379,7 +388,8 @@ fn build_status_empty_orphans_when_missing_worktrees_dir() {
 fn build_status_empty_slots_when_list_errors_or_non_git() {
     let dir = tempdir().unwrap();
     let root = dir.path();
-    ensure_primary(root, "projects/alpha");
+    // plain dir (no .git): observe short-circuits; list still probes is_repo
+    ensure_primary_plain(root, "projects/alpha");
     let mut projects = BTreeMap::new();
     projects.insert(
         "alpha".into(),
@@ -399,12 +409,13 @@ fn build_status_empty_slots_when_list_errors_or_non_git() {
         actions: BTreeMap::new(),
         generators: BTreeMap::new(),
     };
-    // non-git primary: observe is_repo false; list is_repo false → Err → []
+    // non-git primary: observe no call; list is_repo false → Err → []
     // orphan dir on disk must not surface when list soft-fails
     fs::create_dir_all(worktree_slot_path(root, "alpha", "stale")).unwrap();
-    let (runner, _) = ScriptedRunner::new(vec![is_repo_false(), is_repo_false()]);
+    let (runner, _) = ScriptedRunner::new(vec![is_repo_false()]);
     let g = Git::with_runner(runner);
     let snap = build_status(&g, &ws).unwrap();
+    assert!(!snap.projects[0].is_git);
     assert_eq!(snap.projects[0].worktree_slots.as_ref().unwrap().len(), 0);
     assert_eq!(snap.projects[0].worktree_orphans.as_ref().unwrap().len(), 0);
     let v = serde_json::to_value(&snap).unwrap();

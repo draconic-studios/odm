@@ -1,0 +1,41 @@
+name: todo
+projects:
+  cheat-key:
+    path: projects/cheat-key
+    url: https://github.com/jared-hembrow/cheat-key.git
+    branch: main
+    type: app
+  portfolio:
+    path: projects/portfolio
+    url: https://github.com/jared-hembrow/portfolio.git
+    branch: main
+    type: site
+  rss-td-game:
+    path: projects/rss-td-game
+    url: https://github.com/jared-hembrow/rss-td-game.git
+    branch: master
+    type: game
+  tip-top:
+    path: projects/tip-top
+    url: https://github.com/jared-hembrow/tip-top.git
+    branch: main
+    type: app
+progens:
+  desk:
+    path: progens/desk
+  sheets:
+    path: progens/sheets
+    url: https://github.com/jared-hembrow/cheat-key-sheets.git
+    branch: main
+progen_groups:
+  all-docs:
+  - desk
+  - sheets
+  default:
+  - desk
+  personal:
+  - desk
+actions:
+  todo: actions/todo.yaml
+generators:
+  todo: generators/todo.yaml

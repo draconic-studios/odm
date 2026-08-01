@@ -44,6 +44,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Status `is_git` / dirty own-repo only** — entity observation (and `rm --delete` dirty gate) use `Git::is_repo_root` (path has its own `.git`) so path-only Projects/Progens nested under a git Workspace or monorepo no longer inherit ancestor dirtiness or false `is_git`.
+- **`pin apply` detached HEAD UX** — human lines include `detached HEAD`; footer `applied (detached HEAD)`; JSON results include `"detached": true` (`status` stays `"applied"`). Docs note `in_sync` is SHA match, not “on a branch.”
+- **`odm find` docs** — clarify FTS5 whole-token match (not substring/prefix; CamelCase is one token).
 - **CLI JSON/UX hardening** — single-project `worktree prune --json` includes `skipped_nonempty` and prune rows are `{name,path}` only (no `dirty`); multi-progen single-root errors omit “write”; `name:id` vs `--progen` mismatch → usage exit `1`; conflicting repeated `--wt` values → usage exit `1`.
 - **`odm generate --force` file↔dir type conflicts** — per-path remove then write when dest type disagrees with the template (dir where file needed, or file where dir needed), matching symlink overwrite behavior; unit tests cover both directions.
 - **`odm run --json` stdout/stderr** — envelope always includes captured `stdout` and `stderr` strings (concatenated across tasks in order) so agents can debug failures without a second non-JSON run; capture still keeps process stdout clean JSON.

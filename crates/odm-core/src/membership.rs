@@ -215,7 +215,8 @@ where
 {
     let path = abs_checkout(root, rel)?;
     if path.exists() {
-        if git.is_repo(&path)? && !force && !git.is_clean(&path)? {
+        // Own-repo dirty only — nested path-only trees must not inherit ancestor dirt.
+        if git.is_repo_root(&path)? && !force && !git.is_clean(&path)? {
             restore();
             return Err(OdmError::operation(format!(
                 "working tree dirty for '{name}' (use --force with --delete)"

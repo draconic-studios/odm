@@ -249,6 +249,8 @@ mod tests {
     fn ensure_primary(root: &Path, rel: &str) -> PathBuf {
         let p = root.join(rel);
         fs::create_dir_all(&p).unwrap();
+        // Own-repo marker so observation `is_repo_root` runs scripted is_repo.
+        fs::write(p.join(".git"), "gitdir: mock\n").unwrap();
         p
     }
 

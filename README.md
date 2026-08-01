@@ -72,7 +72,7 @@ odm project worktree prune <project> [--force]
 odm project worktree prune --all [--force]
 ```
 
-See [docs/reference/cli.md](docs/reference/cli.md) for full surfaces (including `agent pack`) and [examples/core-desk/README.md](examples/core-desk/README.md) for dogfood depth.
+See [docs/reference/cli.md](docs/reference/cli.md) for full surfaces (including `agent pack`), [examples/core-desk/README.md](examples/core-desk/README.md) for offline dogfood, and [examples/todo/README.md](examples/todo/README.md) for real-GitHub dogfood + [REVIEW.md](examples/todo/REVIEW.md).
 
 Dogfood Workspace (offline fixtures):
 
@@ -86,6 +86,14 @@ odm find DeskUniqueToken
 odm run hello
 odm generate                              # sample generators/ + hello template
 odm generate hello --dest out/hello
+```
+
+Network dogfood (real public repos; read-only on remotes):
+
+```bash
+cargo build -p odm
+ODM=target/debug/odm examples/todo/scripts/dogfood.sh
+# TEMP=1 ODM=target/debug/odm examples/todo/scripts/probe.sh
 ```
 
 ## Docs

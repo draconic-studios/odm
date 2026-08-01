@@ -15,9 +15,9 @@ A config entry is **managed** when it has a **`url`** (Project or Progen).
 | Entry | ODM git lifecycle |
 |-------|-------------------|
 | `url` set | clone / sync (fetch) / pin record / pin apply / optional tree delete on rm |
-| path only (no `url`) | **never** runs git; user owns the tree entirely |
+| path only (no `url`) | **never** runs lifecycle git (sync/pin/clone); user owns the tree entirely |
 
-Path-only entries may still exist on disk for local-only layouts. Sync and pin ignore them.
+Path-only entries may still exist on disk for local-only layouts. Sync and pin ignore them. Status/list/info report `is_git` only when the path is its **own** checkout root (`.git` at that path) — nesting under a git Workspace does not inherit the ancestor.
 
 ## Plain clones
 
@@ -136,6 +136,7 @@ pins:
 Separate operation (name in cli.md): for each pin whose path exists, check out **`rev` as detached HEAD**.
 
 - Dirty working tree → **fail** unless force.
+- Detached is intentional (pin authority = commit SHA). CLI output states `detached HEAD`; pin **`in_sync`** means HEAD SHA equals pin `rev`, not “checked out on a branch.” Re-attach with ordinary `git checkout <branch>` when you want a branch again.
 - Missing path → skip or fail per CLI (design default: fail for named apply; for all-apply, fail-fast).
 - Does not change config. After a successful apply, auto-maintain leaves `rev` unchanged (HEAD already at pin).
 

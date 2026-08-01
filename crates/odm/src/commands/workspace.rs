@@ -113,6 +113,7 @@ pub struct PinApplyItemDto {
     pub name: String,
     pub status: String,
     pub rev: Option<String>,
+    pub detached: bool,
 }
 
 impl From<&PinApplyResult> for PinApplyItemDto {
@@ -121,6 +122,7 @@ impl From<&PinApplyResult> for PinApplyItemDto {
             name: r.name.clone(),
             status: r.status.clone(),
             rev: r.rev.clone(),
+            detached: r.detached,
         }
     }
 }
@@ -139,14 +141,16 @@ pub fn pin_apply_cmd(
     } else {
         let mut s = String::new();
         for r in &results {
+            let det = if r.detached { "\tdetached HEAD" } else { "" };
             s.push_str(&format!(
-                "{}\t{}\t{}\n",
+                "{}\t{}\t{}{}\n",
                 r.name,
                 r.status,
-                r.rev.as_deref().unwrap_or("-")
+                r.rev.as_deref().unwrap_or("-"),
+                det
             ));
         }
-        s.push_str("applied\n");
+        s.push_str("applied (detached HEAD)\n");
         s
     };
     Ok(Ready::ok(dto, human))
@@ -265,12 +269,14 @@ mod tests {
                 name: "alpha".into(),
                 status: "applied".into(),
                 rev: Some("dead".into()),
+                detached: true,
             }],
         };
         let v = serde_json::to_value(&dto).unwrap();
         assert_eq!(v["results"][0]["name"], "alpha");
         assert_eq!(v["results"][0]["status"], "applied");
         assert_eq!(v["results"][0]["rev"], "dead");
+        assert_eq!(v["results"][0]["detached"], true);
     }
 
     #[test]

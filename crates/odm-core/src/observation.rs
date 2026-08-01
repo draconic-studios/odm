@@ -108,8 +108,9 @@ pub fn observe_entity<R: odm_git::CommandRunner>(
         match resolve_under_root(root, rel_path) {
             Ok(abs) => {
                 let on_disk = abs.exists();
+                // Own checkout only — not nested inside an ancestor Workspace/monorepo git.
                 let is_git = if on_disk {
-                    git.is_repo(&abs).unwrap_or(false)
+                    git.is_repo_root(&abs).unwrap_or(false)
                 } else {
                     false
                 };
@@ -255,5 +256,69 @@ mod tests {
         assert!(bad.resolve_error.is_some());
         assert!(!bad.on_disk);
         assert_eq!(bad.pin_state, PinState::None);
+    }
+
+    #[test]
+    fn path_only_under_workspace_git_is_not_is_git() {
+        let dir = tempdir().unwrap();
+        init_workspace(InitOptions {
+            path: dir.path().to_path_buf(),
+            no_git: false,
+            name: None,
+        })
+        .unwrap();
+        let mut cfg = WorkspaceConfig::default();
+        cfg.progens.insert(
+            "desk".into(),
+            crate::config::ProgenEntry {
+                path: "progens/desk".into(),
+                url: None,
+                branch: None,
+            },
+        );
+        save_config(dir.path(), &cfg).unwrap();
+        std::fs::create_dir_all(dir.path().join("progens/desk")).unwrap();
+        std::fs::write(dir.path().join("progens/desk/Note.md"), "# n\n").unwrap();
+        // Dirty the Workspace git root — must not leak onto path-only progen.
+        std::fs::write(dir.path().join("stray.txt"), "x").unwrap();
+
+        let git = Git::new();
+        let obs = observe_workspace(&git, dir.path(), &cfg, None).unwrap();
+        let desk = obs.find("desk").unwrap();
+        assert!(desk.on_disk);
+        assert!(!desk.is_git, "path-only must not inherit ancestor git");
+        assert_eq!(desk.dirty, None);
+        assert!(desk.head.is_none());
+    }
+
+    #[test]
+    fn own_git_at_entity_path_is_is_git() {
+        let dir = tempdir().unwrap();
+        init_workspace(InitOptions {
+            path: dir.path().to_path_buf(),
+            no_git: false,
+            name: None,
+        })
+        .unwrap();
+        let mut cfg = WorkspaceConfig::default();
+        cfg.progens.insert(
+            "vault".into(),
+            crate::config::ProgenEntry {
+                path: "progens/vault".into(),
+                url: None,
+                branch: None,
+            },
+        );
+        save_config(dir.path(), &cfg).unwrap();
+        let vault = dir.path().join("progens/vault");
+        std::fs::create_dir_all(&vault).unwrap();
+        let git = Git::new();
+        git.init(&vault).unwrap();
+        std::fs::write(vault.join("a.md"), "x").unwrap();
+
+        let obs = observe_workspace(&git, dir.path(), &cfg, None).unwrap();
+        let v = obs.find("vault").unwrap();
+        assert!(v.is_git);
+        assert_eq!(v.dirty, Some(true));
     }
 }

@@ -98,7 +98,7 @@ odm pin apply [name…]
 odm pin status [name…]
 ```
 
-- **`apply`**: checkout each selected pin’s `rev` as **detached HEAD**. Dirty tree → fail unless force flag (exact force flag name: `--force`). Missing path: named apply → fail; all-apply → fail-fast (`multi-git.md`).
+- **`apply`**: checkout each selected pin’s `rev` as **detached HEAD**. Dirty tree → fail unless force flag (exact force flag name: `--force`). Missing path: named apply → fail; all-apply → fail-fast (`multi-git.md`). Human lines include a `detached HEAD` column; footer is `applied (detached HEAD)`. JSON per result includes `"detached": true` (status remains `"applied"`). **`in_sync` is SHA match only** — it does not mean “on a branch.”
 - **`status`**: pin file vs current HEAD for managed entries (present / drift / missing path).
 - No names → all pinned managed entries.
 
@@ -110,7 +110,7 @@ odm pin status [name…]
 odm status
 ```
 
-Workspace snapshot: configured Projects/Progens, on-disk presence, git/pin drift summary, dirty hints, **registered** worktree slots and **orphan** slot dirs per Project, and **registered** agent packs. Does not fetch. `--json` for agents:
+Workspace snapshot: configured Projects/Progens, on-disk presence, git/pin drift summary, dirty hints, **registered** worktree slots and **orphan** slot dirs per Project, and **registered** agent packs. Does not fetch. Entity `is_git` / dirty apply only when the path is its **own** git checkout root (has `.git` at that path) — path-only trees nested under a git Workspace or monorepo do **not** inherit the ancestor repo. `--json` for agents:
 
 - Each project includes `worktree_slots: [ { "name", "path", "dirty" } ]` (`path` is `worktrees/<project>/<slot>`; `dirty` is `true` / `false` / `null` when the cleanliness probe fails; empty array when none / non-git / list soft-fails). Progens omit `worktree_slots`.
 - Each project also includes `worktree_orphans: [ { "name", "path" } ]` (same orphan definition as doctor/prune; sorted by name; empty array when none / missing dir / soft-fail). Observation only — no `dirty` on orphans. Progens omit `worktree_orphans`.
@@ -208,7 +208,7 @@ odm find [query] [--limit <n>] [--progen …] [--progen-group …] [--json]
 ```
 
 - Federated **FTS** query: fan-out per selected store; merge per `progen.md` (tag `"progen"`, identity `(progen, id)`, stable Progen order). No facet flags on the ODM CLI.
-- Query is **plain text**: each whitespace token is matched literally (FTS operators/`AND`/`OR` and punctuation do not fail the search). Multi-word → AND of terms (no phrase mode).
+- Query is **plain text**: each whitespace token is matched as a whole **FTS5 token** (quoted so operators/`AND`/`OR` and punctuation do not fail the search). Multi-word → AND of terms (no phrase mode). **Not substring or prefix:** `TodoWelcome` does not match `TodoWelcomeToken`; CamelCase is one token (default unicode61 tokenizer). Prefer full tokens or whitespace-separated words in notes.
 - Default scope: all configured Progens (`--progen` / `--progen-group` narrow).
 - Empty query → list scoped notes (same path as a free-text query).
 - `--limit` max hits **per store**, default **200**; `0` rejected (usage exit `1`).

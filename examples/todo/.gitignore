@@ -1,0 +1,16 @@
+# Hand-maintained extras (ODM managed block below is rewritten by doctor --fix / sync)
+.odm/odm.lock.yaml
+.odm/agent-packs.json
+out/
+
+# >>> ODM managed (do not edit between markers)
+.odm/cache/
+.odm/log/
+.odm/progen/
+progens/sheets/
+projects/cheat-key/
+projects/portfolio/
+projects/rss-td-game/
+projects/tip-top/
+worktrees/
+# <<< ODM managed
