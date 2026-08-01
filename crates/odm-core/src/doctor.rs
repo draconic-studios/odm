@@ -7,10 +7,10 @@ use serde::Serialize;
 use crate::config::{odm_dir, pin_path, Workspace};
 use crate::error::OdmError;
 use crate::gitignore::{
-    ancestor_gitignore_has_drift, apply_managed_gitignore, resolve_under_root,
-    workspace_gitignore_has_drift,
+    ancestor_gitignore_has_drift, apply_managed_gitignore, workspace_gitignore_has_drift,
 };
-use crate::pin::{is_full_sha, parse_pin_yaml};
+use crate::observation::{observe_workspace, EntityObservation};
+use crate::pin::{is_full_sha, load_pin, parse_pin_yaml};
 use crate::url_match::urls_match_with_root;
 
 /// `odm doctor --json` report.
@@ -37,18 +37,24 @@ pub enum CheckStatus {
 }
 
 /// Run doctor checks. When `fix` is true, apply mechanical repairs then re-check.
-pub fn run_doctor(ws: &Workspace, fix: bool) -> Result<DoctorReport, OdmError> {
+pub fn run_doctor<R: odm_git::CommandRunner>(
+    git: &Git<R>,
+    ws: &Workspace,
+    fix: bool,
+) -> Result<DoctorReport, OdmError> {
     if fix {
-        apply_fixes(ws)?;
+        apply_fixes(git, ws)?;
     }
-    let checks = collect_checks(ws)?;
+    let checks = collect_checks(git, ws)?;
     let ok = !checks.iter().any(|c| c.status == CheckStatus::Fail);
     Ok(DoctorReport { ok, checks })
 }
 
-fn apply_fixes(ws: &Workspace) -> Result<(), OdmError> {
+fn apply_fixes<R: odm_git::CommandRunner>(
+    git: &Git<R>,
+    ws: &Workspace,
+) -> Result<(), OdmError> {
     ensure_odm_layout(&ws.root)?;
-    let git = Git::new();
     if ws.config.manage_gitignore() && git.is_repo(&ws.root).unwrap_or(false) {
         apply_managed_gitignore(&ws.root, &ws.config)?;
     } else if ws.config.manage_gitignore() {
@@ -69,9 +75,14 @@ fn ensure_odm_layout(root: &Path) -> Result<(), OdmError> {
     Ok(())
 }
 
-fn collect_checks(ws: &Workspace) -> Result<Vec<DoctorCheck>, OdmError> {
+fn collect_checks<R: odm_git::CommandRunner>(
+    git: &Git<R>,
+    ws: &Workspace,
+) -> Result<Vec<DoctorCheck>, OdmError> {
     let mut checks = Vec::new();
-    let git = Git::new();
+    // Soft-load pin: invalid pin is reported by pin_checks, not a hard doctor error.
+    let pin = load_pin(&ws.root).ok().flatten();
+    let obs = observe_workspace(git, &ws.root, &ws.config, pin.as_ref())?;
 
     checks.push(DoctorCheck {
         id: "config_load".into(),
@@ -83,32 +94,14 @@ fn collect_checks(ws: &Workspace) -> Result<Vec<DoctorCheck>, OdmError> {
     checks.push(odm_layout_check(&ws.root));
 
     // path_declared + path_exists + managed_git + origin_match per entity
-    for (name, entry) in &ws.config.projects {
-        push_entity_path_checks(
-            &mut checks,
-            &ws.root,
-            "project",
-            name,
-            &entry.path,
-            entry.url.as_deref(),
-            entry.is_managed(),
-            &git,
-        );
+    for e in &obs.projects {
+        push_entity_path_checks(&mut checks, &ws.root, "project", e);
     }
-    for (name, entry) in &ws.config.progens {
-        push_entity_path_checks(
-            &mut checks,
-            &ws.root,
-            "progen",
-            name,
-            &entry.path,
-            entry.url.as_deref(),
-            entry.is_managed(),
-            &git,
-        );
+    for e in &obs.progens {
+        push_entity_path_checks(&mut checks, &ws.root, "progen", e);
     }
 
-    checks.push(gitignore_drift_check(ws, &git)?);
+    checks.push(gitignore_drift_check(ws, git)?);
     checks.extend(pin_checks(ws)?);
 
     Ok(checks)
@@ -137,31 +130,25 @@ fn odm_layout_check(root: &Path) -> DoctorCheck {
     }
 }
 
-#[allow(clippy::too_many_arguments)]
 fn push_entity_path_checks(
     checks: &mut Vec<DoctorCheck>,
     root: &Path,
     kind: &str,
-    name: &str,
-    rel: &str,
-    url: Option<&str>,
-    managed: bool,
-    git: &Git,
+    e: &EntityObservation,
 ) {
+    let name = &e.name;
+    let rel = &e.path;
     let id_base = format!("{kind}:{name}");
 
-let abs = match resolve_under_root(root, rel) {
-        Ok(p) => p,
-        Err(e) => {
-            checks.push(DoctorCheck {
-                id: format!("path_declared:{id_base}"),
-                status: CheckStatus::Fail,
-                message: e.message(),
-                fixable: false,
-            });
-            return;
-        }
-    };
+    if let Some(err) = &e.resolve_error {
+        checks.push(DoctorCheck {
+            id: format!("path_declared:{id_base}"),
+            status: CheckStatus::Fail,
+            message: err.clone(),
+            fixable: false,
+        });
+        return;
+    }
 
     checks.push(DoctorCheck {
         id: format!("path_declared:{id_base}"),
@@ -170,7 +157,7 @@ let abs = match resolve_under_root(root, rel) {
         fixable: false,
     });
 
-    if !abs.exists() {
+    if !e.on_disk {
         checks.push(DoctorCheck {
             id: format!("path_exists:{id_base}"),
             status: CheckStatus::Warn,
@@ -187,12 +174,11 @@ let abs = match resolve_under_root(root, rel) {
         fixable: false,
     });
 
-    if !managed {
+    if !e.managed {
         return;
     }
 
-    let is_git = git.is_repo(&abs).unwrap_or(false);
-    if !is_git {
+    if !e.is_git {
         checks.push(DoctorCheck {
             id: format!("managed_git:{id_base}"),
             status: CheckStatus::Fail,
@@ -209,13 +195,13 @@ let abs = match resolve_under_root(root, rel) {
         fixable: false,
     });
 
-    let Some(cfg_url) = url else {
+    let Some(cfg_url) = e.url.as_deref() else {
         return;
     };
 
-    match git.origin_url(&abs) {
-        Ok(origin) => {
-            if urls_match_with_root(cfg_url, &origin, Some(root)) {
+    match &e.origin {
+        Some(origin) => {
+            if urls_match_with_root(cfg_url, origin, Some(root)) {
                 checks.push(DoctorCheck {
                     id: format!("origin_match:{id_base}"),
                     status: CheckStatus::Pass,
@@ -233,7 +219,7 @@ let abs = match resolve_under_root(root, rel) {
                 });
             }
         }
-        Err(_) => {
+        None => {
             checks.push(DoctorCheck {
                 id: format!("origin_match:{id_base}"),
                 status: CheckStatus::Fail,
@@ -244,7 +230,10 @@ let abs = match resolve_under_root(root, rel) {
     }
 }
 
-fn gitignore_drift_check(ws: &Workspace, git: &Git) -> Result<DoctorCheck, OdmError> {
+fn gitignore_drift_check<R: odm_git::CommandRunner>(
+    ws: &Workspace,
+    git: &Git<R>,
+) -> Result<DoctorCheck, OdmError> {
     if !ws.config.manage_gitignore() {
         return Ok(DoctorCheck {
             id: "gitignore_drift".into(),
@@ -461,7 +450,8 @@ mod tests {
         })
         .unwrap();
         let ws = load_ws(dir.path());
-        let report = run_doctor(&ws, false).unwrap();
+        let git = Git::new();
+        let report = run_doctor(&git, &ws, false).unwrap();
         let c = report.checks.iter().find(|c| c.id == "config_load").unwrap();
         assert_eq!(c.status, CheckStatus::Pass);
         assert!(report.ok);
@@ -477,12 +467,13 @@ mod tests {
         })
         .unwrap();
         let ws = load_ws(dir.path());
-        let report = run_doctor(&ws, false).unwrap();
+        let git = Git::new();
+        let report = run_doctor(&git, &ws, false).unwrap();
         let c = report.checks.iter().find(|c| c.id == "odm_layout").unwrap();
         assert_eq!(c.status, CheckStatus::Warn);
         assert!(c.fixable);
 
-        let report2 = run_doctor(&ws, true).unwrap();
+        let report2 = run_doctor(&git, &ws, true).unwrap();
         let c2 = report2.checks.iter().find(|c| c.id == "odm_layout").unwrap();
         assert_eq!(c2.status, CheckStatus::Pass);
         assert!(dir.path().join(".odm/cache").is_dir());
@@ -511,7 +502,8 @@ mod tests {
         );
         save_config(dir.path(), &cfg).unwrap();
         let ws = load_ws(dir.path());
-        let report = run_doctor(&ws, false).unwrap();
+        let git = Git::new();
+        let report = run_doctor(&git, &ws, false).unwrap();
         let c = report
             .checks
             .iter()
@@ -533,7 +525,8 @@ mod tests {
         // clobber gitignore
         fs::write(dir.path().join(".gitignore"), "user\n").unwrap();
         let ws = load_ws(dir.path());
-        let report = run_doctor(&ws, false).unwrap();
+        let git = Git::new();
+        let report = run_doctor(&git, &ws, false).unwrap();
         let c = report
             .checks
             .iter()
@@ -541,7 +534,7 @@ mod tests {
             .unwrap();
         assert_eq!(c.status, CheckStatus::Warn);
 
-        let report2 = run_doctor(&ws, true).unwrap();
+        let report2 = run_doctor(&git, &ws, true).unwrap();
         let c2 = report2
             .checks
             .iter()
@@ -573,7 +566,8 @@ mod tests {
         );
         save_pin(dir.path(), &pin).unwrap();
         let ws = load_ws(dir.path());
-        let report = run_doctor(&ws, false).unwrap();
+        let git = Git::new();
+        let report = run_doctor(&git, &ws, false).unwrap();
         let c = report.checks.iter().find(|c| c.id == "pin_unknown").unwrap();
         assert_eq!(c.status, CheckStatus::Warn);
         assert!(report.ok); // warn only
@@ -594,7 +588,8 @@ mod tests {
         )
         .unwrap();
         let ws = load_ws(dir.path());
-        let report = run_doctor(&ws, false).unwrap();
+        let git = Git::new();
+        let report = run_doctor(&git, &ws, false).unwrap();
         let c = report.checks.iter().find(|c| c.id == "pin_version").unwrap();
         assert_eq!(c.status, CheckStatus::Fail);
         assert!(!report.ok);

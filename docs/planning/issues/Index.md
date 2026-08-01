@@ -10,11 +10,26 @@ _(none open — phases 1–5 closed)_
 
 ## Frontier (open, unblocked)
 
-_(empty)_
+- [[issues-34-workspace-observation-depth]] — Workspace observation depth (`ready-for-agent`)
+- [[issues-35-workspace-path-policy]] — Workspace path policy module (`ready-for-agent`)
 
 ## Blocked
 
-_(empty)_
+- [[issues-36-managed-entity-membership]] — blocked by [[issues-34-workspace-observation-depth]], [[issues-35-workspace-path-policy]]
+- [[issues-37-progen-facade-engine]] — blocked by [[issues-35-workspace-path-policy]]
+- [[issues-38-cli-command-dtos]] — blocked by [[issues-34-workspace-observation-depth]], [[issues-36-managed-entity-membership]], [[issues-37-progen-facade-engine]]
+- [[issues-39-action-run-result-stdio]] — blocked by [[issues-35-workspace-path-policy]]
+
+## Architecture deepen (post-0.1.0)
+
+All six from architecture review 2026-08-01; tagged `ready-for-agent` with Agent Briefs. Work frontier first.
+
+- [[issues-34-workspace-observation-depth]]
+- [[issues-35-workspace-path-policy]]
+- [[issues-36-managed-entity-membership]]
+- [[issues-37-progen-facade-engine]]
+- [[issues-38-cli-command-dtos]]
+- [[issues-39-action-run-result-stdio]]
 
 ## Closed maps (delivery spine)
 

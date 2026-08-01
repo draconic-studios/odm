@@ -336,9 +336,9 @@ pub fn pin_status<R: odm_git::CommandRunner>(
     let pin = load_pin(root)?;
     let present = pin.is_some();
     let pin_file = ".odm/odm.lock.yaml".to_string();
+    let obs = crate::observation::observe_workspace(git, root, config, pin.as_ref())?;
 
     let entities = if names.is_empty() {
-        // all managed, plus any pin-only names already covered by managed
         all_managed(config)
     } else {
         resolve_status_names(config, names)?
@@ -346,39 +346,14 @@ pub fn pin_status<R: odm_git::CommandRunner>(
 
     let mut entries = Vec::new();
     for entity in entities {
-        let path = abs_checkout(root, &entity.path);
-        let pin_rev = pin
-            .as_ref()
-            .and_then(|p| p.pins.get(&entity.name))
-            .map(|e| e.rev.clone());
-
-        let (head, on_disk_git) = if !path.exists() {
-            (None, false)
-        } else if git.is_repo(&path)? {
-            (git.head_sha(&path).ok(), true)
-        } else {
-            (None, false)
-        };
-
-        let state = if !present {
-            "missing_pin_file".to_string()
-        } else if !path.exists() {
-            "missing_path".to_string()
-        } else if pin_rev.is_none() {
-            "unpinned".to_string()
-        } else if !on_disk_git {
-            "missing_path".to_string()
-        } else if head.as_ref() == pin_rev.as_ref() {
-            "in_sync".to_string()
-        } else {
-            "drift".to_string()
-        };
-
+        let row = obs.find(&entity.name).ok_or_else(|| {
+            OdmError::usage(format!("unknown entity '{}'", entity.name))
+        })?;
         entries.push(PinStatusEntry {
             name: entity.name,
-            pin_rev,
-            head,
-            state,
+            pin_rev: row.pin_rev.clone(),
+            head: row.head.clone(),
+            state: row.pin_state.as_str().to_string(),
         });
     }
 
@@ -648,67 +623,24 @@ pub fn entity_disk_info<R: odm_git::CommandRunner>(
     rel_path: &str,
     managed_url: Option<&str>,
 ) -> Result<EntityDiskInfo, OdmError> {
-    let path = abs_checkout(root, rel_path);
     let pin = load_pin(root)?;
-    let pin_rev = pin
-        .as_ref()
-        .and_then(|p| p.pins.get(name))
-        .map(|e| e.rev.clone());
-
-    if !path.exists() {
-        let pin_state = if pin.is_none() && managed_url.is_some() {
-            "missing_pin_file"
-        } else if pin_rev.is_some() {
-            "missing_path"
-        } else if managed_url.is_none() {
-            "none"
-        } else {
-            "missing_path"
-        };
-        return Ok(EntityDiskInfo {
-            on_disk: false,
-            is_git: false,
-            head: None,
-            origin: None,
-            dirty: None,
-            pin_rev,
-            pin_state: pin_state.into(),
-        });
-    }
-
-    let is_git = git.is_repo(&path)?;
-    let (head, origin, dirty) = if is_git {
-        (
-            git.head_sha(&path).ok(),
-            git.origin_url(&path).ok(),
-            git.is_clean(&path).ok().map(|c| !c),
-        )
-    } else {
-        (None, None, None)
-    };
-
-    let pin_state = if managed_url.is_none() {
-        "none".to_string()
-    } else if pin.is_none() {
-        "missing_pin_file".to_string()
-    } else if pin_rev.is_none() {
-        "unpinned".to_string()
-    } else if !is_git {
-        "missing_path".to_string()
-    } else if head.as_ref() == pin_rev.as_ref() {
-        "in_sync".to_string()
-    } else {
-        "drift".to_string()
-    };
-
+    let row = crate::observation::observe_entity(
+        git,
+        root,
+        name,
+        rel_path,
+        managed_url,
+        managed_url.is_some(),
+        pin.as_ref(),
+    )?;
     Ok(EntityDiskInfo {
-        on_disk: true,
-        is_git,
-        head,
-        origin,
-        dirty,
-        pin_rev,
-        pin_state,
+        on_disk: row.on_disk,
+        is_git: row.is_git,
+        head: row.head,
+        origin: row.origin,
+        dirty: row.dirty,
+        pin_rev: row.pin_rev,
+        pin_state: row.pin_state.as_str().to_string(),
     })
 }
 

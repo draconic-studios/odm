@@ -171,7 +171,8 @@ fn run(cli: Cli, out: &GlobalOut) -> Result<i32, OdmError> {
         Commands::Status => {
             let root = discover_root(cli.root.as_deref(), &std::env::current_dir()?)?;
             let ws = load_workspace(&root)?;
-            let snap = build_status(&ws)?;
+            let git = Git::new();
+            let snap = build_status(&git, &ws)?;
             if out.json {
                 print_json(&snap)?;
             } else {
@@ -182,7 +183,8 @@ fn run(cli: Cli, out: &GlobalOut) -> Result<i32, OdmError> {
         Commands::Doctor { fix } => {
             let root = discover_root(cli.root.as_deref(), &std::env::current_dir()?)?;
             let ws = load_workspace(&root)?;
-            let report = run_doctor(&ws, fix)?;
+            let git = Git::new();
+            let report = run_doctor(&git, &ws, fix)?;
             if out.json {
                 print_json(&report)?;
             } else {
@@ -200,7 +202,7 @@ fn run(cli: Cli, out: &GlobalOut) -> Result<i32, OdmError> {
             let git = Git::new();
             match cmd {
                 ProjectCmd::List => {
-                    let snap = build_status(&ws)?;
+                    let snap = build_status(&git, &ws)?;
                     if out.json {
                         let list: Vec<_> = ws
                             .config
@@ -294,7 +296,7 @@ fn run(cli: Cli, out: &GlobalOut) -> Result<i32, OdmError> {
                     let entry = ws.config.projects.get(&name).ok_or_else(|| {
                         OdmError::usage(format!("unknown project '{name}'"))
                     })?;
-                    let snap = build_status(&ws)?;
+                    let snap = build_status(&git, &ws)?;
                     let st = snap
                         .projects
                         .iter()
@@ -465,7 +467,7 @@ fn run_progen(
 
     match cmd {
         ProgenCmd::List => {
-            let snap = build_status(&ws)?;
+            let snap = build_status(&git, &ws)?;
             if out.json {
                 let list: Vec<_> = ws
                     .config
@@ -731,12 +733,5 @@ fn path_to_rel(path: &Path) -> Result<String, OdmError> {
 }
 
 fn pin_state_label(s: PinState) -> &'static str {
-    match s {
-        PinState::None => "none",
-        PinState::MissingPath => "missing_path",
-        PinState::Unpinned => "unpinned",
-        PinState::InSync => "in_sync",
-        PinState::Drift => "drift",
-        PinState::MissingPinFile => "missing_pin_file",
-    }
+    s.as_str()
 }

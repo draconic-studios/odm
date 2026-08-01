@@ -8,6 +8,7 @@ mod gitignore;
 mod init;
 mod io;
 mod lifecycle;
+mod observation;
 mod pin;
 mod progen_lifecycle;
 mod status;
@@ -35,11 +36,15 @@ pub use lifecycle::{
     EntityDiskInfo, ManagedEntity, MaterializeOutcome, PinApplyResult, PinStatusEntry,
     PinStatusReport, SyncResult,
 };
+pub use observation::{
+    observe_entity, observe_workspace, EntityObservation, WorkspaceObservation,
+};
 pub use pin::{
     is_full_sha, load_pin, parse_pin_yaml, prune_pins, save_pin, PinEntry, PinFile,
 };
 pub use progen_lifecycle::{path_buf_to_rel, progen_add, progen_rm};
 pub use status::{
-    build_status, compute_pin_state, format_status_human, EntityStatus, PinState, StatusSnapshot,
+    build_status, compute_pin_state, format_status_human, status_from_observation, EntityStatus,
+    PinState, StatusSnapshot,
 };
 pub use url_match::{normalize_git_url, urls_match, urls_match_with_root};

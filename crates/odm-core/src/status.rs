@@ -1,12 +1,9 @@
-use std::path::Path;
-
 use odm_git::Git;
 use serde::Serialize;
 
 use crate::config::Workspace;
 use crate::error::OdmError;
-use crate::gitignore::resolve_under_root;
-use crate::pin::{load_pin, PinFile};
+use crate::pin::load_pin;
 
 /// `odm status --json` snapshot.
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
@@ -41,126 +38,58 @@ pub enum PinState {
     MissingPinFile,
 }
 
-/// Build Workspace status snapshot. Does not fetch.
-pub fn build_status(ws: &Workspace) -> Result<StatusSnapshot, OdmError> {
-    let git = Git::new();
-    let pin = load_pin(&ws.root)?;
-    let pin_present = pin.is_some();
-
-    let mut projects = Vec::new();
-    for (name, entry) in &ws.config.projects {
-        projects.push(entity_status(
-            &ws.root,
-            name,
-            &entry.path,
-            entry.url.as_deref(),
-            entry.is_managed(),
-            pin.as_ref(),
-            pin_present,
-            &git,
-        )?);
-    }
-
-    let mut progens = Vec::new();
-    for (name, entry) in &ws.config.progens {
-        progens.push(entity_status(
-            &ws.root,
-            name,
-            &entry.path,
-            entry.url.as_deref(),
-            entry.is_managed(),
-            pin.as_ref(),
-            pin_present,
-            &git,
-        )?);
-    }
-
-    Ok(StatusSnapshot {
-        root: ws.root.display().to_string(),
-        projects,
-        progens,
-    })
-}
-
-#[allow(clippy::too_many_arguments)]
-fn entity_status(
-    root: &Path,
-    name: &str,
-    rel_path: &str,
-    url: Option<&str>,
-    managed: bool,
-    pin: Option<&PinFile>,
-    pin_present: bool,
-    git: &Git,
-) -> Result<EntityStatus, OdmError> {
-    let abs = match resolve_under_root(root, rel_path) {
-        Ok(p) => p,
-        Err(_) => {
-            return Ok(EntityStatus {
-                name: name.into(),
-                path: rel_path.into(),
-                url: url.map(str::to_string),
-                managed,
-                on_disk: false,
-                is_git: false,
-                head: None,
-                pin_rev: pin.and_then(|p| p.pins.get(name).map(|e| e.rev.clone())),
-                pin_state: if !managed {
-                    PinState::None
-                } else if !pin_present {
-                    PinState::MissingPinFile
-                } else {
-                    PinState::MissingPath
-                },
-                dirty: None,
-            });
+impl PinState {
+    /// Locked snake_case label for JSON `pin_state` / pin status `state`.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            PinState::None => "none",
+            PinState::MissingPath => "missing_path",
+            PinState::Unpinned => "unpinned",
+            PinState::InSync => "in_sync",
+            PinState::Drift => "drift",
+            PinState::MissingPinFile => "missing_pin_file",
         }
-    };
-
-    let on_disk = abs.exists();
-    let is_git = if on_disk {
-        git.is_repo(&abs).unwrap_or(false)
-    } else {
-        false
-    };
-
-    let head = if is_git {
-        git.head_sha(&abs).ok()
-    } else {
-        None
-    };
-
-    let dirty = if is_git {
-        git.is_clean(&abs).ok().map(|clean| !clean)
-    } else {
-        None
-    };
-
-    let pin_entry = pin.and_then(|p| p.pins.get(name));
-    let pin_rev = pin_entry.map(|e| e.rev.clone());
-
-    let pin_state = compute_pin_state(
-        managed,
-        pin_present,
-        on_disk,
-        pin_entry.map(|e| e.rev.as_str()),
-        head.as_deref(),
-    );
-
-    Ok(EntityStatus {
-        name: name.into(),
-        path: rel_path.into(),
-        url: url.map(str::to_string),
-        managed,
-        on_disk,
-        is_git,
-        head,
-        pin_rev,
-        pin_state,
-        dirty,
-    })
+    }
 }
 
+/// Build Workspace status snapshot. Does not fetch.
+pub fn build_status<R: odm_git::CommandRunner>(
+    git: &Git<R>,
+    ws: &Workspace,
+) -> Result<StatusSnapshot, OdmError> {
+    let pin = load_pin(&ws.root)?;
+    let obs = crate::observation::observe_workspace(git, &ws.root, &ws.config, pin.as_ref())?;
+    Ok(status_from_observation(&obs))
+}
+
+/// Pure projection: observation → status snapshot.
+pub fn status_from_observation(obs: &crate::observation::WorkspaceObservation) -> StatusSnapshot {
+    StatusSnapshot {
+        root: obs.root.clone(),
+        projects: obs.projects.iter().map(entity_status_from_obs).collect(),
+        progens: obs.progens.iter().map(entity_status_from_obs).collect(),
+    }
+}
+
+fn entity_status_from_obs(e: &crate::observation::EntityObservation) -> EntityStatus {
+    EntityStatus {
+        name: e.name.clone(),
+        path: e.path.clone(),
+        url: e.url.clone(),
+        managed: e.managed,
+        on_disk: e.on_disk,
+        is_git: e.is_git,
+        head: e.head.clone(),
+        pin_rev: e.pin_rev.clone(),
+        pin_state: e.pin_state,
+        dirty: e.dirty,
+    }
+}
+
+/// Single source of truth for pin drift labels.
+///
+/// Order: `!managed` → None; `!pin_present` → MissingPinFile; `pin_rev` none → Unpinned;
+/// `!on_disk` → MissingPath; head==pin_rev → InSync; else Drift.
 pub fn compute_pin_state(
     managed: bool,
     pin_present: bool,
@@ -182,8 +111,7 @@ pub fn compute_pin_state(
     }
     match (pin_rev, head) {
         (Some(p), Some(h)) if p == h => PinState::InSync,
-        (Some(_), Some(_)) => PinState::Drift,
-        (Some(_), None) => PinState::Drift,
+        (Some(_), _) => PinState::Drift,
         _ => PinState::Unpinned,
     }
 }
@@ -222,13 +150,9 @@ fn format_entity_line(e: &EntityStatus) -> String {
     } else {
         "missing"
     };
-    let pin: &str = match e.pin_state {
+    let pin = match e.pin_state {
         PinState::None => "-",
-        PinState::MissingPath => "missing_path",
-        PinState::Unpinned => "unpinned",
-        PinState::InSync => "in_sync",
-        PinState::Drift => "drift",
-        PinState::MissingPinFile => "missing_pin_file",
+        other => other.as_str(),
     };
     let dirty = match e.dirty {
         Some(true) => " dirty",
@@ -247,30 +171,55 @@ mod tests {
 
     #[test]
     fn pin_state_matrix() {
+        // unmanaged
         assert_eq!(
             compute_pin_state(false, false, true, None, None),
             PinState::None
         );
         assert_eq!(
+            compute_pin_state(false, true, false, Some("a"), None),
+            PinState::None
+        );
+        // missing pin file
+        assert_eq!(
             compute_pin_state(true, false, true, None, Some("a")),
             PinState::MissingPinFile
         );
+        assert_eq!(
+            compute_pin_state(true, false, false, None, None),
+            PinState::MissingPinFile
+        );
+        // unpinned (pin present, no entry) — including path missing
         assert_eq!(
             compute_pin_state(true, true, true, None, Some("a")),
             PinState::Unpinned
         );
         assert_eq!(
+            compute_pin_state(true, true, false, None, None),
+            PinState::Unpinned
+        );
+        // missing path (pin entry, not on disk)
+        assert_eq!(
             compute_pin_state(true, true, false, Some("a"), None),
             PinState::MissingPath
         );
         let sha = "a".repeat(40);
+        // in_sync
         assert_eq!(
             compute_pin_state(true, true, true, Some(&sha), Some(&sha)),
             PinState::InSync
         );
+        // drift: head differs
         assert_eq!(
             compute_pin_state(true, true, true, Some(&sha), Some("b")),
             PinState::Drift
         );
+        // drift: on disk but not git / no head (former lifecycle "missing_path")
+        assert_eq!(
+            compute_pin_state(true, true, true, Some(&sha), None),
+            PinState::Drift
+        );
+        assert_eq!(PinState::InSync.as_str(), "in_sync");
+        assert_eq!(PinState::MissingPinFile.as_str(), "missing_pin_file");
     }
 }
