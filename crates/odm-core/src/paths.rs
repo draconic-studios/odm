@@ -4,6 +4,29 @@ use std::path::{Component, Path, PathBuf};
 
 use crate::error::OdmError;
 
+/// Why a path failed workspace-root resolution policy.
+#[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
+pub enum PathResolveError {
+    #[error("path must be relative, got '{path}'")]
+    Absolute { path: String },
+    #[error("path escapes Workspace root: '{path}'")]
+    Escape { path: String },
+}
+
+impl PathResolveError {
+    pub fn path(&self) -> &str {
+        match self {
+            Self::Absolute { path } | Self::Escape { path } => path,
+        }
+    }
+}
+
+impl From<PathResolveError> for OdmError {
+    fn from(err: PathResolveError) -> Self {
+        OdmError::workspace(err.to_string())
+    }
+}
+
 /// ODM state directory: `<root>/.odm`.
 pub fn odm_dir(root: &Path) -> PathBuf {
     root.join(".odm")
@@ -26,12 +49,12 @@ pub fn agent_packs_path(root: &Path) -> PathBuf {
 
 /// Resolve config-relative `rel` under Workspace `root`.
 /// Err if absolute or escapes via `..`.
-pub fn resolve_under_root(root: &Path, rel: &str) -> Result<PathBuf, OdmError> {
+pub fn resolve_under_root(root: &Path, rel: &str) -> Result<PathBuf, PathResolveError> {
     let p = Path::new(rel);
     if p.is_absolute() {
-        return Err(OdmError::workspace(format!(
-            "path must be relative, got '{rel}'"
-        )));
+        return Err(PathResolveError::Absolute {
+            path: rel.to_string(),
+        });
     }
     let mut out = root.to_path_buf();
     for c in p.components() {
@@ -40,34 +63,34 @@ pub fn resolve_under_root(root: &Path, rel: &str) -> Result<PathBuf, OdmError> {
             Component::Normal(s) => out.push(s),
             Component::ParentDir => {
                 if !out.pop() || out.as_os_str().is_empty() {
-                    return Err(OdmError::workspace(format!(
-                        "path escapes Workspace root: '{rel}'"
-                    )));
+                    return Err(PathResolveError::Escape {
+                        path: rel.to_string(),
+                    });
                 }
                 if !out.starts_with(root) {
-                    return Err(OdmError::workspace(format!(
-                        "path escapes Workspace root: '{rel}'"
-                    )));
+                    return Err(PathResolveError::Escape {
+                        path: rel.to_string(),
+                    });
                 }
             }
             Component::RootDir | Component::Prefix(_) => {
-                return Err(OdmError::workspace(format!(
-                    "path must be relative, got '{rel}'"
-                )));
+                return Err(PathResolveError::Absolute {
+                    path: rel.to_string(),
+                });
             }
         }
     }
     if !out.starts_with(root) {
-        return Err(OdmError::workspace(format!(
-            "path escapes Workspace root: '{rel}'"
-        )));
+        return Err(PathResolveError::Escape {
+            path: rel.to_string(),
+        });
     }
     Ok(out)
 }
 
 /// Primary checkout / Progen store absolute path (escape-safe).
 pub fn abs_checkout(root: &Path, rel: &str) -> Result<PathBuf, OdmError> {
-    resolve_under_root(root, rel)
+    Ok(resolve_under_root(root, rel)?)
 }
 
 /// Single path component used as a name (entity, worktree slot, …).
@@ -130,14 +153,39 @@ mod tests {
     #[test]
     fn resolve_under_root_rejects_escape() {
         let root = Path::new("/ws");
-        assert!(resolve_under_root(root, "../outside").is_err());
-        assert!(resolve_under_root(root, "a/../../outside").is_err());
+        assert!(matches!(
+            resolve_under_root(root, "../outside"),
+            Err(PathResolveError::Escape { path }) if path == "../outside"
+        ));
+        assert!(matches!(
+            resolve_under_root(root, "a/../../outside"),
+            Err(PathResolveError::Escape { path }) if path == "a/../../outside"
+        ));
     }
 
     #[test]
     fn resolve_under_root_rejects_absolute() {
         let root = Path::new("/ws");
-        assert!(resolve_under_root(root, "/abs").is_err());
+        assert!(matches!(
+            resolve_under_root(root, "/abs"),
+            Err(PathResolveError::Absolute { path }) if path == "/abs"
+        ));
+    }
+
+    #[test]
+    fn path_resolve_error_into_workspace_odm() {
+        let abs: OdmError = PathResolveError::Absolute {
+            path: "/x".into(),
+        }
+        .into();
+        assert_eq!(abs.code(), "workspace");
+        assert!(abs.message().contains("relative"));
+        let esc: OdmError = PathResolveError::Escape {
+            path: "../y".into(),
+        }
+        .into();
+        assert_eq!(esc.code(), "workspace");
+        assert!(esc.message().contains("escape"));
     }
 
     #[test]

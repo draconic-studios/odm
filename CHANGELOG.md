@@ -63,6 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Typed path resolve errors** — `resolve_under_root` returns `PathResolveError::{Absolute,Escape}`; callers match the type instead of sniffing English message text (exit codes / `error.code` unchanged).
 - `examples/core-desk` includes a sample Generator (`hello` → `templates/hello`) and a tiny demo agent pack (`agent-packs/demo`).
 - `examples/core-desk` assets expand: second Progen `ops` + `all-docs` group, vault note ids (`readme` / `ops-note`), project-scoped `in-alpha` actions, gitignore for dogfood debris.
 - `examples/core-desk` README + `core_desk_pack_list_missing_gate` dogfood pack list `missing` (install → dest delete → rm).

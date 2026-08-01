@@ -4,7 +4,8 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use odm_core::{
-    abs_checkout, resolve_under_root, worktree_slot_path, ActionTask, OdmError, Workspace,
+    abs_checkout, resolve_under_root, worktree_slot_path, ActionTask, OdmError, PathResolveError,
+    Workspace,
 };
 
 /// How task stdio is handled during Action execution.
@@ -75,15 +76,13 @@ pub fn resolve_cwd(
     task_dir: Option<&str>,
 ) -> Result<PathBuf, OdmError> {
     if let Some(dir) = task_dir {
-        let cwd = resolve_under_root(ws.root.as_path(), dir).map_err(|e| {
-            let msg = e.to_string();
-            if msg.contains("relative") {
-                OdmError::usage(format!("action task dir must be relative, got '{dir}'"))
-            } else {
-                OdmError::usage(format!(
-                    "action task dir must not escape Workspace root, got '{dir}'"
-                ))
+        let cwd = resolve_under_root(ws.root.as_path(), dir).map_err(|e| match e {
+            PathResolveError::Absolute { path } => {
+                OdmError::usage(format!("action task dir must be relative, got '{path}'"))
             }
+            PathResolveError::Escape { path } => OdmError::usage(format!(
+                "action task dir must not escape Workspace root, got '{path}'"
+            )),
         })?;
         if !cwd.is_dir() {
             return Err(OdmError::usage(format!(

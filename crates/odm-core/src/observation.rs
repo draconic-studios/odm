@@ -124,7 +124,7 @@ pub fn observe_entity<R: odm_git::CommandRunner>(
                 };
                 (Some(abs), None, on_disk, is_git, head, origin, dirty)
             }
-            Err(e) => (None, Some(e.message()), false, false, None, None, None),
+            Err(e) => (None, Some(e.to_string()), false, false, None, None, None),
         };
 
     let pin_state = compute_pin_state(

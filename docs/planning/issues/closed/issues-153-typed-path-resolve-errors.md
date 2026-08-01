@@ -2,7 +2,7 @@
 id: issues-153
 title: "Typed path resolve errors"
 description: "Replace English contains() remaps of resolve_under_root failures with a typed Absolute vs Escape (or equivalent) contract."
-status: reviewing
+status: closed
 issue-type: feature-request
 severity: medium
 tags:
@@ -67,11 +67,11 @@ None
 
 **Acceptance criteria:**
 
-- [ ] No production caller maps path-policy failures via `message.contains(...)` for absolute vs escape
-- [ ] Existing CLI/unit tests for path escape on membership, bundles, action dirs, and run cwd still pass with the same exit codes
-- [ ] Typed failure is unit-tested directly (absolute input, `..` escape, happy relative)
-- [ ] `cargo test` green; `cargo clippy --workspace --all-targets -- -D warnings` clean
-- [ ] Touched files within LOC limits (≤1000 preferred, ≤1250 hard)
+- [x] No production caller maps path-policy failures via `message.contains(...)` for absolute vs escape
+- [x] Existing CLI/unit tests for path escape on membership, bundles, action dirs, and run cwd still pass with the same exit codes
+- [x] Typed failure is unit-tested directly (absolute input, `..` escape, happy relative)
+- [x] `cargo test` green; `cargo clippy --workspace --all-targets -- -D warnings` clean
+- [x] Touched files within LOC limits (≤1000 preferred, ≤1250 hard)
 
 **Out of scope:**
 

@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::OdmError;
 use crate::io::atomic_write;
-use crate::paths::{parse_path_token, resolve_under_root};
+use crate::paths::{parse_path_token, resolve_under_root, PathResolveError};
 
 pub use crate::paths::{config_path, odm_dir, pin_path};
 
@@ -236,17 +236,13 @@ fn validate_rel_path(kind: &str, name: &str, path: &str) -> Result<(), OdmError>
         )));
     }
     // Same escape rules as runtime checkout resolve (`paths::resolve_under_root`).
-    resolve_under_root(Path::new("/__odm_ws__"), path).map_err(|e| {
-        let msg = e.to_string();
-        if msg.contains("relative") {
-            OdmError::workspace(format!(
-                "{kind} '{name}' path must be relative, got '{path}'"
-            ))
-        } else {
-            OdmError::workspace(format!(
-                "{kind} '{name}' path must not escape Workspace root, got '{path}'"
-            ))
-        }
+    resolve_under_root(Path::new("/__odm_ws__"), path).map_err(|e| match e {
+        PathResolveError::Absolute { path } => OdmError::workspace(format!(
+            "{kind} '{name}' path must be relative, got '{path}'"
+        )),
+        PathResolveError::Escape { path } => OdmError::workspace(format!(
+            "{kind} '{name}' path must not escape Workspace root, got '{path}'"
+        )),
     })?;
     Ok(())
 }
@@ -257,17 +253,13 @@ fn validate_action_task_dir(action: &str, task_i: usize, dir: &str) -> Result<()
             "action '{action}' task {task_i} dir must not be empty"
         )));
     }
-    resolve_under_root(Path::new("/__odm_ws__"), dir).map_err(|e| {
-        let msg = e.to_string();
-        if msg.contains("relative") {
-            OdmError::workspace(format!(
-                "action '{action}' task {task_i} dir must be relative, got '{dir}'"
-            ))
-        } else {
-            OdmError::workspace(format!(
-                "action '{action}' task {task_i} dir must not escape Workspace root, got '{dir}'"
-            ))
-        }
+    resolve_under_root(Path::new("/__odm_ws__"), dir).map_err(|e| match e {
+        PathResolveError::Absolute { path } => OdmError::workspace(format!(
+            "action '{action}' task {task_i} dir must be relative, got '{path}'"
+        )),
+        PathResolveError::Escape { path } => OdmError::workspace(format!(
+            "action '{action}' task {task_i} dir must not escape Workspace root, got '{path}'"
+        )),
     })?;
     Ok(())
 }
@@ -291,17 +283,13 @@ fn resolve_bundle_path(
     bundle_name: &str,
     rel: &str,
 ) -> Result<PathBuf, OdmError> {
-    resolve_under_root(root, rel).map_err(|e| {
-        let msg = e.to_string();
-        if msg.contains("relative") {
-            OdmError::workspace(format!(
-                "{kind} bundle '{bundle_name}' path must be relative, got '{rel}'"
-            ))
-        } else {
-            OdmError::workspace(format!(
-                "{kind} bundle '{bundle_name}' path must not escape Workspace root, got '{rel}'"
-            ))
-        }
+    resolve_under_root(root, rel).map_err(|e| match e {
+        PathResolveError::Absolute { path } => OdmError::workspace(format!(
+            "{kind} bundle '{bundle_name}' path must be relative, got '{path}'"
+        )),
+        PathResolveError::Escape { path } => OdmError::workspace(format!(
+            "{kind} bundle '{bundle_name}' path must not escape Workspace root, got '{path}'"
+        )),
     })
 }
 

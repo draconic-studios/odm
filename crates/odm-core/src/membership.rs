@@ -11,7 +11,7 @@ use crate::config::{
 };
 use crate::error::OdmError;
 use crate::gitignore::apply_managed_gitignore;
-use crate::paths::{abs_checkout, progen_index_dir, resolve_under_root};
+use crate::paths::{abs_checkout, progen_index_dir, resolve_under_root, PathResolveError};
 use crate::pin_maintain::{maintain_pins_after, prune_pin_file_if_present};
 
 /// Kind of Workspace membership entry.
@@ -107,19 +107,13 @@ pub fn membership_add<R: odm_git::CommandRunner>(
     if entry.path().trim().is_empty() {
         return Err(OdmError::usage(format!("{label} path must not be empty")));
     }
-    resolve_under_root(root, entry.path()).map_err(|e| {
-        let msg = e.to_string();
-        if msg.contains("relative") {
-            OdmError::usage(format!(
-                "{label} path must be relative, got '{}'",
-                entry.path()
-            ))
-        } else {
-            OdmError::usage(format!(
-                "{label} path must not escape Workspace root, got '{}'",
-                entry.path()
-            ))
+    resolve_under_root(root, entry.path()).map_err(|e| match e {
+        PathResolveError::Absolute { path } => {
+            OdmError::usage(format!("{label} path must be relative, got '{path}'"))
         }
+        PathResolveError::Escape { path } => OdmError::usage(format!(
+            "{label} path must not escape Workspace root, got '{path}'"
+        )),
     })?;
 
     let managed = entry.url().map(|url| ManagedEntity {

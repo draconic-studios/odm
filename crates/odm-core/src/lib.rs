@@ -56,7 +56,7 @@ pub use observation::{
 };
 pub use paths::{
     abs_checkout, agent_packs_path, config_path, odm_dir, path_buf_to_rel, pin_path,
-    progen_index_dir, resolve_under_root, worktree_slot_path,
+    progen_index_dir, resolve_under_root, worktree_slot_path, PathResolveError,
 };
 pub use pin::{
     is_full_sha, load_pin, parse_pin_yaml, prune_pins, save_pin, PinEntry, PinFile,
