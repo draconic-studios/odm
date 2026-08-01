@@ -30,11 +30,14 @@ pub fn generator<'a>(ws: &'a Workspace, name: &str) -> Result<&'a GeneratorDef, 
 /// - Without `force`, fails if dest exists as a file or non-empty directory.
 /// - Empty dest directory is allowed without `force`.
 /// - With `force`, overwrites files in place; does not delete unrelated extras.
+/// - With `dry_run`, validates and counts would-copy files but writes nothing
+///   (including no force overwrites).
 pub fn generate_local(
     ws: &Workspace,
     name: &str,
     dest_rel: &str,
     force: bool,
+    dry_run: bool,
 ) -> Result<GenerateOutcome, OdmError> {
     let def = generator(ws, name)?;
 
@@ -78,6 +81,8 @@ pub fn generate_local(
                 "destination is not empty: {dest_rel} (use --force)"
             )));
         }
+    } else if dry_run {
+        // Validate only — do not create dest or parents.
     } else if let Some(parent) = dest.parent() {
         fs::create_dir_all(parent).map_err(|e| {
             OdmError::operation(format!(
@@ -94,6 +99,11 @@ pub fn generate_local(
         })?;
     }
 
+    if dry_run {
+        let copied = count_tree(&template_path)?;
+        return Ok(GenerateOutcome { copied, dest });
+    }
+
     let copied = copy_tree(&template_path, &dest)?;
     Ok(GenerateOutcome { copied, dest })
 }
@@ -103,6 +113,31 @@ fn is_dir_empty(path: &Path) -> Result<bool, OdmError> {
         OdmError::operation(format!("failed to read {}: {e}", path.display()))
     })?;
     Ok(entries.next().is_none())
+}
+
+/// Count files and symlinks under `src` the same way [`copy_tree`] would write them.
+/// Directories are recursed into and not counted.
+fn count_tree(src: &Path) -> Result<u32, OdmError> {
+    let mut count = 0u32;
+    let entries = fs::read_dir(src).map_err(|e| {
+        OdmError::operation(format!("failed to read {}: {e}", src.display()))
+    })?;
+    for entry in entries {
+        let entry = entry.map_err(|e| {
+            OdmError::operation(format!("failed to read entry in {}: {e}", src.display()))
+        })?;
+        let from = entry.path();
+        let ft = entry.file_type().map_err(|e| {
+            OdmError::operation(format!("failed to stat {}: {e}", from.display()))
+        })?;
+        if ft.is_dir() {
+            count += count_tree(&from)?;
+        } else {
+            // Regular files and symlinks each count as one would-copy.
+            count += 1;
+        }
+    }
+    Ok(count)
 }
 
 /// Recursively copy `src` directory contents into `dst`. Counts files and symlinks.
@@ -243,7 +278,7 @@ mod tests {
         gens.insert("pkg".into(), gen_template("templates/pkg"));
         let ws = ws_with(root.to_path_buf(), gens);
 
-        let out = generate_local(&ws, "pkg", "out/pkg", false).unwrap();
+        let out = generate_local(&ws, "pkg", "out/pkg", false, false).unwrap();
         assert_eq!(out.copied, 2);
         assert_eq!(out.dest, root.join("out/pkg"));
         assert_eq!(
@@ -267,7 +302,7 @@ mod tests {
         gens.insert("n".into(), gen_template("t"));
         let ws = ws_with(root.to_path_buf(), gens);
 
-        let out = generate_local(&ws, "n", "dest/nested", false).unwrap();
+        let out = generate_local(&ws, "n", "dest/nested", false, false).unwrap();
         assert_eq!(out.copied, 2);
         assert_eq!(
             fs::read_to_string(root.join("dest/nested/a/b/c.txt")).unwrap(),
@@ -293,11 +328,11 @@ mod tests {
         fs::write(root.join("out/f.txt"), "old").unwrap();
         fs::write(root.join("out/extra.txt"), "keep").unwrap();
 
-        let err = generate_local(&ws, "g", "out", false).unwrap_err();
+        let err = generate_local(&ws, "g", "out", false, false).unwrap_err();
         assert!(err.to_string().contains("not empty"));
         assert_eq!(exit_code(&err), 3);
 
-        let out = generate_local(&ws, "g", "out", true).unwrap();
+        let out = generate_local(&ws, "g", "out", true, false).unwrap();
         assert_eq!(out.copied, 2);
         assert_eq!(fs::read_to_string(root.join("out/f.txt")).unwrap(), "new");
         assert_eq!(
@@ -322,7 +357,7 @@ mod tests {
         gens.insert("g".into(), gen_template("t"));
         let ws = ws_with(root.to_path_buf(), gens);
 
-        let out = generate_local(&ws, "g", "empty", false).unwrap();
+        let out = generate_local(&ws, "g", "empty", false, false).unwrap();
         assert_eq!(out.copied, 1);
         assert_eq!(fs::read_to_string(root.join("empty/a.txt")).unwrap(), "x");
     }
@@ -338,7 +373,7 @@ mod tests {
         gens.insert("g".into(), gen_template("t"));
         let ws = ws_with(root.to_path_buf(), gens);
 
-        let err = generate_local(&ws, "g", "file", true).unwrap_err();
+        let err = generate_local(&ws, "g", "file", true, false).unwrap_err();
         assert!(err.to_string().contains("not a directory"));
     }
 
@@ -352,7 +387,7 @@ mod tests {
         gens.insert("g".into(), gen_template("t"));
         let ws = ws_with(root.to_path_buf(), gens);
 
-        let err = generate_local(&ws, "g", "../outside", false).unwrap_err();
+        let err = generate_local(&ws, "g", "../outside", false, false).unwrap_err();
         assert!(err.to_string().contains("escape"));
         assert_eq!(exit_code(&err), 2);
 
@@ -366,7 +401,7 @@ mod tests {
             },
         );
         let ws2 = ws_with(root.to_path_buf(), gens2);
-        let err2 = generate_local(&ws2, "bad", "out", false).unwrap_err();
+        let err2 = generate_local(&ws2, "bad", "out", false, false).unwrap_err();
         assert!(err2.to_string().contains("escape"));
     }
 
@@ -379,7 +414,7 @@ mod tests {
         gens.insert("g".into(), gen_template("missing/tpl"));
         let ws = ws_with(root.to_path_buf(), gens);
 
-        let err = generate_local(&ws, "g", "out", false).unwrap_err();
+        let err = generate_local(&ws, "g", "out", false, false).unwrap_err();
         assert!(err.to_string().contains("does not exist"));
         assert_eq!(exit_code(&err), 3);
     }
@@ -388,7 +423,7 @@ mod tests {
     fn unknown_name() {
         let dir = tempfile::tempdir().unwrap();
         let ws = ws_with(dir.path().to_path_buf(), BTreeMap::new());
-        let err = generate_local(&ws, "nope", "out", false).unwrap_err();
+        let err = generate_local(&ws, "nope", "out", false, false).unwrap_err();
         assert!(err.to_string().contains("unknown generator"));
         assert_eq!(exit_code(&err), 1);
         assert!(matches!(err, OdmError::Usage(_)));
@@ -409,7 +444,7 @@ mod tests {
         );
         let ws = ws_with(root.to_path_buf(), gens);
 
-        let err = generate_local(&ws, "remote", "out", false).unwrap_err();
+        let err = generate_local(&ws, "remote", "out", false, false).unwrap_err();
         let msg = err.to_string();
         assert!(msg.contains("remote") || msg.contains("deferred") || msg.contains("template"));
         assert!(msg.to_lowercase().contains("remote") || msg.contains("deferred"));
@@ -432,7 +467,7 @@ mod tests {
         );
         let ws = ws_with(root.to_path_buf(), gens);
 
-        let out = generate_local(&ws, "both", "dest", false).unwrap();
+        let out = generate_local(&ws, "both", "dest", false, false).unwrap();
         assert_eq!(out.copied, 1);
         assert_eq!(fs::read_to_string(root.join("dest/ok.txt")).unwrap(), "yes");
     }
@@ -447,7 +482,7 @@ mod tests {
         gens.insert("e".into(), gen_template("empty_tpl"));
         let ws = ws_with(root.to_path_buf(), gens);
 
-        let out = generate_local(&ws, "e", "out", false).unwrap();
+        let out = generate_local(&ws, "e", "out", false, false).unwrap();
         assert_eq!(out.copied, 0);
         assert!(root.join("out").is_dir());
     }
@@ -479,11 +514,160 @@ mod tests {
         gens.insert("s".into(), gen_template("t"));
         let ws = ws_with(root.to_path_buf(), gens);
 
-        let out = generate_local(&ws, "s", "out", false).unwrap();
+        let out = generate_local(&ws, "s", "out", false, false).unwrap();
         assert_eq!(out.copied, 2);
         let link = root.join("out/link.txt");
         assert!(link.symlink_metadata().unwrap().file_type().is_symlink());
         assert_eq!(fs::read_link(&link).unwrap(), PathBuf::from("target.txt"));
         assert_eq!(fs::read_to_string(&link).unwrap(), "data");
+    }
+
+    /// Snapshot relative paths under root (files, dirs, symlinks) for no-write checks.
+    fn list_rel_paths(root: &Path) -> Vec<String> {
+        let mut out = Vec::new();
+        fn walk(base: &Path, dir: &Path, out: &mut Vec<String>) {
+            for entry in fs::read_dir(dir).unwrap() {
+                let entry = entry.unwrap();
+                let path = entry.path();
+                let rel = path.strip_prefix(base).unwrap().to_string_lossy().into_owned();
+                out.push(rel);
+                if entry.file_type().unwrap().is_dir() {
+                    walk(base, &path, out);
+                }
+            }
+        }
+        walk(root, root, &mut out);
+        out.sort();
+        out
+    }
+
+    #[test]
+    fn dry_run_happy_counts_without_writes() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        setup_template(
+            root,
+            "templates/pkg",
+            &[
+                ("README.md", "hello"),
+                (".keep", ""),
+                ("nested/a.txt", "a"),
+            ],
+        );
+
+        let mut gens = BTreeMap::new();
+        gens.insert("pkg".into(), gen_template("templates/pkg"));
+        let ws = ws_with(root.to_path_buf(), gens);
+
+        let before = list_rel_paths(root);
+        let out = generate_local(&ws, "pkg", "out/pkg", false, true).unwrap();
+        assert_eq!(out.copied, 3);
+        assert_eq!(out.dest, root.join("out/pkg"));
+        assert!(!root.join("out/pkg").exists());
+        assert!(!root.join("out").exists());
+        assert_eq!(list_rel_paths(root), before);
+    }
+
+    #[test]
+    fn dry_run_force_existing_no_writes() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        setup_template(root, "t", &[("f.txt", "new"), ("only_tpl.txt", "tpl")]);
+
+        let mut gens = BTreeMap::new();
+        gens.insert("g".into(), gen_template("t"));
+        let ws = ws_with(root.to_path_buf(), gens);
+
+        fs::create_dir_all(root.join("out")).unwrap();
+        fs::write(root.join("out/f.txt"), "old").unwrap();
+        fs::write(root.join("out/extra.txt"), "keep").unwrap();
+
+        let before = list_rel_paths(root);
+        let out = generate_local(&ws, "g", "out", true, true).unwrap();
+        assert_eq!(out.copied, 2);
+        // Dest contents unchanged.
+        assert_eq!(fs::read_to_string(root.join("out/f.txt")).unwrap(), "old");
+        assert!(!root.join("out/only_tpl.txt").exists());
+        assert_eq!(
+            fs::read_to_string(root.join("out/extra.txt")).unwrap(),
+            "keep"
+        );
+        assert_eq!(list_rel_paths(root), before);
+    }
+
+    #[test]
+    fn dry_run_non_empty_dest_without_force_errors() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        setup_template(root, "t", &[("a.txt", "x")]);
+        fs::create_dir_all(root.join("out")).unwrap();
+        fs::write(root.join("out/existing.txt"), "stay").unwrap();
+
+        let mut gens = BTreeMap::new();
+        gens.insert("g".into(), gen_template("t"));
+        let ws = ws_with(root.to_path_buf(), gens);
+
+        let before = list_rel_paths(root);
+        let err = generate_local(&ws, "g", "out", false, true).unwrap_err();
+        assert!(err.to_string().contains("not empty"));
+        assert_eq!(exit_code(&err), 3);
+        assert_eq!(
+            fs::read_to_string(root.join("out/existing.txt")).unwrap(),
+            "stay"
+        );
+        assert!(!root.join("out/a.txt").exists());
+        assert_eq!(list_rel_paths(root), before);
+    }
+
+    #[test]
+    fn dry_run_dest_is_file_errors() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        setup_template(root, "t", &[("a.txt", "x")]);
+        fs::write(root.join("file"), "nope").unwrap();
+
+        let mut gens = BTreeMap::new();
+        gens.insert("g".into(), gen_template("t"));
+        let ws = ws_with(root.to_path_buf(), gens);
+
+        let err = generate_local(&ws, "g", "file", true, true).unwrap_err();
+        assert!(err.to_string().contains("not a directory"));
+        assert_eq!(fs::read_to_string(root.join("file")).unwrap(), "nope");
+    }
+
+    #[test]
+    fn dry_run_url_only_errors() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+
+        let mut gens = BTreeMap::new();
+        gens.insert(
+            "remote".into(),
+            GeneratorDef {
+                template: None,
+                url: Some("https://example.com/gen.git".into()),
+            },
+        );
+        let ws = ws_with(root.to_path_buf(), gens);
+
+        let err = generate_local(&ws, "remote", "out", false, true).unwrap_err();
+        assert_eq!(exit_code(&err), 1);
+        assert!(!root.join("out").exists());
+    }
+
+    #[test]
+    fn real_run_still_writes_after_dry_run_param() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        setup_template(root, "t", &[("a.txt", "x"), ("b/c.txt", "y")]);
+
+        let mut gens = BTreeMap::new();
+        gens.insert("g".into(), gen_template("t"));
+        let ws = ws_with(root.to_path_buf(), gens);
+
+        let out = generate_local(&ws, "g", "dest", false, false).unwrap();
+        assert_eq!(out.copied, 2);
+        assert_eq!(fs::read_to_string(root.join("dest/a.txt")).unwrap(), "x");
+        assert_eq!(fs::read_to_string(root.join("dest/b/c.txt")).unwrap(), "y");
     }
 }

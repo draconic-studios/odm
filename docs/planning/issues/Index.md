@@ -6,15 +6,16 @@ See `docs/agents/issue-tracker.md`.
 
 ## Maps
 
-_(none open)_
+- [[issues-99-post-v1-generate-dry-run-map]] — Post-v1 generate `--dry-run` (local template preview)
 
 ## Frontier (open, unblocked)
 
-_(empty — seed next slice)_
+- [[issues-101-generate-dry-run-cli]] — `ready-for-agent` — CLI `--dry-run` flag + human/JSON
 
 ## Blocked
 
-_(none)_
+- [[issues-102-generate-dry-run-docs-honesty]] — blocked by 101
+- [[issues-103-core-desk-generate-dry-run-dogfood]] — blocked by 101
 
 ## Architecture deepen (post-0.1.0)
 

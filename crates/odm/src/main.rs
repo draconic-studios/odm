@@ -433,7 +433,7 @@ fn run(cli: Cli, out: &GlobalOut) -> Result<i32, OdmError> {
                         OdmError::usage("generate requires --dest <path> when a name is given")
                     })?;
                     let dest_rel = path_buf_to_rel(&dest)?;
-                    let outcome = generate_local(&ws, &name, &dest_rel, force)?;
+                    let outcome = generate_local(&ws, &name, &dest_rel, force, false)?;
                     if out.json {
                         print_json(&GenerateRunDto {
                             generator: name,
