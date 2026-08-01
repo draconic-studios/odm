@@ -42,7 +42,7 @@ Ship a **public project website** for ODM that can be the repo’s GitHub Pages 
 - Prefer order: 110 first; 111 and 112 blocked by 110 (parallel after); 113 blocked by 110 (can land before full content); 114 blocked by 113; 115 human blocked by 113.
 - **115 closed early:** human enabled Pages deploy folder **`/` (root)**.
 - **110–114 closed:** full static site (home, install, quickstart, concepts, features, guides, CLI, config); README/install honesty.
-- **Site home:** `website/` on `main`; publish contents to Pages branch root via `scripts/pages-publish.sh` (Pages folder `/`).
+- **Site home:** `website/` on `main` only; Pages deploys that folder via `.github/workflows/pages.yml` (branch deploy cannot target `/website`).
 
 ## Not yet specified
 

@@ -1,6 +1,6 @@
 # ODM project website
 
-Static HTML/CSS for the public project site. No Node, no SSG, no GitHub Actions.
+Static HTML/CSS under `website/` on **main** only. No second branch.
 
 ## Local preview
 
@@ -12,17 +12,11 @@ python3 -m http.server 8080 --directory website
 
 ## GitHub Pages
 
-Source tree is `website/` on `main`. Publish the **contents** of this folder to the branch/folder your Pages settings use (typically branch with folder `/`).
+GitHub branch deploy only supports `/` or `/docs`, not `/website`. This repo deploys `website/` via a single workflow: `.github/workflows/pages.yml`.
 
-```bash
-# update local gh-pages from website/ (no push)
-./scripts/pages-publish.sh
+**Settings → Pages → Build and deployment → Source: GitHub Actions**
 
-# push gh-pages
-ODM_PAGES_PUSH=1 ./scripts/pages-publish.sh
-```
-
-Expected URL: https://hembrow-innovations.github.io/odm/
+Push to `main` (when `website/**` changes) publishes https://hembrow-innovations.github.io/odm/
 
 ## Content sources
 
