@@ -10,7 +10,7 @@ _(none open)_
 
 ## Frontier (open, unblocked)
 
-- [[issues-54-readme-post-010-docs-drift]] — README + phased-delivery honesty (`ready-for-agent`)
+_(none)_
 
 ## Blocked
 

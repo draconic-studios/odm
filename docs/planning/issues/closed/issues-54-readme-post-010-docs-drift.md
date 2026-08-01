@@ -2,7 +2,7 @@
 id: issues-54
 title: "README and phased-delivery post-0.1.0 drift"
 description: "Align README quickstart and phased-delivery sketch list with landed generate + worktree; agent still sketch."
-status: open
+status: closed
 issue-type: observation
 severity: low
 tags:
@@ -63,10 +63,10 @@ None
 
 **Acceptance criteria:**
 
-- [ ] README mentions generate + worktree as available (agent not oversold)
-- [ ] phased-delivery no longer lists landed worktree/generate v1 as sketch-only blockers
-- [ ] No Rust/code changes
-- [ ] `cargo test` still green (sanity)
+- [x] README mentions generate + worktree as available (agent not oversold)
+- [x] phased-delivery no longer lists landed worktree/generate v1 as sketch-only blockers
+- [x] No Rust/code changes
+- [x] `cargo test` still green (sanity)
 
 **Out of scope:**
 
@@ -76,7 +76,15 @@ None
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met
+
+## Answer
+
+Docs-only honesty pass aligned with CHANGELOG [Unreleased] and `cli.md` matrix:
+
+- **README:** Status notes post-0.1.0 worktree slots + local generate; pack local v1; start/prompt sketch. Quickstart snippet for `odm generate` and `project worktree list|add`; dogfood shows core-desk generate; pointer to cli.md for packs.
+- **phased-delivery.md:** Phase spine splits landed (worktree v1, generate local, pack local) vs still-deferred sketches; historical Actions out-of-phase bullets annotated; Related points to mixed-depth refs.
+- **install.md:** unchanged (no stub claims). No Rust diffs. `cargo test` green.
 
 ## Comments
 

@@ -2,7 +2,7 @@
 
 Poly-repo workspace OS for humans and AI agents: one config, one CLI, and orchestrated Projects + Progens without submodules or a second brain product.
 
-**Status:** v0.1.0 spine — core multi-git, Progen integration, and Actions in a single `odm` binary.
+**Status:** v0.1.0 spine (multi-git, Progen, Actions) plus post-0.1.0 **worktree slots** and local **`odm generate`**. Agent pack install/link/list is local v1; `agent start` / `agent prompt` remain sketch.
 
 ## Install
 
@@ -59,6 +59,17 @@ odm run            # list actions
 odm run <name>
 ```
 
+Generators (local template) and worktree slots:
+
+```bash
+odm generate                              # list Generators
+odm generate <name> --dest <rel-path>     # materialize local template
+odm project worktree list <project>
+odm project worktree add <project> <slot> [--branch <b>]
+```
+
+See [docs/reference/cli.md](docs/reference/cli.md) for full surfaces (including `agent pack`).
+
 Dogfood Workspace (offline fixtures):
 
 ```bash
@@ -69,6 +80,8 @@ odm --root . sync
 odm progen reindex
 odm find DeskUniqueToken
 odm run hello
+odm generate                              # sample generators/ + hello template
+odm generate hello --dest out/hello
 ```
 
 ## Docs

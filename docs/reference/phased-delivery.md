@@ -23,14 +23,25 @@ Closing the design map means the docs package is review-complete. It does **not*
 
 ## Phase spine
 
-Sketch-only areas (worktrees, graph/tags, env, generators depth, agent packs) are **not** required phases before Ship. They enter an implement slice only when pulled in deliberately.
+Post-0.1.0 **landed outside the original Ship spine** (not required before v0.1.0, now available):
+
+- **Worktree slots v1** — `odm project worktree` add/list/rm and `--wt` path binding (`worktrees.md`; deferred items still listed there)
+- **Generate local template v1** — `odm generate` list + materialize from local bundles (`env-gen-packs.md`; remote/`template.toml` depth deferred)
+- **Agent pack local v1** — `odm agent pack` install/link/list (`env-gen-packs.md`; marketplace/manifest deferred)
+
+Still deferred / sketch (not Ship gates unless pulled in deliberately):
+
+- Graph/tags, env productization
+- Generate remote and full `template.toml` depth
+- Agent `start` / `prompt`
+- Worktree deferred items (config slots, GC, pin↔slot, doctor orphans — `worktrees.md`)
 
 ### 1. Design package
 
 **Done means** (acceptance checklist; full record on planning issue design-package-acceptance):
 
-- **Files present** — root `CONTEXT.md`; full-spec refs: `vision`, `architecture`, `config`, `cli`, `progen`, `multi-git`, `phased-delivery`; sketches: `worktrees`, `graph`, `env-gen-packs`. Not required: `concepts.md`, ADRs, research notes
-- **Depth** — full-spec enough to start Implement core without reopening fundamentals; sketches at the locked sketch bar (not Ship gates); CONTEXT = product nouns only, no “brain”
+- **Files present** — root `CONTEXT.md`; full-spec refs: `vision`, `architecture`, `config`, `cli`, `progen`, `multi-git`, `phased-delivery`; design-time sketch refs (later mixed depth): `worktrees`, `graph`, `env-gen-packs`. Not required: `concepts.md`, ADRs, research notes
+- **Depth** — full-spec enough to start Implement core without reopening fundamentals; design-time sketches were not Ship gates (post-0.1.0 some landed as v1 — see Phase spine); CONTEXT = product nouns only, no “brain”
 - **No unresolved conflicts** — map Decisions match cited files; required files don’t contradict locked choices; CONTEXT vocabulary used in refs; Out-of-scope / Not-yet-specified not silently promoted
 - **Open questions** — map **Not yet specified** is the register (may be non-empty); no unnamed design blockers
 - **Ready** — safe to chart a later **Implement core** map only; this phase does not start implementation
@@ -96,11 +107,11 @@ Full acceptance checklist: planning issue vertical-slice-order-and-core-acceptan
 - Shell-out model for command bodies; Nx/user scripts remain outside ODM
 - Enough action support that the “one desk” story is usable without ad-hoc wrappers for common tasks
 
-**Out of this phase:**
+**Out of this phase** (historical Actions-slice boundary; post-0.1.0 status differs — see Phase spine):
 
 - HashiCorp go-plugin / npm plugin installers (dropped with Go)
-- Generator/`template.toml` full depth unless explicitly pulled from sketch into this slice
-- Agent-pack and worktree productization unless explicitly pulled in
+- Generator/`template.toml` full depth (local generate v1 landed later; remote/templating still deferred — `env-gen-packs.md`)
+- Agent-pack and worktree productization (both landed as local/v1 later; start/prompt and worktree deferred items still open — `env-gen-packs.md`, `worktrees.md`)
 
 ### 5. Ship
 
@@ -129,5 +140,7 @@ Dogfood or CI artifacts may exist during phases 2–4. They are not “ODM v1 sh
 - CLI: `cli.md`
 - Multi-git: `multi-git.md`
 - Progen: `progen.md`
-- Sketch sections: `worktrees.md`, `graph.md`, `env-gen-packs.md`
+- Worktrees (v1 + deferred): `worktrees.md`
+- Env / generate / packs (mixed depth): `env-gen-packs.md`
+- Still mostly sketch: `graph.md`
 - Legacy facts (optional): `research/legacy-go-odm.md`
