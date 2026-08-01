@@ -2,7 +2,7 @@
 id: issues-139
 title: "CLI integration: pin force, sync named, project/progen rm"
 description: "Thin binary coverage for pin apply --force, named sync, and membership rm --delete/--force."
-status: reviewing
+status: closed
 issue-type: feature-request
 severity: medium
 tags:
@@ -51,12 +51,16 @@ None (pairs well with 138)
 
 **Acceptance criteria:**
 
-- [ ] Each area has at least one success + one primary failure CLI test
-- [ ] `cargo test -p odm` green
-- [ ] File size limits respected
+- [x] Each area has at least one success + one primary failure CLI test
+- [x] `cargo test -p odm` green
+- [x] File size limits respected
 
 **Out of scope:** full exit matrix (140); core-desk dogfood script (145).
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met
+
+## Done
+
+- New `crates/odm/tests/cli_pin_sync_rm.rs` (~350 LOC): pin dirty/force + JSON status + named subset; named sync + unknown; project rm keep/delete/dirty-force; progen rm undeclare/delete/unknown.
