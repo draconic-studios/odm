@@ -93,6 +93,7 @@ bootstrap:
       dir: apps/api          # optional; default = Workspace root
 ```
 
+- Bundle paths are relative to the Workspace root (absolute/`..` rejected).
 - **Merge** all bundles into one Action namespace.
 - **Duplicate** Action names across bundles → config error.
 - Bundle map keys are organizational only (not CLI selectors in v1).

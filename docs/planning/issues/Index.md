@@ -18,7 +18,6 @@ See `docs/agents/issue-tracker.md`.
 
 ### Swarm audit — critical / high (prefer first)
 
-- [[issues-124-bundle-path-escape]] — action/generator bundle path escape (`ready-for-agent`)
 - [[issues-125-membership-path-escape]] — membership add path escape (`ready-for-agent`)
 - [[issues-126-action-dir-escape]] — action task dir escape (`ready-for-agent`)
 - [[issues-127-wt-missing-exit-code]] — missing wt/path exit 4 (`ready-for-agent`)

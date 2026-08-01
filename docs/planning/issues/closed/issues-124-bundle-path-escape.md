@@ -2,13 +2,12 @@
 id: issues-124
 title: "Action/generator bundle paths must resolve under root"
 description: "Bundle paths use root.join without resolve_under_root; absolute and .. paths read outside the Workspace."
-status: open
+status: closed
 issue-type: bug
 severity: high
 tags:
   - planning
   - issue
-  - ready-for-agent
 ---
 
 # Action/generator bundle paths must resolve under root
@@ -60,13 +59,13 @@ None
 
 **Acceptance criteria:**
 
-- [ ] Absolute and escaping bundle paths rejected on load
-- [ ] Valid relative bundles still merge
-- [ ] Unit tests cover both failure modes
-- [ ] `cargo test -p odm-core` green
+- [x] Absolute and escaping bundle paths rejected on load
+- [x] Valid relative bundles still merge
+- [x] Unit tests cover both failure modes
+- [x] `cargo test -p odm-core` green
 
 **Out of scope:** action `dir` escape (126), membership path (125).
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met

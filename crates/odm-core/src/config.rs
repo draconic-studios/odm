@@ -239,13 +239,33 @@ fn validate_progen_groups(config: &WorkspaceConfig) -> Result<(), OdmError> {
     Ok(())
 }
 
+fn resolve_bundle_path(
+    root: &Path,
+    kind: &str,
+    bundle_name: &str,
+    rel: &str,
+) -> Result<PathBuf, OdmError> {
+    resolve_under_root(root, rel).map_err(|e| {
+        let msg = e.to_string();
+        if msg.contains("relative") {
+            OdmError::workspace(format!(
+                "{kind} bundle '{bundle_name}' path must be relative, got '{rel}'"
+            ))
+        } else {
+            OdmError::workspace(format!(
+                "{kind} bundle '{bundle_name}' path must not escape Workspace root, got '{rel}'"
+            ))
+        }
+    })
+}
+
 fn load_action_bundles(
     root: &Path,
     bundles: &BTreeMap<String, String>,
 ) -> Result<BTreeMap<String, ActionDef>, OdmError> {
     let mut merged = BTreeMap::new();
     for (bundle_name, rel) in bundles {
-        let path = root.join(rel);
+        let path = resolve_bundle_path(root, "action", bundle_name, rel)?;
         if !path.is_file() {
             return Err(OdmError::workspace(format!(
                 "action bundle '{bundle_name}' path does not exist: {rel}"
@@ -291,7 +311,7 @@ fn load_generator_bundles(
 ) -> Result<BTreeMap<String, GeneratorDef>, OdmError> {
     let mut merged = BTreeMap::new();
     for (bundle_name, rel) in bundles {
-        let path = root.join(rel);
+        let path = resolve_bundle_path(root, "generator", bundle_name, rel)?;
         if !path.is_file() {
             return Err(OdmError::workspace(format!(
                 "generator bundle '{bundle_name}' path does not exist: {rel}"
@@ -441,6 +461,55 @@ progen_groups:
         assert!(err.to_string().contains("path does not exist"));
         assert!(matches!(err, OdmError::Workspace(_)));
         assert_eq!(crate::error::exit_code(&err), 2);
+    }
+
+    #[test]
+    fn action_bundle_absolute_path_rejected() {
+        let dir = tempdir().unwrap();
+        let abs = dir.path().join("evil.yaml");
+        fs::write(&abs, "boot:\n  tasks:\n    - run: echo hi\n").unwrap();
+        let yaml = format!("actions:\n  core: {}\n", abs.display());
+        let c = parse_config_yaml(&yaml).unwrap();
+        let err = validate_and_load_bundles(dir.path(), c).unwrap_err();
+        assert!(err.to_string().contains("relative"), "{err}");
+        assert!(matches!(err, OdmError::Workspace(_)));
+        assert_eq!(crate::error::exit_code(&err), 2);
+    }
+
+    #[test]
+    fn action_bundle_escape_path_rejected() {
+        let dir = tempdir().unwrap();
+        let outside = dir.path().parent().unwrap().join("outside-actions.yaml");
+        fs::write(&outside, "boot:\n  tasks:\n    - run: echo hi\n").unwrap();
+        let c = parse_config_yaml("actions:\n  core: ../outside-actions.yaml\n").unwrap();
+        let err = validate_and_load_bundles(dir.path(), c).unwrap_err();
+        assert!(err.to_string().contains("escape"), "{err}");
+        assert!(matches!(err, OdmError::Workspace(_)));
+        assert_eq!(crate::error::exit_code(&err), 2);
+        let _ = fs::remove_file(&outside);
+    }
+
+    #[test]
+    fn generator_bundle_absolute_and_escape_rejected() {
+        let dir = tempdir().unwrap();
+        let root = dir.path();
+        let abs = root.join("evil-g.yaml");
+        fs::write(&abs, "pkg:\n  template: t.md\n").unwrap();
+        let yaml = format!("generators:\n  core: {}\n", abs.display());
+        let c = parse_config_yaml(&yaml).unwrap();
+        let err = validate_and_load_bundles(root, c).unwrap_err();
+        assert!(err.to_string().contains("relative"), "{err}");
+        assert!(matches!(err, OdmError::Workspace(_)));
+        assert_eq!(crate::error::exit_code(&err), 2);
+
+        let outside = root.parent().unwrap().join("outside-gen.yaml");
+        fs::write(&outside, "pkg:\n  template: t.md\n").unwrap();
+        let c = parse_config_yaml("generators:\n  core: ../outside-gen.yaml\n").unwrap();
+        let err = validate_and_load_bundles(root, c).unwrap_err();
+        assert!(err.to_string().contains("escape"), "{err}");
+        assert!(matches!(err, OdmError::Workspace(_)));
+        assert_eq!(crate::error::exit_code(&err), 2);
+        let _ = fs::remove_file(&outside);
     }
 
     #[test]
