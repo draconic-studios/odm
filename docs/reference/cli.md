@@ -136,6 +136,7 @@ odm project worktree list <project>
 odm project worktree add <project> <slot> [--branch <b>]
 odm project worktree rm <project> <slot> [--force]
 odm project worktree prune <project> [--force]
+odm project worktree prune --all [--force]
 ```
 
 - **`list` / `info`**: config + disk/git summary; `--json`. `info` includes registered `worktree_slots: [ { "name", "path" } ]` (`path` is `worktrees/<project>/<slot>`; empty array when none / non-git / list soft-fails). Human lists slot names only when non-empty (`worktrees: a, b`).

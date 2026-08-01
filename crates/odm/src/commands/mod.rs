@@ -36,7 +36,8 @@ pub use run::{
 };
 pub use status::status_snapshot;
 pub use worktree::{
-    format_worktree_add_human, format_worktree_list_human, format_worktree_prune_human,
-    format_worktree_rm_human, worktree_list_dto, worktree_prune_dto, worktree_slot_action_dto,
-    WorktreeListDto, WorktreePruneDto, WorktreeSlotActionDto, WorktreeSlotDto,
+    format_worktree_add_human, format_worktree_list_human, format_worktree_prune_all_human,
+    format_worktree_prune_human, format_worktree_rm_human, worktree_list_dto,
+    worktree_prune_all_dto, worktree_prune_dto, worktree_slot_action_dto, WorktreeListDto,
+    WorktreePruneAllDto, WorktreePruneDto, WorktreeSlotActionDto, WorktreeSlotDto,
 };

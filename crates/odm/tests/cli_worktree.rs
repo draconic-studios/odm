@@ -483,6 +483,208 @@ fn worktree_prune_empty_orphan_and_force_and_registered_safe() {
         .stdout(predicate::str::contains("pruned 0 orphan worktree dirs"));
 }
 
+/// init + two git projects (alpha, beta).
+fn workspace_with_two_git_projects(root: &Path) {
+    odm()
+        .args(["init", root.to_str().unwrap()])
+        .assert()
+        .success();
+
+    for name in ["alpha", "beta"] {
+        let bare = bare_with_main(root, name);
+        odm()
+            .args([
+                "--root",
+                root.to_str().unwrap(),
+                "project",
+                "add",
+                name,
+                "--path",
+                &format!("projects/{name}"),
+                "--url",
+                bare.to_str().unwrap(),
+                "--branch",
+                "main",
+            ])
+            .assert()
+            .success();
+    }
+}
+
+#[test]
+fn worktree_prune_all_two_empty_orphans() {
+    let dir = tempdir().unwrap();
+    let root = dir.path().join("ws");
+    workspace_with_two_git_projects(&root);
+
+    let a = root.join("worktrees/alpha/stale");
+    let b = root.join("worktrees/beta/stale");
+    fs::create_dir_all(&a).unwrap();
+    fs::create_dir_all(&b).unwrap();
+
+    let out = odm()
+        .args([
+            "--root",
+            root.to_str().unwrap(),
+            "--json",
+            "project",
+            "worktree",
+            "prune",
+            "--all",
+        ])
+        .assert()
+        .success()
+        .get_output()
+        .stdout
+        .clone();
+    let v: serde_json::Value = serde_json::from_slice(&out).unwrap();
+    assert_eq!(v["all"], true);
+    let pruned = v["pruned"].as_array().unwrap();
+    assert_eq!(pruned.len(), 2);
+    assert_eq!(pruned[0]["project"], "alpha");
+    assert_eq!(pruned[0]["name"], "stale");
+    assert_eq!(pruned[0]["path"], "worktrees/alpha/stale");
+    assert_eq!(pruned[1]["project"], "beta");
+    assert_eq!(pruned[1]["path"], "worktrees/beta/stale");
+    assert_eq!(v["skipped_nonempty"].as_array().unwrap().len(), 0);
+    assert!(!a.exists());
+    assert!(!b.exists());
+}
+
+#[test]
+fn worktree_prune_all_partial_nonempty_exit_3() {
+    let dir = tempdir().unwrap();
+    let root = dir.path().join("ws");
+    workspace_with_two_git_projects(&root);
+
+    let empty = root.join("worktrees/alpha/empty");
+    let full = root.join("worktrees/beta/full");
+    fs::create_dir_all(&empty).unwrap();
+    fs::create_dir_all(&full).unwrap();
+    fs::write(full.join("leftover.txt"), "x").unwrap();
+
+    let out = odm()
+        .args([
+            "--root",
+            root.to_str().unwrap(),
+            "--json",
+            "project",
+            "worktree",
+            "prune",
+            "--all",
+        ])
+        .assert()
+        .failure()
+        .code(3)
+        .get_output()
+        .stdout
+        .clone();
+    let v: serde_json::Value = serde_json::from_slice(&out).unwrap();
+    assert_eq!(v["all"], true);
+    assert_eq!(v["pruned"].as_array().unwrap().len(), 1);
+    assert_eq!(v["pruned"][0]["project"], "alpha");
+    assert_eq!(v["skipped_nonempty"].as_array().unwrap().len(), 1);
+    assert_eq!(v["skipped_nonempty"][0]["project"], "beta");
+    assert_eq!(v["skipped_nonempty"][0]["name"], "full");
+    assert!(!empty.exists());
+    assert!(full.is_dir());
+
+    // force clears remaining
+    odm()
+        .args([
+            "--root",
+            root.to_str().unwrap(),
+            "project",
+            "worktree",
+            "prune",
+            "--all",
+            "--force",
+        ])
+        .assert()
+        .success();
+    assert!(!full.exists());
+}
+
+#[test]
+fn worktree_prune_all_mutual_exclusion_and_bare() {
+    let dir = tempdir().unwrap();
+    let root = dir.path().join("ws");
+    workspace_with_git_project(&root);
+
+    // clap usage → exit 2 (project convention for missing/conflicting args)
+    odm()
+        .args([
+            "--root",
+            root.to_str().unwrap(),
+            "project",
+            "worktree",
+            "prune",
+        ])
+        .assert()
+        .failure()
+        .code(2);
+
+    odm()
+        .args([
+            "--root",
+            root.to_str().unwrap(),
+            "project",
+            "worktree",
+            "prune",
+            "--all",
+            "alpha",
+        ])
+        .assert()
+        .failure()
+        .code(2);
+}
+
+#[test]
+fn worktree_prune_all_skips_non_git_in_mix() {
+    let dir = tempdir().unwrap();
+    let root = dir.path().join("ws");
+    workspace_with_git_project(&root);
+
+    // non-git project in config
+    odm()
+        .args([
+            "--root",
+            root.to_str().unwrap(),
+            "project",
+            "add",
+            "docs",
+            "--path",
+            "projects/docs",
+        ])
+        .assert()
+        .success();
+    fs::create_dir_all(root.join("projects/docs")).unwrap();
+    fs::write(root.join("projects/docs/README"), "not git").unwrap();
+
+    let orphan = root.join("worktrees/alpha/stale");
+    fs::create_dir_all(&orphan).unwrap();
+
+    let out = odm()
+        .args([
+            "--root",
+            root.to_str().unwrap(),
+            "--json",
+            "project",
+            "worktree",
+            "prune",
+            "--all",
+        ])
+        .assert()
+        .success()
+        .get_output()
+        .stdout
+        .clone();
+    let v: serde_json::Value = serde_json::from_slice(&out).unwrap();
+    assert_eq!(v["pruned"].as_array().unwrap().len(), 1);
+    assert_eq!(v["pruned"][0]["project"], "alpha");
+    assert!(!orphan.exists());
+}
+
 #[test]
 fn worktree_prune_unknown_project_usage() {
     let dir = tempdir().unwrap();

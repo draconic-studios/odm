@@ -63,6 +63,7 @@ pub use status::{
 };
 pub use url_match::{normalize_git_url, urls_match, urls_match_with_root};
 pub use worktree::{
-    validate_slot_name, worktree_add, worktree_list, worktree_prune, worktree_rm,
-    WorktreeListOutcome, WorktreePruneOutcome, WorktreeSlotInfo, WorktreeSlotOutcome,
+    validate_slot_name, worktree_add, worktree_list, worktree_prune, worktree_prune_all,
+    worktree_rm, WorktreeListOutcome, WorktreePruneAllOutcome, WorktreePruneAllSlot,
+    WorktreePruneOutcome, WorktreeSlotInfo, WorktreeSlotOutcome,
 };

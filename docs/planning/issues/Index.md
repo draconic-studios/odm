@@ -6,15 +6,16 @@ See `docs/agents/issue-tracker.md`.
 
 ## Maps
 
-_(none open)_
+- [[issues-77-post-v1-worktree-observation-map]] — Post-v1 worktree multi-prune + slot dirty observation
 
 ## Frontier (open, unblocked)
 
-_(none)_
+- [[issues-79-worktree-slot-dirty-observation]] — dirty on list/status/info slots (`ready-for-agent`)
 
 ## Blocked
 
-_(none)_
+- [[issues-80-worktree-observation-docs-honesty]] — blocked by 79 (78 closed)
+- [[issues-81-core-desk-worktree-observation-dogfood]] — blocked by 79 (78 closed)
 
 ## Architecture deepen (post-0.1.0)
 

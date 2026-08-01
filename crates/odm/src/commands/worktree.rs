@@ -1,6 +1,8 @@
 //! `odm project worktree` DTOs and human formatters.
 
-use odm_core::{WorktreeListOutcome, WorktreePruneOutcome, WorktreeSlotOutcome};
+use odm_core::{
+    WorktreeListOutcome, WorktreePruneAllOutcome, WorktreePruneOutcome, WorktreeSlotOutcome,
+};
 use serde::Serialize;
 
 /// `odm project worktree list --json`.
@@ -17,6 +19,14 @@ pub struct WorktreeSlotDto {
     pub path: String,
 }
 
+/// One slot under `prune --all` JSON (includes project).
+#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
+pub struct WorktreePruneAllSlotDto {
+    pub project: String,
+    pub name: String,
+    pub path: String,
+}
+
 /// `odm project worktree add|rm --json`.
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
 pub struct WorktreeSlotActionDto {
@@ -25,11 +35,19 @@ pub struct WorktreeSlotActionDto {
     pub path: String,
 }
 
-/// `odm project worktree prune --json`.
+/// `odm project worktree prune <project> --json`.
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
 pub struct WorktreePruneDto {
     pub project: String,
     pub pruned: Vec<WorktreeSlotDto>,
+}
+
+/// `odm project worktree prune --all --json`.
+#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
+pub struct WorktreePruneAllDto {
+    pub all: bool,
+    pub pruned: Vec<WorktreePruneAllSlotDto>,
+    pub skipped_nonempty: Vec<WorktreePruneAllSlotDto>,
 }
 
 pub fn worktree_list_dto(out: &WorktreeListOutcome) -> WorktreeListDto {
@@ -68,6 +86,26 @@ pub fn worktree_prune_dto(out: &WorktreePruneOutcome) -> WorktreePruneDto {
     }
 }
 
+pub fn worktree_prune_all_dto(out: &WorktreePruneAllOutcome) -> WorktreePruneAllDto {
+    fn map_slots(
+        slots: &[odm_core::WorktreePruneAllSlot],
+    ) -> Vec<WorktreePruneAllSlotDto> {
+        slots
+            .iter()
+            .map(|s| WorktreePruneAllSlotDto {
+                project: s.project.clone(),
+                name: s.name.clone(),
+                path: s.path.clone(),
+            })
+            .collect()
+    }
+    WorktreePruneAllDto {
+        all: true,
+        pruned: map_slots(&out.pruned),
+        skipped_nonempty: map_slots(&out.skipped_nonempty),
+    }
+}
+
 pub fn format_worktree_list_human(out: &WorktreeListOutcome) -> String {
     let mut s = String::new();
     for slot in &out.slots {
@@ -102,6 +140,41 @@ pub fn format_worktree_prune_human(out: &WorktreePruneOutcome) -> String {
             .skipped_nonempty
             .iter()
             .map(|p| p.name.as_str())
+            .collect();
+        s.push_str(&format!(
+            "\nskipped non-empty orphan{} (use --force): {}",
+            if out.skipped_nonempty.len() == 1 {
+                ""
+            } else {
+                "s"
+            },
+            names.join(", ")
+        ));
+    }
+    s
+}
+
+pub fn format_worktree_prune_all_human(out: &WorktreePruneAllOutcome) -> String {
+    let mut s = if out.pruned.is_empty() {
+        "pruned 0 orphan worktree dirs".to_string()
+    } else {
+        let names: Vec<String> = out
+            .pruned
+            .iter()
+            .map(|p| format!("{}/{}", p.project, p.name))
+            .collect();
+        format!(
+            "pruned {} orphan worktree dir{}: {}",
+            out.pruned.len(),
+            if out.pruned.len() == 1 { "" } else { "s" },
+            names.join(", ")
+        )
+    };
+    if !out.skipped_nonempty.is_empty() {
+        let names: Vec<String> = out
+            .skipped_nonempty
+            .iter()
+            .map(|p| format!("{}/{}", p.project, p.name))
             .collect();
         s.push_str(&format!(
             "\nskipped non-empty orphan{} (use --force): {}",
@@ -220,5 +293,49 @@ mod tests {
         let h = format_worktree_prune_human(&partial);
         assert!(h.contains("pruned 1 orphan worktree dir: empty"));
         assert!(h.contains("skipped non-empty orphan (use --force): full"));
+    }
+
+    #[test]
+    fn prune_all_dto_json_shape() {
+        use odm_core::{WorktreePruneAllOutcome, WorktreePruneAllSlot};
+        let out = WorktreePruneAllOutcome {
+            pruned: vec![WorktreePruneAllSlot {
+                project: "alpha".into(),
+                name: "stale".into(),
+                path: "worktrees/alpha/stale".into(),
+            }],
+            skipped_nonempty: vec![WorktreePruneAllSlot {
+                project: "beta".into(),
+                name: "full".into(),
+                path: "worktrees/beta/full".into(),
+            }],
+        };
+        let v = serde_json::to_value(worktree_prune_all_dto(&out)).unwrap();
+        assert_eq!(v["all"], true);
+        assert_eq!(v["pruned"][0]["project"], "alpha");
+        assert_eq!(v["pruned"][0]["name"], "stale");
+        assert_eq!(v["pruned"][0]["path"], "worktrees/alpha/stale");
+        assert_eq!(v["skipped_nonempty"][0]["project"], "beta");
+        assert_eq!(v["skipped_nonempty"][0]["name"], "full");
+    }
+
+    #[test]
+    fn prune_all_human_qualified_names() {
+        use odm_core::{WorktreePruneAllOutcome, WorktreePruneAllSlot};
+        let out = WorktreePruneAllOutcome {
+            pruned: vec![WorktreePruneAllSlot {
+                project: "alpha".into(),
+                name: "empty".into(),
+                path: "worktrees/alpha/empty".into(),
+            }],
+            skipped_nonempty: vec![WorktreePruneAllSlot {
+                project: "beta".into(),
+                name: "full".into(),
+                path: "worktrees/beta/full".into(),
+            }],
+        };
+        let h = format_worktree_prune_all_human(&out);
+        assert!(h.contains("pruned 1 orphan worktree dir: alpha/empty"));
+        assert!(h.contains("skipped non-empty orphan (use --force): beta/full"));
     }
 }
