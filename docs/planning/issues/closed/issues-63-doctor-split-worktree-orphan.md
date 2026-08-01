@@ -2,7 +2,7 @@
 id: issues-63
 title: "Split doctor worktree orphan checks out of doctor.rs"
 description: "Extract worktree orphan doctor checks (+ tests) so doctor.rs stays ≤1000 LOC target."
-status: open
+status: closed
 issue-type: feature-request
 severity: medium
 tags:
@@ -61,11 +61,11 @@ None
 
 **Acceptance criteria:**
 
-- [ ] Orphan logic lives outside monolithic `doctor.rs` body
-- [ ] `doctor.rs` ≤1000 LOC; no file >1250
-- [ ] Existing orphan unit tests pass (relocated OK)
-- [ ] No intentional behavior/JSON/check-id change
-- [ ] `cargo test` green; clippy `-D warnings` clean on workspace
+- [x] Orphan logic lives outside monolithic `doctor.rs` body
+- [x] `doctor.rs` ≤1000 LOC; no file >1250
+- [x] Existing orphan unit tests pass (relocated OK)
+- [x] No intentional behavior/JSON/check-id change
+- [x] `cargo test` green; clippy `-D warnings` clean on workspace
 
 **Out of scope:**
 
@@ -76,4 +76,8 @@ None
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met
+
+## Answer
+
+Extracted `worktree_orphan_checks` + orphan unit tests into flat `crates/odm-core/src/doctor_worktree.rs` (`pub(crate)` only). `collect_checks` calls `crate::doctor_worktree::worktree_orphan_checks`. Public doctor API unchanged. LOC: `doctor.rs` 611, `doctor_worktree.rs` 389. `cargo test` + clippy `-D warnings` green.
