@@ -5,7 +5,7 @@ use odm_git::Git;
 
 use crate::config::{config_path, odm_dir, save_config, WorkspaceConfig};
 use crate::error::OdmError;
-use crate::gitignore::update_workspace_gitignore;
+use crate::gitignore::apply_managed_gitignore;
 
 #[derive(Debug, Clone)]
 pub struct InitOptions {
@@ -59,7 +59,7 @@ pub fn init_workspace(opts: InitOptions) -> Result<InitResult, OdmError> {
     save_config(&root, &config)?;
 
     if git && config.manage_gitignore() {
-        update_workspace_gitignore(&root, &config)?;
+        apply_managed_gitignore(&root, &config)?;
     }
 
     Ok(InitResult { root, git })

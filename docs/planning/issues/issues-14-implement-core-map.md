@@ -42,11 +42,13 @@ Working **Implement core** in this repo per `docs/reference/phased-delivery.md` 
 - [[issues-17-config-and-pin-serde-model]] — **done** — serde deny-unknown; BTreeMap; eager bundles; atomic write; pin v1 (`odm-core`).
 - [[issues-18-cli-error-and-exit-code-spine]] — **done** — OdmError→exit 1–4; JSON error envelope; bare success JSON.
 - [[issues-19-core-desk-example-layout]] — **done** — fixtures alpha/beta bare + preseeded config; no checkouts committed.
-- [[issues-20-core-json-shapes]] — (open) snake_case bare objects for init/status/doctor/pin/project.
-- [[issues-21-gitignore-manage-markers]] — (partial) markers + workspace-root seed on init landed; ancestor nested updates still open.
-- [[issues-22-doctor-check-matrix]] — (open) check ids + --fix gitignore/dirs only; no pin rewrite.
-- [[issues-23-integration-test-harness]] — (partial) crates/odm/tests + assert_cmd smoke; full core-desk harness open.
+- [[issues-20-core-json-shapes]] — (partial) init/status/doctor/pin/project list+info JSON shapes landed; leave open only if further field polish needed.
+- [[issues-21-gitignore-manage-markers]] — **done** — markers; workspace-root + ancestor nested managed blocks; drift helpers for doctor.
+- [[issues-22-doctor-check-matrix]] — **done** — check ids + `--fix` gitignore/dirs only; no pin rewrite.
+- [[issues-23-integration-test-harness]] — (partial) crates/odm/tests + assert_cmd; core-desk temp-copy sync/pin smoke + status/doctor smoke landed; leave open if fuller gate matrix wanted.
 - [[issues-24-url-origin-match-rules]] — **done** — normalize strip .git/SCP/ports; no https↔ssh equate.
+- **Multi-git lifecycle (2026-08-01):** materialize (clone/match/mismatch), sync depth-order fail-fast, pin auto-maintain when Workspace is git, `pin status`/`apply`, `project add`/`rm`/`git` wired in bin.
+- **Status + doctor (2026-08-01):** `odm status` snapshot + `odm doctor [--fix]` ODM-side checks.
 
 ## Not yet specified
 

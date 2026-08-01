@@ -1,4 +1,6 @@
 use std::fs;
+use std::path::{Path, PathBuf};
+use std::process::Command;
 
 use assert_cmd::cargo::cargo_bin;
 use predicates::prelude::*;
@@ -6,6 +8,57 @@ use tempfile::tempdir;
 
 fn odm() -> assert_cmd::Command {
     assert_cmd::Command::new(cargo_bin("odm"))
+}
+
+fn git_user(repo: &Path) {
+    assert!(Command::new("git")
+        .args(["-C", repo.to_str().unwrap(), "config", "user.email", "t@est"])
+        .status()
+        .unwrap()
+        .success());
+    assert!(Command::new("git")
+        .args(["-C", repo.to_str().unwrap(), "config", "user.name", "t"])
+        .status()
+        .unwrap()
+        .success());
+}
+
+fn bare_with_main(root: &Path, name: &str) -> PathBuf {
+    let bare = root.join(format!("{name}.git"));
+    assert!(Command::new("git")
+        .args(["init", "--bare", bare.to_str().unwrap()])
+        .status()
+        .unwrap()
+        .success());
+    let seed = root.join(format!("{name}-seed"));
+    assert!(Command::new("git")
+        .args(["clone", bare.to_str().unwrap(), seed.to_str().unwrap()])
+        .status()
+        .unwrap()
+        .success());
+    git_user(&seed);
+    fs::write(seed.join("README"), name).unwrap();
+    assert!(Command::new("git")
+        .args(["-C", seed.to_str().unwrap(), "add", "README"])
+        .status()
+        .unwrap()
+        .success());
+    assert!(Command::new("git")
+        .args(["-C", seed.to_str().unwrap(), "commit", "-m", "init"])
+        .status()
+        .unwrap()
+        .success());
+    assert!(Command::new("git")
+        .args(["-C", seed.to_str().unwrap(), "branch", "-M", "main"])
+        .status()
+        .unwrap()
+        .success());
+    assert!(Command::new("git")
+        .args(["-C", seed.to_str().unwrap(), "push", "-u", "origin", "main"])
+        .status()
+        .unwrap()
+        .success());
+    bare
 }
 
 #[test]
@@ -30,7 +83,6 @@ fn init_and_project_list() {
 
     assert!(root.join(".odm/odm.config.yaml").is_file());
 
-    // inject a project into config
     fs::write(
         root.join(".odm/odm.config.yaml"),
         "projects:\n  alpha:\n    path: projects/alpha\n    url: ./fixtures/alpha.git\n",
@@ -77,7 +129,7 @@ fn init_json_and_refuse_second() {
 }
 
 #[test]
-fn stub_sync_exit_1() {
+fn status_and_doctor_smoke() {
     let dir = tempdir().unwrap();
     odm()
         .current_dir(dir.path())
@@ -87,11 +139,27 @@ fn stub_sync_exit_1() {
 
     odm()
         .current_dir(dir.path())
-        .arg("sync")
+        .arg("status")
         .assert()
-        .failure()
-        .code(1)
-        .stderr(predicate::str::contains("not implemented: sync"));
+        .success()
+        .stdout(predicate::str::contains("Workspace:"));
+
+    odm()
+        .current_dir(dir.path())
+        .args(["--json", "status"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("\"projects\""))
+        .stdout(predicate::str::contains("\"progens\""));
+
+    odm()
+        .current_dir(dir.path())
+        .args(["doctor", "--fix"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("doctor: ok"));
+
+    assert!(dir.path().join(".odm/cache").is_dir());
 }
 
 #[test]
@@ -132,4 +200,131 @@ fn unknown_project_usage() {
         .stderr(predicate::str::contains("unknown project"));
 }
 
+#[test]
+fn project_add_sync_pin_flow() {
+    let dir = tempdir().unwrap();
+    let root = dir.path().join("ws");
+    odm()
+        .args(["init", root.to_str().unwrap()])
+        .assert()
+        .success();
 
+    let bare = bare_with_main(&root, "alpha");
+
+    odm()
+        .args([
+            "--root",
+            root.to_str().unwrap(),
+            "project",
+            "add",
+            "alpha",
+            "--path",
+            "projects/alpha",
+            "--url",
+            bare.to_str().unwrap(),
+            "--branch",
+            "main",
+        ])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("cloned"));
+
+    assert!(root.join("projects/alpha/README").is_file());
+    assert!(root.join(".odm/odm.lock.yaml").is_file());
+
+    odm()
+        .args(["--root", root.to_str().unwrap(), "sync"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("alpha"));
+
+    odm()
+        .args([
+            "--root",
+            root.to_str().unwrap(),
+            "--json",
+            "pin",
+            "status",
+        ])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("in_sync"));
+
+    odm()
+        .args(["--root", root.to_str().unwrap(), "pin", "apply"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("applied"));
+
+    odm()
+        .args([
+            "--root",
+            root.to_str().unwrap(),
+            "project",
+            "git",
+            "alpha",
+            "--",
+            "rev-parse",
+            "HEAD",
+        ])
+        .assert()
+        .success();
+}
+
+#[test]
+fn core_desk_fixture_sync() {
+    // Copy core-desk example into temp and sync from bare fixtures.
+    let manifest = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let example = manifest
+        .join("../../examples/core-desk")
+        .canonicalize()
+        .expect("examples/core-desk");
+    let dir = tempdir().unwrap();
+    let root = dir.path().join("core-desk");
+    copy_dir(&example, &root);
+
+    // Make workspace a git repo so pins auto-create
+    assert!(Command::new("git")
+        .args(["init", root.to_str().unwrap()])
+        .status()
+        .unwrap()
+        .success());
+    git_user(&root);
+
+    odm()
+        .args(["--root", root.to_str().unwrap(), "sync"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("alpha"))
+        .stdout(predicate::str::contains("beta"));
+
+    assert!(root.join("projects/alpha").exists());
+    assert!(root.join("projects/beta").exists());
+    assert!(root.join(".odm/odm.lock.yaml").is_file());
+
+    odm()
+        .args([
+            "--root",
+            root.to_str().unwrap(),
+            "--json",
+            "pin",
+            "status",
+        ])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("\"present\": true"));
+}
+
+fn copy_dir(src: &Path, dst: &Path) {
+    fs::create_dir_all(dst).unwrap();
+    for entry in fs::read_dir(src).unwrap() {
+        let entry = entry.unwrap();
+        let ty = entry.file_type().unwrap();
+        let to = dst.join(entry.file_name());
+        if ty.is_dir() {
+            copy_dir(&entry.path(), &to);
+        } else {
+            fs::copy(entry.path(), to).unwrap();
+        }
+    }
+}
