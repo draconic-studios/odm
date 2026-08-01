@@ -40,9 +40,9 @@ These are **external links**: explicit URL or file path syntax so the store engi
 
 ## Scope model
 
-### Default (reads)
+### Federating reads
 
-Federating read commands (`context`, `find` / query, `ls`-style listing across memory, etc.) with **no** scope flags use:
+Today only **`odm find`** (FTS) fans out across stores. With **no** scope flags it uses:
 
 **all Progens declared in Workspace config**
 
@@ -50,15 +50,22 @@ Federating read commands (`context`, `find` / query, `ls`-style listing across m
 - Not a hidden default group.
 - If `progens` is empty, there is no progen scope (command-specific error or empty result — defined per CLI command later).
 
+### Single-root reads (not federated)
+
+These resolve **one** Progen path — they do **not** merge results across stores:
+
+- **`odm context`** — in-store one-hop neighborhood only; disambiguate with `--progen` / `name:id` (or sole configured Progen).
+- **`odm progen ls` / `tree` / `get` / `body` / `backlinks` / …** — store façade; pass `--progen` when multiple are configured.
+
 ### Narrowing (reads)
 
 | Flag | Meaning |
 |------|---------|
-| `--progen <name>` | Include this Progen (repeatable) |
-| `--progen-group <name>` | Include all members of this **Progen group** (repeatable) |
+| `--progen <name>` | Include this Progen (repeatable on federating commands; single name on single-root) |
+| `--progen-group <name>` | Include all members of this **Progen group** (repeatable; **`find` only**) |
 
 - Names must exist in Workspace config; unknown → **hard error**.
-- Combined flags → **union** of all named members (deduped).
+- Combined flags on federating commands → **union** of all named members (deduped).
 - v1 accepts **config names only**, not raw filesystem paths on these flags.
 
 ### Writes / mutates
@@ -78,9 +85,9 @@ Typical use: unrelated products stay in separate Progens; within one product, im
 
 No `default_progen_group` (or equivalent) in v1 — default remains all Progens.
 
-## Federated read merge
+## Federated read merge (`odm find`)
 
-When ODM fans out a read across N roots:
+When ODM fans out **`find`** across N roots:
 
 1. Run the single-root operation on each selected Progen path.
 2. Tag every hit with the **Progen name**.
@@ -94,7 +101,7 @@ No cross-store rank fusion beyond simple concatenation/grouping in v1 unless a c
 ## CLI façade
 
 - Store-oriented commands live under **`odm progen …`** (never “brain”).
-- Global scope flags (`--progen`, `--progen-group`) apply on ODM commands that federate; exact flag surface is locked in `docs/reference/cli.md`.
+- Global scope flags (`--progen`, `--progen-group`) apply on commands that federate (`find`); single-root façade/context use `--progen` / `name:id` only. Exact flag surface: `docs/reference/cli.md`.
 - ODM resolves name → path via Workspace config, then calls into progen crates (in-process) or equivalent single-root operations.
 
 ## Explicit non-goals (v1)

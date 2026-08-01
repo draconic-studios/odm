@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Install — ODM</title>
-  <meta name="description" content="Install the odm binary from GitHub Releases or build from source." />
+  <meta name="description" content="Install the odm binary: build from source (primary); GitHub Releases when published." />
   <link rel="stylesheet" href="assets/style.css" />
 </head>
 <body>
@@ -51,8 +51,8 @@
           <strong>On this page</strong>
           <ul>
             <li><a href="#requirements">Requirements</a></li>
-            <li><a href="#releases">GitHub Releases (primary)</a></li>
-            <li><a href="#source">Build from source</a></li>
+            <li><a href="#source">Build from source (primary)</a></li>
+            <li><a href="#releases">GitHub Releases (when published)</a></li>
             <li><a href="#verify">Verify</a></li>
             <li><a href="#non-goals">Not in this release</a></li>
           </ul>
@@ -65,25 +65,7 @@
           <li><strong>Build from source:</strong> Rust 1.70+</li>
         </ul>
 
-        <h2 id="releases">GitHub Releases (primary)</h2>
-        <ol>
-          <li>Open the latest release: <a href="https://github.com/hembrow-innovations/odm/releases">github.com/hembrow-innovations/odm/releases</a></li>
-          <li>Download <code>odm-&lt;version&gt;-&lt;target&gt;.tar.gz</code> for your host triple
-            (e.g. <code>aarch64-apple-darwin</code>, <code>x86_64-unknown-linux-musl</code>).</li>
-          <li>Extract and place <code>odm</code> on your <code>PATH</code>:</li>
-        </ol>
-        <pre><code>tar xzf odm-&lt;version&gt;-&lt;target&gt;.tar.gz
-# archive contains: odm, README-release.txt
-sudo mv odm /usr/local/bin/   # or another directory on PATH
-odm --version</code></pre>
-        <div class="callout">
-          <p>Example for 0.1.0 on Apple Silicon:</p>
-          <pre><code>tar xzf odm-0.1.0-aarch64-apple-darwin.tar.gz
-# move ./odm somewhere on PATH
-odm --version</code></pre>
-        </div>
-
-        <h2 id="source">Build from source</h2>
+        <h2 id="source">Build from source (primary)</h2>
         <pre><code>git clone https://github.com/hembrow-innovations/odm.git
 cd odm
 cargo build -p odm --release
@@ -99,6 +81,20 @@ cargo install --path crates/odm
           <li><strong><code>ODM_TARGET=&lt;triple&gt;</code></strong> — build for a specific triple</li>
           <li><strong><code>ODM_RELEASE_PUBLISH=1</code></strong> — after build, run <code>gh release create</code> (authenticated <code>gh</code>)</li>
         </ul>
+
+        <h2 id="releases">GitHub Releases (when published)</h2>
+        <p>No published release assets are required to install today — use build from source above.</p>
+        <p>When a release <strong>is</strong> published:</p>
+        <ol>
+          <li>Open <a href="https://github.com/hembrow-innovations/odm/releases">github.com/hembrow-innovations/odm/releases</a></li>
+          <li>Download <code>odm-&lt;version&gt;-&lt;target&gt;.tar.gz</code> for your host triple
+            (e.g. <code>aarch64-apple-darwin</code>, <code>x86_64-unknown-linux-musl</code>).</li>
+          <li>Extract and place <code>odm</code> on your <code>PATH</code>:</li>
+        </ol>
+        <pre><code>tar xzf odm-&lt;version&gt;-&lt;target&gt;.tar.gz
+# archive contains: odm, README-release.txt
+sudo mv odm /usr/local/bin/   # or another directory on PATH
+odm --version</code></pre>
 
         <h2 id="verify">Verify</h2>
         <pre><code>odm --version

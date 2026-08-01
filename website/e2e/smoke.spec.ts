@@ -121,12 +121,13 @@ test.describe("nav", () => {
 });
 
 test.describe("install", () => {
-  test("release path, source build, releases link", async ({ page }) => {
+  test("source build primary, releases when published, releases link", async ({ page }) => {
     await expectNoPageErrors(page, async () => {
       await page.goto("/install.html");
       await expect(page.getByRole("heading", { name: "Install", exact: true })).toBeVisible();
-      await expect(page.getByRole("heading", { name: /GitHub Releases/i })).toBeVisible();
       await expect(page.getByRole("heading", { name: /Build from source/i })).toBeVisible();
+      await expect(page.getByRole("heading", { name: /GitHub Releases/i })).toBeVisible();
+      await expect(page.getByText(/No published release assets are required/i)).toBeVisible();
       await expect(
         page.getByRole("link", { name: /github\.com\/hembrow-innovations\/odm\/releases/i }),
       ).toHaveAttribute("href", "https://github.com/hembrow-innovations/odm/releases");

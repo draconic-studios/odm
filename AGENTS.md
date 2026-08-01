@@ -3,7 +3,7 @@
 - Commits as work packages: `<type>(<scope>): <description>` — `feat` | `fix` | `test` | `refactor` | `chore`
 - No `Co-Authored-By` lines
 - TDD, DRY, YAGNI; prefer one-liner solutions when clear
-- No CI/CD or GitHub Actions
+- No product CI test matrix; GitHub Actions allowed only for GitHub Pages deploy of `website/`
 - Worktrees **disabled** — never `git worktree add` or agent isolation worktrees
 - No new git branches for agent work; cleanup when done
 - File size target ≤1000 LOC, hard limit 1250

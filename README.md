@@ -8,19 +8,7 @@ Poly-repo workspace OS for humans and AI agents: one config, one CLI, and orches
 
 ## Install
 
-### GitHub Releases (primary)
-
-Download the tarball for your platform from [GitHub Releases](https://github.com/hembrow-innovations/odm/releases), extract `odm` onto your `PATH`, and verify:
-
-```bash
-tar xzf odm-0.1.0-<target>.tar.gz
-# move ./odm somewhere on PATH
-odm --version
-```
-
-See [docs/reference/install.md](docs/reference/install.md) for details.
-
-### Build from source
+### Build from source (primary)
 
 Requirements: **Rust 1.70+**, **git** on `PATH`. Actions (`odm run`) need a Unix shell.
 
@@ -32,9 +20,16 @@ cargo build -p odm --release
 
 # or install into cargo's bin dir:
 cargo install --path crates/odm
+odm --version
 ```
 
-Release packaging (local tarball under `dist/`):
+See [docs/reference/install.md](docs/reference/install.md) for details.
+
+### GitHub Releases (when published)
+
+When a release is published, download the platform tarball from [GitHub Releases](https://github.com/hembrow-innovations/odm/releases), extract `odm` onto your `PATH`, and verify with `odm --version`. Until then, build from source above.
+
+Local packaging (tarball under `dist/`, optional `gh release create`):
 
 ```bash
 ./scripts/release-build.sh
@@ -101,6 +96,9 @@ odm generate hello --dest out/hello
 - **Config**: [docs/reference/config.md](docs/reference/config.md)
 - **Multi-git**: [docs/reference/multi-git.md](docs/reference/multi-git.md)
 - **Progen**: [docs/reference/progen.md](docs/reference/progen.md)
+- **Worktrees**: [docs/reference/worktrees.md](docs/reference/worktrees.md)
+- **Env / generate / packs**: [docs/reference/env-gen-packs.md](docs/reference/env-gen-packs.md)
+- **Graph** (sketch): [docs/reference/graph.md](docs/reference/graph.md)
 - **Phased delivery**: [docs/reference/phased-delivery.md](docs/reference/phased-delivery.md)
 - **Changelog**: [CHANGELOG.md](CHANGELOG.md)
 - **Domain terms**: [CONTEXT.md](CONTEXT.md)

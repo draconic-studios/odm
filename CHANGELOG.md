@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Docs honesty** — install leads with build-from-source (Releases = when published); `AGENTS.md` allows Pages-only Actions; `progen.md` / `cli.md` federation = `find` only; README docs links; guide-actions HTML paren.
 - **Progen wikilinks in code** — fenced ```/~~~ blocks and inline `` `code` `` no longer contribute graph edges; invalid YAML frontmatter hard-fails reindex with the note path.
 - **Clap usage exit codes** — parse failures (unknown command / bad flags) exit `1` (not clap’s default `2`), matching library usage errors; with `--json` on argv, stdout is the standard `{ ok: false, error: { code: "usage", … } }` envelope.
 - **`odm-git` non-interactive lifecycle** — captured git ops set `GIT_TERMINAL_PROMPT=0` so clone/fetch fail fast instead of hanging on auth prompts; `Git::run` passthrough stays user-facing.

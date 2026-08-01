@@ -2,7 +2,7 @@
 id: issues-136
 title: "Docs honesty: Releases, AGENTS Pages, progen federation"
 description: "Install docs claim empty GitHub Releases; AGENTS forbids Actions while Pages uses them; progen.md overclaims context/ls federation."
-status: open
+status: closed
 issue-type: bug
 severity: medium
 tags:
@@ -62,14 +62,14 @@ None (cutting a real release is optional human step; docs must not claim empty c
 
 **Acceptance criteria:**
 
-- [ ] No primary claim of existing Release assets
-- [ ] AGENTS allows Pages workflow only
-- [ ] progen.md federation accurate
-- [ ] README docs links updated
-- [ ] HTML typo fixed
+- [x] No primary claim of existing Release assets
+- [x] AGENTS allows Pages workflow only
+- [x] progen.md federation accurate
+- [x] README docs links updated
+- [x] HTML typo fixed
 
 **Out of scope:** Actually publishing a release; Playwright (116–118); pack list missing docs (107).
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met
