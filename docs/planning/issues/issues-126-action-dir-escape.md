@@ -2,7 +2,7 @@
 id: issues-126
 title: "Action task dir must stay under Workspace root"
 description: "task.dir uses root.join without resolve_under_root; actions can run with cwd outside the Workspace."
-status: open
+status: reviewing
 issue-type: bug
 severity: high
 tags:
