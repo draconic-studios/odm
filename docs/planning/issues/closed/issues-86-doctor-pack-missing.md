@@ -2,7 +2,7 @@
 id: issues-86
 title: "Doctor warn for missing agent pack paths"
 description: "odm doctor warns pack_missing:<name> when a registry entry path does not exist on disk."
-status: open
+status: closed
 issue-type: feature-request
 severity: medium
 tags:
@@ -65,12 +65,12 @@ None
 
 **Acceptance criteria:**
 
-- [ ] Missing registry path → `pack_missing:<name>` warn, not fixable
-- [ ] Present path → no that check
-- [ ] `--fix` does not alter packs/registry for this check
-- [ ] Unit tests cover missing vs present
-- [ ] File sizes ≤1000 target / ≤1250 hard
-- [ ] `cargo test` green; clippy `-D warnings` clean on workspace
+- [x] Missing registry path → `pack_missing:<name>` warn, not fixable
+- [x] Present path → no that check
+- [x] `--fix` does not alter packs/registry for this check
+- [x] Unit tests cover missing vs present
+- [x] File sizes ≤1000 target / ≤1250 hard
+- [x] `cargo test` green; clippy `-D warnings` clean on workspace
 
 **Out of scope:**
 
@@ -81,4 +81,13 @@ None
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met
+
+## Answer
+
+Landed `doctor_pack.rs` with `pack_missing_checks` wired into `collect_checks` after worktree checks.
+
+- Registry via `pack_list`; missing path (no path/symlink entry via `symlink_metadata`) → `pack_missing:<name>` Warn, `fixable: false`
+- Dangling symlink present → no pack_missing; empty/missing/corrupt registry → soft-skip
+- `--fix` does not touch registry or pack paths
+- Unit tests: missing, present, empty, dangling symlink, corrupt soft-skip, doctor --fix no-op

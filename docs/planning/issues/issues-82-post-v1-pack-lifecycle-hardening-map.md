@@ -40,6 +40,7 @@ After worktree observation map [[issues-77-post-v1-worktree-observation-map]] cl
 - **83 closed:** test extract — `worktree_tests.rs` via `#[path]`; `worktree.rs` ~384 LOC; public API unchanged.
 - **84 closed:** `pack_rm(ws, name)` — registry drop + best-effort dest delete; missing dest ok; unknown → not_found/4; re-exported; unit tests; no CLI.
 - **85 closed:** CLI `odm agent pack rm <name>` — human + `--json` entry DTO; unknown → exit 4; integration tests (install/link→rm).
+- **86 closed:** `pack_missing_checks` in `doctor_pack.rs` — warn `pack_missing:<name>` when registry path absent (lexists via symlink_metadata); fixable false; `--fix` no-op; unit tests.
 
 ## Not yet specified
 

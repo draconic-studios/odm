@@ -5,6 +5,7 @@ mod checkout;
 mod config;
 mod discover;
 mod doctor;
+mod doctor_pack;
 mod doctor_worktree;
 mod error;
 mod generate;

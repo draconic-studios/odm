@@ -105,6 +105,7 @@ fn collect_checks<R: odm_git::CommandRunner>(
     checks.extend(pin_checks(ws)?);
     checks.extend(crate::doctor_worktree::worktree_orphan_checks(git, ws));
     checks.extend(crate::doctor_worktree::worktree_dirty_checks(git, ws));
+    checks.extend(crate::doctor_pack::pack_missing_checks(ws));
 
     Ok(checks)
 }
