@@ -2,7 +2,7 @@
 id: issues-147
 title: "File gaps found while running full dogfood tour"
 description: "After dogfood.sh / full_tour gate: file any new product bugs or docs gaps as ready-for-agent issues; close this if none."
-status: open
+status: reviewing
 issue-type: observation
 severity: low
 tags:
