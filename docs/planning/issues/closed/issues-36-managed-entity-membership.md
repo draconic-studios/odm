@@ -2,7 +2,7 @@
 id: issues-36
 title: "Managed-entity membership depth"
 description: "Collapse project/progen lifecycle mirror; split lifecycle into checkout, pin maintain, and membership depths."
-status: open
+status: closed
 issue-type: feature-request
 severity: high
 tags:
@@ -70,13 +70,13 @@ See Agent Brief.
 - Vault ensure behavior already used for Obsidian-compatible empty vaults (README, non-clobber `.obsidian`, gitignore) must still run on progen add when creating store path
 
 **Acceptance criteria:**
-- [ ] No shallow near-duplicate progen add/rm module that only renames project ops
-- [ ] CLI main does not pass a one-off vault closure into core for progen add (composition lives in a library crate)
-- [ ] Project and Progen add/rm still update config, gitignore, pins, and materialize consistently with prior semantics
-- [ ] Progen rm still drops group membership and ODM progen index dir
-- [ ] Sync / pin apply behavior and tests remain green
-- [ ] lifecycle-sized files stay under the repo hard LOC limit (1250) after the split
-- [ ] `cargo test` and `cargo clippy -- -D warnings` clean for touched crates
+- [x] No shallow near-duplicate progen add/rm module that only renames project ops
+- [x] CLI main does not pass a one-off vault closure into core for progen add (composition lives in a library crate)
+- [x] Project and Progen add/rm still update config, gitignore, pins, and materialize consistently with prior semantics
+- [x] Progen rm still drops group membership and ODM progen index dir
+- [x] Sync / pin apply behavior and tests remain green
+- [x] lifecycle-sized files stay under the repo hard LOC limit (1250) after the split
+- [x] `cargo test` and `cargo clippy -- -D warnings` clean for touched crates
 
 **Out of scope:**
 - Re-deriving pin state (owned by observation issue)
@@ -84,6 +84,19 @@ See Agent Brief.
 - Worktree slot lifecycle commands
 - Agent packs
 - Changing Workspace config schema keys
+
+## Answer
+
+Split the lifecycle god-module into three deep modules and moved vault composition into `odm-progen`:
+
+- **`checkout.rs`** (451 LOC) — `ManagedEntity`, materialize, sync, depth-sort, clone URL resolve
+- **`pin_maintain.rs`** (349 LOC) — `maintain_pins_after`, pin status/apply; `pin.rs` stays pure IO
+- **`membership.rs`** (core, 490 LOC) — unified `membership_add`/`membership_rm` parameterized by `MembershipKind::{Project,Progen}`; progen hooks strip groups + drop ODM progen index dir; no vault `FnOnce`
+- **`odm-progen::membership`** (120 LOC) — `add_progen` / `rm_progen` compose core membership + `ensure_vault` with prior vault timing
+- **Deleted** `lifecycle.rs`, `progen_lifecycle.rs`; dropped unused `entity_disk_info` export
+- CLI `main` calls `odm_progen::{add_progen,rm_progen}` — no vault closure into core
+
+Regression tests: `progen_rm_strips_group_and_index_dir`, `path_only_add_scaffolds_vault_without_bin_closure`, `managed_no_clone_skips_vault`. Full `cargo test` + clippy `-D warnings` green.
 
 ## Comments
 

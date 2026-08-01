@@ -10,19 +10,17 @@ _(none open — phases 1–5 closed)_
 
 ## Frontier (open, unblocked)
 
-- [[issues-36-managed-entity-membership]] — Managed entity membership (`ready-for-agent`)
 - [[issues-37-progen-facade-engine]] — Progen façade / engine (`ready-for-agent`)
 - [[issues-39-action-run-result-stdio]] — Action RunResult / stdio (`ready-for-agent`)
 
 ## Blocked
 
-- [[issues-38-cli-command-dtos]] — blocked by [[issues-36-managed-entity-membership]], [[issues-37-progen-facade-engine]]
+- [[issues-38-cli-command-dtos]] — blocked by [[issues-37-progen-facade-engine]]
 
 ## Architecture deepen (post-0.1.0)
 
 Remaining from architecture review 2026-08-01; tagged `ready-for-agent` with Agent Briefs. Work frontier first.
 
-- [[issues-36-managed-entity-membership]]
 - [[issues-37-progen-facade-engine]]
 - [[issues-38-cli-command-dtos]]
 - [[issues-39-action-run-result-stdio]]

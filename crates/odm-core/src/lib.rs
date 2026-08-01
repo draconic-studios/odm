@@ -1,5 +1,6 @@
 //! `odm-core` — Workspace config, pin, discovery, and path policy.
 
+mod checkout;
 mod config;
 mod discover;
 mod doctor;
@@ -7,14 +8,18 @@ mod error;
 mod gitignore;
 mod init;
 mod io;
-mod lifecycle;
+mod membership;
 mod observation;
 mod paths;
 mod pin;
-mod progen_lifecycle;
+mod pin_maintain;
 mod status;
 mod url_match;
 
+pub use checkout::{
+    all_managed, materialize, resolve_clone_url, resolve_managed, sort_by_depth, sync_managed,
+    ManagedEntity, MaterializeOutcome, SyncResult,
+};
 pub use config::{
     load_workspace, parse_config_yaml, save_config, validate_and_load_bundles, ActionDef,
     ActionTask, GeneratorDef, ProjectEntry, ProgenEntry, Workspace, WorkspaceConfig,
@@ -29,22 +34,23 @@ pub use gitignore::{
     update_workspace_gitignore, workspace_gitignore_has_drift, BEGIN_MARKER, END_MARKER,
 };
 pub use init::{init_workspace, InitOptions, InitResult};
-pub use lifecycle::{
-    all_managed, entity_disk_info, materialize, pin_apply, pin_status, project_add, project_git,
-    project_rm, resolve_clone_url, resolve_managed, sort_by_depth, sync_managed, EntityDiskInfo,
-    ManagedEntity, MaterializeOutcome, PinApplyResult, PinStatusEntry, PinStatusReport, SyncResult,
+pub use membership::{
+    membership_add, membership_rm, path_buf_to_rel, progen_add, progen_rm, project_add,
+    project_git, project_rm, MembershipEntry, MembershipKind,
+};
+pub use observation::{
+    observe_entity, observe_workspace, EntityObservation, WorkspaceObservation,
 };
 pub use paths::{
     abs_checkout, config_path, odm_dir, pin_path, progen_index_dir, resolve_under_root,
     worktree_slot_path,
 };
-pub use observation::{
-    observe_entity, observe_workspace, EntityObservation, WorkspaceObservation,
-};
 pub use pin::{
     is_full_sha, load_pin, parse_pin_yaml, prune_pins, save_pin, PinEntry, PinFile,
 };
-pub use progen_lifecycle::{path_buf_to_rel, progen_add, progen_rm};
+pub use pin_maintain::{
+    pin_apply, pin_status, PinApplyResult, PinStatusEntry, PinStatusReport,
+};
 pub use status::{
     build_status, compute_pin_state, format_status_human, status_from_observation, EntityStatus,
     PinState, StatusSnapshot,

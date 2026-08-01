@@ -383,6 +383,7 @@ name = "odm-progen"
 version = "0.1.0"
 dependencies = [
  "odm-core",
+ "odm-git",
  "regex",
  "rusqlite",
  "serde",

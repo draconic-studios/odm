@@ -1,12 +1,14 @@
 //! `odm-progen` — federation/scope + Obsidian-compatible vault store ops.
 
 mod index;
+mod membership;
 mod note;
 mod ops;
 mod scope;
 mod vault;
 
 pub use index::{index_dir, reindex_progen, IndexStats};
+pub use membership::{add_progen, rm_progen};
 pub use note::{parse_wikilinks, NoteDoc, NoteId};
 pub use ops::{
     context_notes, doctor_progens, find_notes, format_context_human, format_find_human,

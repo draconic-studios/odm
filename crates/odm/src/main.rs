@@ -8,16 +8,15 @@ use clap::Parser;
 use odm_actions::{list_actions, run_action, RunOptions};
 use odm_core::{
     abs_checkout, build_status, discover_root, format_doctor_human, format_status_human,
-    init_workspace, load_workspace, path_buf_to_rel, pin_apply, pin_status, progen_add, progen_rm,
-    project_add, project_git, project_rm, run_doctor, sync_managed, InitOptions, MaterializeOutcome,
-    OdmError, PinState, ProgenEntry, ProjectEntry,
+    init_workspace, load_workspace, path_buf_to_rel, pin_apply, pin_status, project_add,
+    project_git, project_rm, run_doctor, sync_managed, InitOptions, MaterializeOutcome, OdmError,
+    PinState, ProgenEntry, ProjectEntry,
 };
 use odm_git::Git;
 use odm_progen::{
-    context_notes, doctor_progens, ensure_vault, find_notes, format_context_human,
-    format_find_human, format_get_human, format_ls_human, get_note, list_notes, note_backlinks,
-    note_body, note_tree, reindex_progen, resolve_read_scope, resolve_single_read, vault_info,
-    ScopedProgen,
+    add_progen, context_notes, doctor_progens, find_notes, format_context_human, format_find_human,
+    format_get_human, format_ls_human, get_note, list_notes, note_backlinks, note_body, note_tree,
+    reindex_progen, resolve_read_scope, resolve_single_read, rm_progen, vault_info, ScopedProgen,
 };
 
 use cli::{AgentCmd, Cli, Commands, PinCmd, ProgenCmd, ProjectCmd};
@@ -517,15 +516,7 @@ fn run_progen(
                 url,
                 branch,
             };
-            let outcome = progen_add(
-                &git,
-                &ws.root,
-                &mut ws.config,
-                &name,
-                entry,
-                no_clone,
-                ensure_vault,
-            )?;
+            let outcome = add_progen(&git, &ws.root, &mut ws.config, &name, entry, no_clone)?;
             if out.json {
                 print_json(&serde_json::json!({
                     "ok": true,
@@ -553,7 +544,7 @@ fn run_progen(
             delete,
             force,
         } => {
-            progen_rm(&git, &ws.root, &mut ws.config, &name, delete, force)?;
+            rm_progen(&git, &ws.root, &mut ws.config, &name, delete, force)?;
             if out.json {
                 print_json(&serde_json::json!({ "ok": true, "name": name }))?;
             } else {
