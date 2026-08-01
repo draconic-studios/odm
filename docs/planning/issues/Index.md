@@ -6,27 +6,15 @@ See `docs/agents/issue-tracker.md`.
 
 ## Maps
 
-- [[issues-148-thermo-nuclear-structure-map]] — Thermo-nuclear structure deepen (inventory, CLI spine, membership split, fsutil, typed paths)
+_(none open)_
 
 ## Frontier (open, unblocked)
 
-- [[issues-150-cli-present-ctx-spine]] — CLI Present/Ctx spine
-- [[issues-152-fsutil-copy-tree]] — shared copy_tree / pack dest prep
-- [[issues-153-typed-path-resolve-errors]] — typed path resolve errors
+_(none)_
 
 ## Blocked
 
 _(none)_
-
-## Architecture deepen (post-0.1.0)
-
-Thermo-nuclear review 2026-08-02; tagged `ready-for-agent` with Agent Briefs. 149 closed (inventory landed). Work remaining deepen tickets.
-
-- [[issues-150-cli-present-ctx-spine]]
-- [[issues-152-fsutil-copy-tree]]
-- [[issues-153-typed-path-resolve-errors]]
-
-Review: `docs/thermo-nuclear-code-quality-review.md`
 
 ## Closed maps (delivery spine)
 
@@ -52,3 +40,4 @@ Review: `docs/thermo-nuclear-code-quality-review.md`
 - [[issues-119-swarm-audit-hardening-map]] — Swarm audit hardening (path safety, find, CLI honesty)
 - [[issues-120-test-coverage-map]] — Behavior-seam test suite + local coverage tooling
 - [[issues-121-full-capability-demo-map]] — core-desk full ODM capability demo + verification
+- [[issues-148-thermo-nuclear-structure-map]] — Thermo-nuclear structure deepen (inventory, CLI spine, membership split, fsutil, typed paths)
