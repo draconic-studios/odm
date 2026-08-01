@@ -2,7 +2,7 @@
 id: issues-142
 title: "CLI integration: --progen-group on find"
 description: "Shipped --progen-group is unit-tested in scope.rs only; zero binary integration coverage."
-status: open
+status: reviewing
 issue-type: feature-request
 severity: medium
 tags:
