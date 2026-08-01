@@ -2,7 +2,7 @@
 id: issues-21
 title: "Gitignore manage markers"
 description: "Lock how ODM maintains managed-path ignore blocks when manage_gitignore is true."
-status: reviewing
+status: closed
 tags:
   - planning
   - issue
@@ -79,3 +79,5 @@ On un-declare (`project rm`): rewrite block without that path; if block would on
 Parent map: [[issues-14-implement-core-map]]
 
 Recommended decision locked for agent implement 2026-08-01.
+
+Landed 2026-08-01: `desired_block` / `apply_managed_gitignore` (workspace root + ancestor nested checkouts), drift helpers, init/lifecycle/doctor `--fix` callers; unit tests for idempotency + ancestor blocks.

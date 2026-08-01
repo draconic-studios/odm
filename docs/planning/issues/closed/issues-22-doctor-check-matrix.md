@@ -2,7 +2,7 @@
 id: issues-22
 title: "Doctor check matrix"
 description: "Lock odm doctor checks and mechanical --fix repairs for core (ODM-side only)."
-status: reviewing
+status: closed
 tags:
   - planning
   - issue
