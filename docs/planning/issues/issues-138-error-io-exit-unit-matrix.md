@@ -2,7 +2,7 @@
 id: issues-138
 title: "Unit tests: error, io, exit_code matrix"
 description: "odm-core error.rs and io.rs have zero direct unit tests; foundation for CLI exit honesty."
-status: open
+status: reviewing
 issue-type: feature-request
 severity: medium
 tags:
