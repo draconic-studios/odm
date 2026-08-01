@@ -2,7 +2,7 @@
 id: issues-131
 title: "Progen index freshness and duplicate id errors"
 description: "Index rebuilds only when missing (stale after edits); duplicate note ids abort whole reindex with opaque SQL error."
-status: reviewing
+status: closed
 issue-type: bug
 severity: high
 tags:
@@ -55,14 +55,14 @@ None
 
 **Acceptance criteria:**
 
-- [ ] Stale index auto-rebuilds on ensure/open
-- [ ] Duplicate id error lists both paths
-- [ ] Unit tests for both
-- [ ] `cargo test -p odm-progen` green
-- [ ] Explicit `reindex` still works
+- [x] Stale index auto-rebuilds on ensure/open
+- [x] Duplicate id error lists both paths
+- [x] Unit tests for both
+- [x] `cargo test -p odm-progen` green
+- [x] Explicit `reindex` still works
 
 **Out of scope:** watch daemon; FTS escape (123); snippet (122).
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met

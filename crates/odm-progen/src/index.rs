@@ -1,11 +1,16 @@
+use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::time::SystemTime;
 
 use odm_core::{progen_index_dir, OdmError, Workspace};
 use rusqlite::{params, Connection};
 
 use crate::scope::ScopedProgen;
 use crate::vault::walk_notes;
+
+/// Fingerprint of vault note paths+mtimes (catches add/edit/delete).
+const META_VAULT_FP: &str = "vault_fp";
 
 const SCHEMA: &str = r#"
 CREATE TABLE IF NOT EXISTS meta (
@@ -45,9 +50,89 @@ fn index_db_path(ws_root: &Path, progen_name: &str) -> PathBuf {
     index_dir(ws_root, progen_name).join("index.db")
 }
 
+/// Cheap paths+mtimes watermark; same skip rules as `walk_notes`.
+fn vault_fingerprint(vault: &Path) -> Result<String, OdmError> {
+    if !vault.is_dir() {
+        return Ok(String::new());
+    }
+    let mut parts: Vec<String> = Vec::new();
+    collect_fp(vault, vault, &mut parts)?;
+    parts.sort();
+    Ok(parts.join("\n"))
+}
+
+fn collect_fp(root: &Path, dir: &Path, out: &mut Vec<String>) -> Result<(), OdmError> {
+    let entries = fs::read_dir(dir).map_err(|e| {
+        OdmError::operation(format!("read {}: {e}", dir.display()))
+    })?;
+    for ent in entries {
+        let ent = ent.map_err(|e| OdmError::operation(e.to_string()))?;
+        let path = ent.path();
+        let name = ent.file_name();
+        let name_s = name.to_string_lossy();
+        if name_s.starts_with('.') {
+            continue;
+        }
+        if path.is_dir() {
+            collect_fp(root, &path, out)?;
+        } else if path.extension().and_then(|e| e.to_str()) == Some("md") {
+            let rel = path
+                .strip_prefix(root)
+                .unwrap_or(&path)
+                .to_string_lossy()
+                .replace('\\', "/");
+            let meta = fs::metadata(&path).map_err(|e| {
+                OdmError::operation(format!("stat {}: {e}", path.display()))
+            })?;
+            let nanos = meta
+                .modified()
+                .unwrap_or(SystemTime::UNIX_EPOCH)
+                .duration_since(SystemTime::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0);
+            out.push(format!("{rel}:{nanos}"));
+        }
+    }
+    Ok(())
+}
+
+fn read_meta(conn: &Connection, key: &str) -> Result<Option<String>, OdmError> {
+    let mut stmt = conn
+        .prepare("SELECT value FROM meta WHERE key = ?1")
+        .map_err(|e| OdmError::operation(e.to_string()))?;
+    let mut rows = stmt
+        .query_map(params![key], |row| row.get(0))
+        .map_err(|e| OdmError::operation(e.to_string()))?;
+    match rows.next() {
+        Some(r) => Ok(Some(r.map_err(|e| OdmError::operation(e.to_string()))?)),
+        None => Ok(None),
+    }
+}
+
+fn index_stale(conn: &Connection, vault: &Path) -> Result<bool, OdmError> {
+    let stored = match read_meta(conn, META_VAULT_FP)? {
+        Some(s) => s,
+        None => return Ok(true),
+    };
+    Ok(vault_fingerprint(vault)? != stored)
+}
+
 /// Rebuild disposable index for one Progen from vault files.
 pub(crate) fn reindex_progen(ws: &Workspace, sp: &ScopedProgen) -> Result<IndexStats, OdmError> {
     let notes = walk_notes(&sp.path)?;
+    let mut first_path: HashMap<&str, &str> = HashMap::new();
+    for n in &notes {
+        let id = n.id.as_str();
+        if let Some(prev) = first_path.get(id) {
+            return Err(OdmError::operation(format!(
+                "duplicate note id '{id}': {prev} and {}",
+                n.rel_path
+            )));
+        }
+        first_path.insert(id, n.rel_path.as_str());
+    }
+
+    let watermark = vault_fingerprint(&sp.path)?;
     let dir = index_dir(&ws.root, &sp.name);
     fs::create_dir_all(&dir).map_err(|e| {
         OdmError::operation(format!("create index dir {}: {e}", dir.display()))
@@ -99,6 +184,11 @@ pub(crate) fn reindex_progen(ws: &Workspace, sp: &ScopedProgen) -> Result<IndexS
         [],
     )
     .map_err(|e| OdmError::operation(e.to_string()))?;
+    tx.execute(
+        "INSERT OR REPLACE INTO meta (key, value) VALUES (?1, ?2)",
+        params![META_VAULT_FP, watermark],
+    )
+    .map_err(|e| OdmError::operation(e.to_string()))?;
     tx.commit()
         .map_err(|e| OdmError::operation(e.to_string()))?;
 
@@ -119,10 +209,18 @@ pub(crate) fn open_index(ws_root: &Path, progen_name: &str) -> Result<Connection
     Connection::open(&db).map_err(|e| OdmError::operation(format!("open index: {e}")))
 }
 
-/// Ensure index exists; rebuild if missing.
+/// Ensure index exists and is fresh vs vault mtimes; rebuild if missing or stale.
 pub(crate) fn ensure_index(ws: &Workspace, sp: &ScopedProgen) -> Result<(), OdmError> {
     let db = index_db_path(&ws.root, &sp.name);
     if !db.exists() {
+        reindex_progen(ws, sp)?;
+        return Ok(());
+    }
+    let conn = Connection::open(&db)
+        .map_err(|e| OdmError::operation(format!("open index: {e}")))?;
+    let stale = index_stale(&conn, &sp.path)?;
+    drop(conn);
+    if stale {
         reindex_progen(ws, sp)?;
     }
     Ok(())
@@ -447,5 +545,121 @@ mod tests {
         let hits = search_fts(&conn, "UniqueZebra word", 10).unwrap();
         assert_eq!(hits.len(), 1);
         assert_eq!(hits[0].id, "a1");
+    }
+
+    fn ws_sp(root: &Path, vault_rel: &str, name: &str) -> (Workspace, ScopedProgen) {
+        let vault = root.join(vault_rel);
+        ensure_vault(&vault).unwrap();
+        let mut progens = BTreeMap::new();
+        progens.insert(
+            name.into(),
+            ProgenEntry {
+                path: vault_rel.into(),
+                url: None,
+                branch: None,
+            },
+        );
+        fs::create_dir_all(root.join(".odm")).unwrap();
+        let ws = Workspace {
+            root: root.to_path_buf(),
+            config: WorkspaceConfig {
+                progens,
+                ..Default::default()
+            },
+            actions: BTreeMap::new(),
+            generators: BTreeMap::new(),
+        };
+        let sp = ScopedProgen {
+            name: name.into(),
+            path: vault,
+        };
+        (ws, sp)
+    }
+
+    #[test]
+    fn ensure_rebuilds_when_vault_newer_than_index() {
+        let d = tempdir().unwrap();
+        let root = d.path();
+        let (ws, sp) = ws_sp(root, "mem", "main");
+        fs::write(
+            sp.path.join("alpha.md"),
+            "---\nid: a1\ntitle: Alpha\n---\nOriginalToken here.\n",
+        )
+        .unwrap();
+        reindex_progen(&ws, &sp).unwrap();
+        let conn = open_index(root, "main").unwrap();
+        assert_eq!(search_fts(&conn, "OriginalToken", 10).unwrap().len(), 1);
+        assert!(search_fts(&conn, "EditedToken", 10).unwrap().is_empty());
+        drop(conn);
+
+        // Bump mtime past the watermark (1s resolution on some FS).
+        std::thread::sleep(std::time::Duration::from_millis(1100));
+        fs::write(
+            sp.path.join("alpha.md"),
+            "---\nid: a1\ntitle: Alpha\n---\nEditedToken here.\n",
+        )
+        .unwrap();
+
+        ensure_index(&ws, &sp).unwrap();
+        let conn = open_index(root, "main").unwrap();
+        assert!(search_fts(&conn, "OriginalToken", 10).unwrap().is_empty());
+        let hits = search_fts(&conn, "EditedToken", 10).unwrap();
+        assert_eq!(hits.len(), 1);
+        assert_eq!(hits[0].id, "a1");
+    }
+
+    #[test]
+    fn reindex_duplicate_id_lists_both_paths() {
+        let d = tempdir().unwrap();
+        let root = d.path();
+        let (ws, sp) = ws_sp(root, "mem", "main");
+        fs::write(
+            sp.path.join("one.md"),
+            "---\nid: same\ntitle: One\n---\nA.\n",
+        )
+        .unwrap();
+        fs::write(
+            sp.path.join("two.md"),
+            "---\nid: same\ntitle: Two\n---\nB.\n",
+        )
+        .unwrap();
+
+        let err = reindex_progen(&ws, &sp).unwrap_err();
+        let msg = err.to_string();
+        assert!(
+            msg.contains("duplicate") && msg.contains("same"),
+            "expected duplicate id error, got: {msg}"
+        );
+        assert!(
+            msg.contains("one.md") && msg.contains("two.md"),
+            "expected both paths, got: {msg}"
+        );
+    }
+
+    #[test]
+    fn ensure_rebuilds_after_note_deleted() {
+        let d = tempdir().unwrap();
+        let root = d.path();
+        let (ws, sp) = ws_sp(root, "mem", "main");
+        fs::write(
+            sp.path.join("keep.md"),
+            "---\nid: k1\n---\nKeepToken\n",
+        )
+        .unwrap();
+        fs::write(
+            sp.path.join("gone.md"),
+            "---\nid: g1\n---\nGoneToken\n",
+        )
+        .unwrap();
+        reindex_progen(&ws, &sp).unwrap();
+        let conn = open_index(root, "main").unwrap();
+        assert_eq!(search_fts(&conn, "GoneToken", 10).unwrap().len(), 1);
+        drop(conn);
+
+        fs::remove_file(sp.path.join("gone.md")).unwrap();
+        ensure_index(&ws, &sp).unwrap();
+        let conn = open_index(root, "main").unwrap();
+        assert!(search_fts(&conn, "GoneToken", 10).unwrap().is_empty());
+        assert_eq!(search_fts(&conn, "KeepToken", 10).unwrap().len(), 1);
     }
 }
