@@ -50,7 +50,8 @@ odm progen …
 odm find | context
 odm run
 odm generate …          # v1 local template
-odm agent …             # sketch
+odm agent pack …        # v1 local install/link/list
+odm agent start|prompt  # sketch
 ```
 
 ---
@@ -251,26 +252,43 @@ odm generate <name> --dest <rel-path> [--force]
 
 ---
 
-### `odm agent` — **sketch**
+### `odm agent pack` — **v1 local install/link/list**
 
-All AI/agent-facing UX lives here (not a top-level `pack` command).
+All AI/agent-facing UX lives under `odm agent` (not a top-level `pack` command). Pack v1 is local filesystem only.
 
 ```text
-odm agent pack install|link|list …
+odm agent pack list
+odm agent pack install <source> --home <path> [--force]
+odm agent pack link <source> --home <path> [--force]
+```
+
+- **Workspace required** (same discovery as generate).
+- **Source:** local directory path. Relative paths resolve under Workspace root (must not escape). Absolute paths allowed. Pack **name** = directory basename. No remote/marketplace; no pack manifest required in v1.
+- **`--home`:** required agent-native root (may be outside Workspace). Pack materializes at `<home>/<name>/`.
+- **`install`:** recursive copy of source into `<home>/<name>/`. Dest exists without `--force` → exit `3`. With `--force`, replace then copy. Missing source → exit `4`.
+- **`link`:** symlink `<home>/<name>` → absolute resolved source. Same exists/`--force` policy. Platforms without symlink support → clear operation error (no silent copy fallback).
+- **`list`:** registry-backed (`.odm/agent-packs.json`). Human: one name per line sorted; empty → `(no agent packs)`. `--json`: `{ "packs": [ { "name", "source", "path", "mode" } ] }` (`mode` = `"install"` | `"link"`).
+- **install/link `--json`:** single entry object (same fields as list items), not wrapped.
+- Human success: `installed <name> -> <path>` / `linked <name> -> <path>`.
+- Deferred: start/prompt productization, pack manifest, marketplace, config-declared packs, status/doctor pack reports — `env-gen-packs.md`.
+
+### `odm agent start` / `odm agent prompt` — **sketch**
+
+```text
 odm agent start [--project] [--wt] …
 odm agent prompt <id> --progen …     # thin wrap of progen prompt when specified
 ```
 
-- Honors `--project`, `--wt`, `--progen`, `--json` where relevant.
-- Full start/pack/prompt flows: `worktrees.md`, `env-gen-packs.md`.
-- Not MCP/`serve`.
+- Still **not implemented** (exit `1`).
+- Honors `--project`, `--wt`, `--progen`, `--json` where relevant when implemented.
+- Intent: `worktrees.md`, `env-gen-packs.md`. Not MCP/`serve`.
 
 ---
 
 ## Full vs sketch matrix
 
-- **Full**: global flags (including `--wt` path binding); `init`; `sync`; `pin apply|status`; `status`; `doctor`; `project list|add|rm|info|git|worktree` (v1); `progen` lifecycle + store façade mapping; `find`; `context`; `run`; `generate` (v1 local template only).
-- **Sketch**: `agent …`; deferred worktree features (config slots, GC, pin↔slot, doctor orphans — `worktrees.md`); generate remote/templating (`env-gen-packs.md`).
+- **Full**: global flags (including `--wt` path binding); `init`; `sync`; `pin apply|status`; `status`; `doctor`; `project list|add|rm|info|git|worktree` (v1); `progen` lifecycle + store façade mapping; `find`; `context`; `run`; `generate` (v1 local template only); `agent pack` (v1 local install/link/list only).
+- **Sketch**: `agent start` / `agent prompt`; deferred worktree features (config slots, GC, pin↔slot, doctor orphans — `worktrees.md`); generate remote/templating; pack marketplace/manifest/config declarations (`env-gen-packs.md`).
 - **Absent**: `serve`, MCP, top-level action verbs, `ops` namespace, path-valued scope flags.
 
 ## Related

@@ -2,7 +2,7 @@
 id: issues-53
 title: "Agent pack integration and docs"
 description: "CLI integration tests, optional core-desk pack fixture, promote agent pack docs from pure sketch."
-status: open
+status: closed
 issue-type: feature-request
 severity: medium
 tags:
@@ -10,7 +10,6 @@ tags:
   - issue
   - wayfinder
   - wayfinder-task
-  - ready-for-agent
 ---
 
 # Agent pack integration and docs
@@ -68,12 +67,12 @@ None — [[issues-52-agent-pack-cli]] closed.
 
 **Acceptance criteria:**
 
-- [ ] Integration tests cover list/install/link/force/error/start-stub
-- [ ] Docs no longer call pack list/install/link pure unimplemented sketch
-- [ ] Deferred items (start, prompt, marketplace, manifest, config declarations) still explicit
-- [ ] CHANGELOG unreleased notes the feature
-- [ ] Map 50 closed with Answer
-- [ ] `cargo test` green
+- [x] Integration tests cover list/install/link/force/error/start-stub
+- [x] Docs no longer call pack list/install/link pure unimplemented sketch
+- [x] Deferred items (start, prompt, marketplace, manifest, config declarations) still explicit
+- [x] CHANGELOG unreleased notes the feature
+- [x] Map 50 closed with Answer
+- [x] `cargo test` green
 
 **Out of scope:**
 
@@ -83,7 +82,18 @@ None — [[issues-52-agent-pack-cli]] closed.
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met
+
+## Answer
+
+Landed agent pack v1 proof + docs:
+
+- **`crates/odm/tests/cli_agent_pack.rs`** — list empty, install+list human/json, force (exit 3), link (unix), missing source (exit 4), start/prompt stubs (exit 1)
+- **core-desk dogfood** — `agent-packs/demo/skills/hello.md` + README one-liner
+- **Docs** — `cli.md` / `env-gen-packs.md` / `architecture.md` promote pack to v1 local; start/prompt/marketplace deferred kept honest; `CHANGELOG.md` Unreleased
+- **Map [[issues-50-agent-packs-map]]** closed with this ticket
+
+`cargo test` green.
 
 ## Comments
 

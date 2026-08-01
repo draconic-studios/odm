@@ -2,7 +2,7 @@
 id: issues-50
 title: "Agent packs map"
 description: "Wayfinder map: implement odm agent pack list|install|link for local packs into an agent home."
-status: open
+status: closed
 issue-type: feature-request
 tags:
   - planning
@@ -46,6 +46,7 @@ Productize **Agent packs** (v1 local only) per `docs/reference/env-gen-packs.md`
 - Parallel hardening (not on this map): [[issues-54-readme-post-010-docs-drift]].
 - **Core landed (issues-51):** `odm-core` `agent_pack` module — `pack_list` / `pack_install` / `pack_link`, registry `.odm/agent-packs.json`, `agent_packs_path`.
 - **CLI landed (issues-52):** `odm agent pack list|install|link` thin adapter; human + `--json`; install/link JSON is a single entry object (same fields as list items); `start`/`prompt` remain stubs.
+- **Integration + docs (issues-53):** `cli_agent_pack` integration tests; docs/CHANGELOG promote pack v1; core-desk `agent-packs/demo` dogfood; map closed.
 
 ## Not yet specified
 
@@ -63,6 +64,16 @@ Productize **Agent packs** (v1 local only) per `docs/reference/env-gen-packs.md`
 ## Blocked by
 
 None — generators map closed; agent CLI stubs exist.
+
+## Answer
+
+Destination met for **Agent packs v1 local**:
+
+- **Core (51):** `pack_list` / `pack_install` / `pack_link` + `.odm/agent-packs.json`
+- **CLI (52):** `odm agent pack list|install|link` human + JSON; start/prompt stubs
+- **Proof + docs (53):** `crates/odm/tests/cli_agent_pack.rs`; `cli.md` / `env-gen-packs.md` / `architecture.md` / `CHANGELOG` honesty; optional `examples/core-desk/agent-packs/demo`
+
+**Still deferred:** `agent start`, `agent prompt`, pack manifest, marketplace, config-declared packs, status/doctor pack reports, Windows junction beyond honest error.
 
 ## Comments
 

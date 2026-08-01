@@ -1,6 +1,6 @@
 # core-desk
 
-Offline dogfood Workspace for ODM **core**, path-only **Progen** vault, shell **Actions**, and a tiny local **Generator**.
+Offline dogfood Workspace for ODM **core**, path-only **Progen** vault, shell **Actions**, a tiny local **Generator**, and a demo **Agent pack**.
 
 ## Layout
 
@@ -19,6 +19,8 @@ examples/core-desk/
     core.yaml     # hello → templates/hello
   templates/
     hello/        # local generate template
+  agent-packs/
+    demo/         # local pack source for install/link dogfood
   .odm/
     odm.config.yaml
 ```
@@ -75,6 +77,12 @@ odm --json run hello    # {"action":"hello","exitCode":0}
 odm generate            # list: hello
 odm generate hello --dest out/hello
 # out/hello/hello.txt
+
+# Agent packs (local install into a home dir)
+mkdir -p /tmp/odm-agent-home
+odm agent pack install agent-packs/demo --home /tmp/odm-agent-home
+odm agent pack list
+# demo
 ```
 
 ## Fixtures

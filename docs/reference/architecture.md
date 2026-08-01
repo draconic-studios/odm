@@ -82,7 +82,7 @@ Outside-in flow for a Workspace:
    - **Git lifecycle** — plain clones at Project/Progen paths; pin file; Worktree slots under `worktrees/<project>/<slot>/` (`multi-git.md`).
    - **Progen façade** — scope union → N× single-root progen engine calls; ODM-owned index/cache only under `.odm/progen/<name>/` (`progen.md`).
    - **Actions** — load Action bundle files → shell-out to command bodies.
-   - **Agent packs** (sketch) — install/link into agent-native homes.
+   - **Agent packs** (v1 local) — install/link/list into agent-native homes; registry under `.odm/`.
 5. **On disk, not owned as ODM content** — Primary checkouts, Progen stores, worktree slot trees (paths may be managed clones; content is the user’s).
 
 **Edge rule:** Workspace config is the only layout source of truth.
@@ -99,7 +99,7 @@ workspace core  ── reads .odm/odm.config.yaml (+ pin)
     ├── git lifecycle ──► primary checkouts, worktrees/
     ├── progen façade ──► progen stores (+ .odm/progen/<name>/ indexes)
     ├── actions ────────► shell-out (user/Nx/scripts)
-    └── agent packs ────► agent config homes (sketch)
+    └── agent packs ────► agent config homes (v1 local)
 ```
 
 ## Ownership boundaries
@@ -148,7 +148,7 @@ Rules:
 
 - **Depend inward** — `odm` → feature crates → `odm-core`. Progen crates never depend on ODM.
 - **One product binary** — crates are boundaries, not multiple distributeables.
-- **Thin modules until crate earned** — `generate` (v1 local template in `odm-core`) and sketch `agent` stay in-tree until depth demands a crate.
+- **Thin modules until crate earned** — `generate` (v1 local template) and `agent_pack` (v1 local install/link/list) live in `odm-core`; `agent start`/`prompt` remain stubs until depth demands a crate.
 - **Non-goal** — deep Serve/MCP (`odm serve`) is out of the v1 design package.
 
 ## Related
@@ -159,5 +159,5 @@ Rules:
 - Progen federation: `progen.md`
 - Worktree slots (sketch): `worktrees.md`
 - Code↔doc index (sketch): `graph.md`
-- Env / generators / packs (sketch): `env-gen-packs.md`
+- Env / generators / packs: `env-gen-packs.md`
 - CLI (`--root`, init): `cli.md`

@@ -1,6 +1,6 @@
-# Env, generators, and agent packs (sketch)
+# Env, generators, and agent packs
 
-**Sketch** — not a Ship gate. Depth bar: intent, placement/ownership, CLI names reserved, explicit deferred. Domain terms: root `CONTEXT.md`. Config pointers: `config.md`. CLI stubs: `cli.md`. Worktrees: `worktrees.md`.
+**Mixed depth** — generators and agent packs have **v1 local** CLI; env and agent start/prompt remain sketch. Not a Ship gate for deferred items. Domain terms: root `CONTEXT.md`. Config pointers: `config.md`. CLI: `cli.md`. Worktrees: `worktrees.md`.
 
 ## Env
 
@@ -57,35 +57,38 @@ odm generate <generator-name> --dest <rel-path> [--force]
 **Placement and ownership:**
 
 - **Targets:** agent-native config/skill homes (user/machine paths) — **not** under `.odm/`, **not** inside Project trees by default.
-- **Operations:** Workspace-scoped (`odm agent pack …` run in a Workspace); may link assets that reference this Workspace.
-- **No** global pack-registry product in this sketch.
-- **No** pack payloads under `.odm/`; optional fetch cache under `.odm/cache/` only if implement needs it (detail deferred).
+- **Operations:** Workspace-scoped (`odm agent pack …` run in a Workspace).
+- **Registry:** Workspace-local `.odm/agent-packs.json` (list is registry-backed; does not scan arbitrary homes).
+- **No** pack **payloads** under `.odm/` (only the registry); no global pack-registry product; marketplace/fetch cache deferred.
 
-**CLI names reserved:**
+**CLI (v1 local install/link/list landed):**
 
 ```text
-odm agent pack install …
-odm agent pack link …
-odm agent pack list …
+odm agent pack list
+odm agent pack install <source> --home <path> [--force]
+odm agent pack link <source> --home <path> [--force]
 ```
 
-- **`install`:** materialize/copy or fetch a pack into an agent home.
-- **`link`:** symlink when the platform allows.
-- **`list`:** what ODM knows is installed/linked.
+- **Source:** local directory; relative under Workspace root (no escape); name = basename. No remote/marketplace; no `pack.toml` required in v1.
+- **`--home`:** required; pack at `<home>/<name>/`.
+- **`install`:** recursive copy. Exists without `--force` → exit `3`. Missing source → exit `4`.
+- **`link`:** symlink to absolute source; same force policy; no silent copy fallback when symlinks unavailable.
+- **`list`:** human one name per line (empty → `(no agent packs)`); JSON shapes in `cli.md`.
 
-**Deferred:**
+**Deferred (still explicit):**
 
-- Pack manifest schema and on-disk pack layout
-- Windows symlink vs copy default
-- Marketplace protocol
+- Pack manifest schema and on-disk pack layout convention
+- Windows junction policy beyond honest error
+- Marketplace protocol / remote fetch
 - First-class agent matrix (Cursor, Claude, etc.)
 - Pack declarations in Workspace config spine
+- `status` / `doctor` pack reports
 
 ---
 
 ## Agent start and prompt
 
-**CLI names reserved:**
+**CLI names reserved (still sketch / not implemented):**
 
 ```text
 odm agent start [--project …] [--wt …] …
@@ -95,7 +98,7 @@ odm agent prompt <id> --progen …
 - **`start`:** launch an agent **runtime** against a Project Primary or `--wt` slot via **shell-out**. No runtime matrix in the design package.
 - **`prompt`:** thin wrap of progen prompt with ODM Progen scope — not a second prompt engine. Primary home is `odm agent prompt`, not a duplicate full surface under `odm progen`.
 
-Honors `--project`, `--wt`, `--progen`, `--json` where relevant (`cli.md`).
+Honors `--project`, `--wt`, `--progen`, `--json` where relevant when implemented (`cli.md`).
 
 **Deferred:** full start flags, runtime detection, session lifecycle, prompt flag parity tables.
 
@@ -114,7 +117,7 @@ Honors `--project`, `--wt`, `--progen`, `--json` where relevant (`cli.md`).
 ## Related
 
 - Config generators map: `config.md`
-- CLI sketch matrix: `cli.md`
+- CLI full vs sketch matrix: `cli.md`
 - Worktree slots: `worktrees.md`
 - Code↔doc index: `graph.md`
 - Architecture / `.odm/`: `architecture.md`

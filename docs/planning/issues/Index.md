@@ -6,11 +6,10 @@ See `docs/agents/issue-tracker.md`.
 
 ## Maps
 
-- [[issues-50-agent-packs-map]] — Agent packs local install/link/list (post-0.1.0)
+_(none open)_
 
 ## Frontier (open, unblocked)
 
-- [[issues-53-agent-pack-integration-and-docs]] — pack integration tests + docs (`ready-for-agent`)
 - [[issues-54-readme-post-010-docs-drift]] — README + phased-delivery honesty (`ready-for-agent`)
 
 ## Blocked
@@ -32,3 +31,4 @@ _(none remaining)_
 - [[issues-27-ship-map]] — Ship (phase 5)
 - [[issues-40-worktree-slots-map]] — Worktree slots (post-0.1.0)
 - [[issues-45-generators-map]] — Generators local template v1 (post-0.1.0)
+- [[issues-50-agent-packs-map]] — Agent packs local install/link/list (post-0.1.0)
