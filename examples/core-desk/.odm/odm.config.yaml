@@ -1,0 +1,10 @@
+name: core-desk
+projects:
+  alpha:
+    path: projects/alpha
+    url: fixtures/alpha.git
+    branch: main
+  beta:
+    path: projects/beta
+    url: fixtures/beta.git
+    branch: main

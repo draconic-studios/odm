@@ -12,7 +12,6 @@ See `docs/agents/issue-tracker.md`.
 
 - [[issues-17-config-and-pin-serde-model]]
 - [[issues-18-cli-error-and-exit-code-spine]]
-- [[issues-19-core-desk-example-layout]]
 - [[issues-24-url-origin-match-rules]]
 
 ## Blocked

@@ -1,0 +1,3 @@
+# Produced by odm sync — never commit managed checkouts or the pin file
+/projects/
+.odm/odm.lock.yaml
