@@ -6,15 +6,16 @@ See `docs/agents/issue-tracker.md`.
 
 ## Maps
 
-_(none open — phases 1–5 closed)_
+- [[issues-40-worktree-slots-map]] — Worktree slots (post-0.1.0)
 
 ## Frontier (open, unblocked)
 
-_(empty)_
+- [[issues-42-worktree-slot-lifecycle]] — core + CLI worktree slot list/add/rm (`ready-for-agent`)
 
 ## Blocked
 
-_(none)_
+- [[issues-43-project-git-wt-resolve]] — blocked by [[issues-42-worktree-slot-lifecycle]]
+- [[issues-44-worktree-integration-and-docs]] — blocked by [[issues-42-worktree-slot-lifecycle]], [[issues-43-project-git-wt-resolve]]
 
 ## Architecture deepen (post-0.1.0)
 

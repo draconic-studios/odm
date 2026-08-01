@@ -1,9 +1,17 @@
 use std::ffi::{OsStr, OsString};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::ExitStatus;
 
 use crate::error::{trim_output, GitError};
 use crate::runner::{CommandRunner, ProcessRunner};
+
+/// One row from `git worktree list --porcelain`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct WorktreeEntry {
+    pub path: PathBuf,
+    pub head: Option<String>,
+    pub branch: Option<String>,
+}
 
 /// Shell-out git façade for ODM multi-git lifecycle.
 ///
@@ -242,6 +250,98 @@ impl<R: CommandRunner> Git<R> {
             .map_err(map_io)
     }
 
+    /// `git -C <primary> worktree add [-b <branch>] -- <slot_path>`.
+    ///
+    /// Caller must ensure parent directories of `slot_path` exist.
+    pub fn worktree_add(
+        &self,
+        primary: &Path,
+        slot_path: &Path,
+        branch: Option<&str>,
+    ) -> Result<(), GitError> {
+        require_absolute(primary)?;
+        require_absolute(slot_path)?;
+        let mut args: Vec<OsString> = vec![
+            "-C".into(),
+            primary.into(),
+            "worktree".into(),
+            "add".into(),
+        ];
+        if let Some(b) = branch {
+            args.push("-b".into());
+            args.push(b.into());
+        }
+        args.push("--".into());
+        args.push(slot_path.into());
+        let out = self.capture("worktree_add", Some(primary), &args)?;
+        if !out.status.success() {
+            return Err(GitError::failed(
+                "worktree_add",
+                Some(primary.to_path_buf()),
+                out.status,
+                out.stderr_str(),
+                out.stdout_str(),
+            ));
+        }
+        Ok(())
+    }
+
+    /// `git -C <primary> worktree list --porcelain`.
+    pub fn worktree_list(&self, primary: &Path) -> Result<Vec<WorktreeEntry>, GitError> {
+        require_absolute(primary)?;
+        let args: Vec<OsString> = vec![
+            "-C".into(),
+            primary.into(),
+            "worktree".into(),
+            "list".into(),
+            "--porcelain".into(),
+        ];
+        let out = self.capture("worktree_list", Some(primary), &args)?;
+        if !out.status.success() {
+            return Err(GitError::failed(
+                "worktree_list",
+                Some(primary.to_path_buf()),
+                out.status,
+                out.stderr_str(),
+                out.stdout_str(),
+            ));
+        }
+        parse_worktree_porcelain(&out.stdout_str())
+    }
+
+    /// `git -C <primary> worktree remove [--force] -- <slot_path>`.
+    pub fn worktree_remove(
+        &self,
+        primary: &Path,
+        slot_path: &Path,
+        force: bool,
+    ) -> Result<(), GitError> {
+        require_absolute(primary)?;
+        require_absolute(slot_path)?;
+        let mut args: Vec<OsString> = vec![
+            "-C".into(),
+            primary.into(),
+            "worktree".into(),
+            "remove".into(),
+        ];
+        if force {
+            args.push("--force".into());
+        }
+        args.push("--".into());
+        args.push(slot_path.into());
+        let out = self.capture("worktree_remove", Some(primary), &args)?;
+        if !out.status.success() {
+            return Err(GitError::failed(
+                "worktree_remove",
+                Some(primary.to_path_buf()),
+                out.status,
+                out.stderr_str(),
+                out.stdout_str(),
+            ));
+        }
+        Ok(())
+    }
+
     fn capture(
         &self,
         operation: &'static str,
@@ -293,5 +393,62 @@ fn is_full_sha(s: &str) -> bool {
 fn looks_like_missing_origin(stderr: &str) -> bool {
     let lower = stderr.to_ascii_lowercase();
     lower.contains("no such remote") || lower.contains("not a remote")
+}
+
+/// Parse `git worktree list --porcelain` stdout into entries (including main).
+fn parse_worktree_porcelain(stdout: &str) -> Result<Vec<WorktreeEntry>, GitError> {
+    let mut entries = Vec::new();
+    let mut path: Option<PathBuf> = None;
+    let mut head: Option<String> = None;
+    let mut branch: Option<String> = None;
+    let mut saw_line = false;
+
+    let flush = |entries: &mut Vec<WorktreeEntry>,
+                 path: &mut Option<PathBuf>,
+                 head: &mut Option<String>,
+                 branch: &mut Option<String>,
+                 raw: &str|
+     -> Result<(), GitError> {
+        match path.take() {
+            Some(p) => {
+                entries.push(WorktreeEntry {
+                    path: p,
+                    head: head.take(),
+                    branch: branch.take(),
+                });
+                Ok(())
+            }
+            None => Err(GitError::Parse {
+                operation: "worktree_list",
+                stdout: raw.to_string(),
+                detail: "worktree record missing path".into(),
+            }),
+        }
+    };
+
+    for line in stdout.lines() {
+        if line.is_empty() {
+            if saw_line {
+                flush(&mut entries, &mut path, &mut head, &mut branch, stdout)?;
+                saw_line = false;
+            }
+            continue;
+        }
+        saw_line = true;
+        if let Some(rest) = line.strip_prefix("worktree ") {
+            path = Some(PathBuf::from(rest));
+        } else if let Some(rest) = line.strip_prefix("HEAD ") {
+            head = Some(rest.to_string());
+        } else if let Some(rest) = line.strip_prefix("branch ") {
+            branch = Some(rest.to_string());
+        }
+        // bare / detached / locked / prunable — ignored
+    }
+
+    if saw_line || path.is_some() || head.is_some() || branch.is_some() {
+        flush(&mut entries, &mut path, &mut head, &mut branch, stdout)?;
+    }
+
+    Ok(entries)
 }
 

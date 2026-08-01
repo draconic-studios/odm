@@ -7,5 +7,5 @@ mod git;
 mod runner;
 
 pub use error::GitError;
-pub use git::Git;
+pub use git::{Git, WorktreeEntry};
 pub use runner::{CommandOutput, CommandRunner, ProcessRunner};
