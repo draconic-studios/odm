@@ -2,7 +2,7 @@
 id: issues-123
 title: "FTS query escaping for safe find"
 description: "User find queries with AND/OR/punctuation become FTS5 syntax errors instead of safe results."
-status: open
+status: closed
 issue-type: bug
 severity: high
 tags:
@@ -54,13 +54,13 @@ None
 
 **Acceptance criteria:**
 
-- [ ] Query `AND` does not return operation/syntax failure
-- [ ] Multi-word find still works on indexed notes
-- [ ] Unit tests cover escape cases
-- [ ] `cargo test -p odm-progen` green
+- [x] Query `AND` does not return operation/syntax failure
+- [x] Multi-word find still works on indexed notes
+- [x] Unit tests cover escape cases
+- [x] `cargo test -p odm-progen` green
 
 **Out of scope:** snippet unicode (122), auto-reindex (131), ranking changes.
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met

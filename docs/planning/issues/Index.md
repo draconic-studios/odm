@@ -18,8 +18,6 @@ See `docs/agents/issue-tracker.md`.
 
 ### Swarm audit — critical / high (prefer first)
 
-- [[issues-122-find-snippet-unicode-panic]] — find snippet UTF-8 panic (`ready-for-agent`)
-- [[issues-123-fts-query-escaping]] — FTS safe queries (`ready-for-agent`)
 - [[issues-124-bundle-path-escape]] — action/generator bundle path escape (`ready-for-agent`)
 - [[issues-125-membership-path-escape]] — membership add path escape (`ready-for-agent`)
 - [[issues-126-action-dir-escape]] — action task dir escape (`ready-for-agent`)

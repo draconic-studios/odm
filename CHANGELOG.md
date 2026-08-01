@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`odm find` FTS queries** — plain-text terms are quoted for FTS5 so `AND`/`OR`/punctuation no longer cause syntax errors; multi-word is AND of terms.
 - **`odm find` snippets** — no longer panic on multi-byte UTF-8 bodies (CJK/emoji); window start/end floored/ceiled to char boundaries.
 
 ### Changed

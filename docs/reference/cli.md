@@ -208,6 +208,7 @@ odm find [query] [--limit <n>] [--progen …] [--progen-group …] [--json]
 ```
 
 - Federated **FTS** query: fan-out per selected store; merge per `progen.md` (tag `"progen"`, identity `(progen, id)`, stable Progen order). No facet flags on the ODM CLI.
+- Query is **plain text**: each whitespace token is matched literally (FTS operators/`AND`/`OR` and punctuation do not fail the search). Multi-word → AND of terms (no phrase mode).
 - Default scope: all configured Progens (`--progen` / `--progen-group` narrow).
 - Empty query → list scoped notes (same path as a free-text query).
 - `--limit` max hits **per store**, default **200**; `0` rejected (usage exit `1`).

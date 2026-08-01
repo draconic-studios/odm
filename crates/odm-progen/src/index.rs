@@ -157,6 +157,29 @@ pub(crate) fn load_all_notes(conn: &Connection) -> Result<Vec<IndexedNote>, OdmE
     Ok(out)
 }
 
+/// Build an FTS5 MATCH expression from plain user text.
+/// Each whitespace-separated token is double-quoted so operators (`AND`/`OR`/`NOT`)
+/// and punctuation never parse as FTS syntax. Multi-word → implicit AND of terms.
+/// Returns `None` when no usable tokens remain (caller treats as empty hits).
+pub(crate) fn escape_fts_query(query: &str) -> Option<String> {
+    let terms: Vec<String> = query
+        .split_whitespace()
+        .map(|t| t.replace('\0', ""))
+        .filter(|t| !t.is_empty())
+        .map(|t| format!("\"{}\"", t.replace('"', "\"\"")))
+        .collect();
+    if terms.is_empty() {
+        None
+    } else {
+        Some(terms.join(" "))
+    }
+}
+
+fn is_fts_syntax_error(err: &rusqlite::Error) -> bool {
+    let s = err.to_string();
+    s.contains("fts5: syntax error") || s.contains("fts5: parse error")
+}
+
 pub(crate) fn search_fts(
     conn: &Connection,
     query: &str,
@@ -167,19 +190,34 @@ pub(crate) fn search_fts(
         all.truncate(limit);
         return Ok(all);
     }
-    let q = query.replace('"', "\"\"");
+    let Some(q) = escape_fts_query(query) else {
+        return Ok(Vec::new());
+    };
     let mut stmt = conn
         .prepare(
             "SELECT id, title, body FROM notes_fts WHERE notes_fts MATCH ?1 LIMIT ?2",
         )
         .map_err(|e| OdmError::operation(e.to_string()))?;
-    let fts_rows: Result<Vec<(String, String, String)>, _> = stmt
-        .query_map(params![q, limit as i64], |row| {
-            Ok((row.get(0)?, row.get(1)?, row.get(2)?))
-        })
-        .map_err(|e| OdmError::operation(e.to_string()))?
-        .collect();
-    let fts_rows = fts_rows.map_err(|e| OdmError::operation(e.to_string()))?;
+    let mapped = stmt.query_map(params![q, limit as i64], |row| {
+        Ok((
+            row.get::<_, String>(0)?,
+            row.get::<_, String>(1)?,
+            row.get::<_, String>(2)?,
+        ))
+    });
+    let rows = match mapped {
+        Ok(rows) => rows,
+        Err(e) if is_fts_syntax_error(&e) => return Ok(Vec::new()),
+        Err(e) => return Err(OdmError::operation(e.to_string())),
+    };
+    let mut fts_rows: Vec<(String, String, String)> = Vec::new();
+    for r in rows {
+        match r {
+            Ok(row) => fts_rows.push(row),
+            Err(e) if is_fts_syntax_error(&e) => return Ok(Vec::new()),
+            Err(e) => return Err(OdmError::operation(e.to_string())),
+        }
+    }
 
     let mut out = Vec::new();
     for (id, _title, _body) in fts_rows {
@@ -325,6 +363,88 @@ mod tests {
         assert_eq!(stats.notes, 3);
         let conn = open_index(root, "main").unwrap();
         let hits = search_fts(&conn, "UniqueZebra", 10).unwrap();
+        assert_eq!(hits.len(), 1);
+        assert_eq!(hits[0].id, "a1");
+    }
+
+    fn fixture_conn() -> (tempfile::TempDir, Connection) {
+        let d = tempdir().unwrap();
+        let root = d.path();
+        let vault = root.join("mem");
+        ensure_vault(&vault).unwrap();
+        fs::write(
+            vault.join("alpha.md"),
+            "---\nid: a1\ntitle: Alpha\n---\nUniqueZebra word and beta notes.\n",
+        )
+        .unwrap();
+        fs::write(
+            vault.join("beta.md"),
+            "---\nid: b1\ntitle: Beta\n---\nOther content here.\n",
+        )
+        .unwrap();
+        let mut progens = BTreeMap::new();
+        progens.insert(
+            "main".into(),
+            ProgenEntry {
+                path: "mem".into(),
+                url: None,
+                branch: None,
+            },
+        );
+        fs::create_dir_all(root.join(".odm")).unwrap();
+        let ws = Workspace {
+            root: root.to_path_buf(),
+            config: WorkspaceConfig {
+                progens,
+                ..Default::default()
+            },
+            actions: BTreeMap::new(),
+            generators: BTreeMap::new(),
+        };
+        let sp = ScopedProgen {
+            name: "main".into(),
+            path: vault,
+        };
+        reindex_progen(&ws, &sp).unwrap();
+        let conn = open_index(root, "main").unwrap();
+        (d, conn)
+    }
+
+    #[test]
+    fn escape_fts_quotes_operators() {
+        assert_eq!(escape_fts_query("AND").as_deref(), Some("\"AND\""));
+        assert_eq!(
+            escape_fts_query("foo OR bar").as_deref(),
+            Some("\"foo\" \"OR\" \"bar\"")
+        );
+        assert_eq!(
+            escape_fts_query(r#"say "hi""#).as_deref(),
+            Some(r#""say" """hi""""#)
+        );
+        assert_eq!(escape_fts_query("   ").as_deref(), None);
+    }
+
+    #[test]
+    fn search_and_alone_is_not_syntax_error() {
+        let (_d, conn) = fixture_conn();
+        let hits = search_fts(&conn, "AND", 10).unwrap();
+        // literal token AND may or may not appear in corpus; must not error
+        assert!(hits.len() <= 10);
+    }
+
+    #[test]
+    fn search_punctuation_is_not_syntax_error() {
+        let (_d, conn) = fixture_conn();
+        let hits = search_fts(&conn, "@@@", 10).expect("no fts syntax");
+        assert!(hits.is_empty());
+        let hits = search_fts(&conn, r#""broken" OR ("#, 10).expect("no fts syntax");
+        assert!(hits.is_empty());
+    }
+
+    #[test]
+    fn search_multi_word_and_of_terms() {
+        let (_d, conn) = fixture_conn();
+        let hits = search_fts(&conn, "UniqueZebra word", 10).unwrap();
         assert_eq!(hits.len(), 1);
         assert_eq!(hits[0].id, "a1");
     }
