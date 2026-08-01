@@ -238,3 +238,37 @@ fn failed_clone_attaches_stderr() {
         other => panic!("expected Failed, got {other:?}"),
     }
 }
+
+#[test]
+fn worktree_add_list_remove_round_trip() {
+    let t = TempDir::new().unwrap();
+    let primary = abs(&t, "primary");
+    fs::create_dir(&primary).unwrap();
+    let g = Git::new();
+    g.init(&primary).unwrap();
+    git_user(&primary);
+    commit_file(&primary, "README", "hi");
+
+    let slot = abs(&t, "slot");
+    g.worktree_add(&primary, &slot, Some("wt-branch")).unwrap();
+    assert!(slot.is_dir());
+    let slot_canon = fs::canonicalize(&slot).unwrap();
+
+    let entries = g.worktree_list(&primary).unwrap();
+    assert!(
+        entries
+            .iter()
+            .any(|e| fs::canonicalize(&e.path).ok().as_ref() == Some(&slot_canon)),
+        "list should contain slot path; got {entries:?}"
+    );
+
+    g.worktree_remove(&primary, &slot, false).unwrap();
+    assert!(!slot.exists());
+    let after = g.worktree_list(&primary).unwrap();
+    assert!(
+        after
+            .iter()
+            .all(|e| fs::canonicalize(&e.path).ok().as_ref() != Some(&slot_canon)),
+        "list should not contain removed slot; got {after:?}"
+    );
+}

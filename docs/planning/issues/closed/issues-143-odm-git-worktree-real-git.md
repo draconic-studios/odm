@@ -2,7 +2,7 @@
 id: issues-143
 title: "odm-git real-git worktree integration test"
 description: "worktree_ops.rs is mock-only; add one real-git tempfile test for add/list/remove at the git crate seam."
-status: reviewing
+status: closed
 issue-type: feature-request
 severity: low
 tags:
@@ -48,11 +48,11 @@ None
 
 **Acceptance criteria:**
 
-- [ ] Real-git worktree round-trip test
-- [ ] `cargo test -p odm-git` green
+- [x] Real-git worktree round-trip test
+- [x] `cargo test -p odm-git` green
 
 **Out of scope:** non-interactive env product change (133).
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met
