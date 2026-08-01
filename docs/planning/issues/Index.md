@@ -6,11 +6,11 @@ See `docs/agents/issue-tracker.md`.
 
 ## Maps
 
-- [[issues-99-post-v1-generate-dry-run-map]] — Post-v1 generate `--dry-run` (local template preview)
+_(none open)_
 
 ## Frontier (open, unblocked)
 
-- [[issues-103-core-desk-generate-dry-run-dogfood]] — `ready-for-agent` — core-desk dry-run dogfood gate
+_(none)_
 
 ## Blocked
 
@@ -40,3 +40,4 @@ _(none remaining)_
 - [[issues-82-post-v1-pack-lifecycle-hardening-map]] — Post-v1 pack rm + doctor pack_missing + worktree module split
 - [[issues-89-post-v1-status-packs-map]] — Post-v1 status packs + pack observation dogfood
 - [[issues-94-post-v1-status-orphans-map]] — Post-v1 status/info worktree orphans + dogfood
+- [[issues-99-post-v1-generate-dry-run-map]] — Post-v1 generate `--dry-run` (local template preview)

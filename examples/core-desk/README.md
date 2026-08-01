@@ -111,6 +111,10 @@ odm --json run hello    # {"action":"hello","exitCode":0}
 
 # Generators (local template copy)
 odm generate            # list: hello
+odm generate hello --dest out/hello --dry-run
+# would generate; no files written under out/hello
+# optional: odm --json generate hello --dest out/hello --dry-run
+#   → dry_run: true, copied >= 1
 odm generate hello --dest out/hello
 # out/hello/hello.txt
 

@@ -691,3 +691,42 @@ fn core_desk_unknown_project_exit_1() {
         .code(1)
         .stderr(predicate::str::contains("unknown project"));
 }
+
+#[test]
+fn core_desk_generate_dry_run_gate() {
+    if skip_without_git() {
+        return;
+    }
+    let (_dir, root) = setup_temp_core_desk();
+    let root_s = root.to_str().unwrap();
+    let dest = root.join("out/hello");
+
+    let v = json_stdout(odm().args([
+        "--root",
+        root_s,
+        "--json",
+        "generate",
+        "hello",
+        "--dest",
+        "out/hello",
+        "--dry-run",
+    ]));
+    assert_eq!(v["generator"], "hello");
+    assert_eq!(v["dest"], "out/hello");
+    assert_eq!(v["dry_run"], true);
+    assert!(v["copied"].as_u64().unwrap() >= 1);
+    assert!(!dest.exists());
+
+    odm()
+        .args([
+            "--root",
+            root_s,
+            "generate",
+            "hello",
+            "--dest",
+            "out/hello",
+        ])
+        .assert()
+        .success();
+    assert!(dest.join("hello.txt").is_file());
+}

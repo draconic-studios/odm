@@ -2,7 +2,7 @@
 id: issues-103
 title: "core-desk dogfood generate --dry-run"
 description: "core-desk README + integration gate: dry-run writes nothing then real generate materializes."
-status: open
+status: closed
 issue-type: feature-request
 severity: low
 tags:
@@ -66,10 +66,10 @@ See Agent Brief.
 
 **Acceptance criteria:**
 
-- [ ] core-desk README documents dry-run then real generate for `hello`
-- [ ] Integration gate asserts dry-run no-write + real generate writes
-- [ ] `core_desk.rs` within LOC limits
-- [ ] `cargo test` green
+- [x] core-desk README documents dry-run then real generate for `hello`
+- [x] Integration gate asserts dry-run no-write + real generate writes
+- [x] `core_desk.rs` within LOC limits
+- [x] `cargo test` green
 
 **Out of scope:**
 
@@ -79,4 +79,12 @@ See Agent Brief.
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met
+
+## Answer
+
+core-desk dogfood for generate `--dry-run`:
+
+- **README** Generators: dry-run first (`would generate` / no files), optional `--json` / `dry_run: true`, then real `odm generate hello --dest out/hello`.
+- **Gate** `core_desk_generate_dry_run_gate`: JSON dry-run asserts `dry_run: true`, `copied >= 1`, dest absent; real generate writes `out/hello/hello.txt`.
+- `core_desk.rs` 732 LOC; full `cargo test` green. No product changes.

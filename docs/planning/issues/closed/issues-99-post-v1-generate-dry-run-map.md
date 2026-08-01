@@ -2,7 +2,7 @@
 id: issues-99
 title: "Post-v1 generate dry-run map"
 description: "Wayfinder map: odm generate --dry-run (count without write); docs + core-desk dogfood."
-status: open
+status: closed
 issue-type: feature-request
 tags:
   - planning
@@ -44,6 +44,7 @@ After status orphans map [[issues-94-post-v1-status-orphans-map]] closed, pull t
 - **100 closed:** `generate_local(..., force, dry_run)`; dry-run validates + `count_tree` (files/symlinks), zero writes even with force; real path unchanged when `dry_run=false`; CLI still passes `false` until 101.
 - **101 closed:** CLI `--dry-run` on generate-run; `GenerateRunDto.dry_run`; human `would generate` / `generated`; integration coverage in `cli_generate.rs`.
 - **102 closed:** docs honesty — cli.md / env-gen-packs.md / phased-delivery / CHANGELOG / README record landed `--dry-run`; remote/templating remain deferred.
+- **103 closed:** core-desk README + `core_desk_generate_dry_run_gate` — dry-run no-write then real generate materializes `hello.txt`.
 
 
 ## Not yet specified
