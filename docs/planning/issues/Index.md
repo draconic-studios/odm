@@ -6,15 +6,16 @@ See `docs/agents/issue-tracker.md`.
 
 ## Maps
 
-_(none open)_
+- [[issues-55-post-v1-hardening-map]] — Post-v1 hardening + agent prompt thin
 
 ## Frontier (open, unblocked)
 
-_(none)_
+- [[issues-57-doctor-worktree-orphans]] — Doctor warn on worktree slot orphans
+- [[issues-58-agent-prompt-thin]] — Agent prompt thin v1 (CLI over context)
 
 ## Blocked
 
-_(none)_
+- [[issues-59-agent-prompt-integration-docs]] — blocked by [[issues-58-agent-prompt-thin]]
 
 ## Architecture deepen (post-0.1.0)
 

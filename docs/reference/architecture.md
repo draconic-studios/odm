@@ -19,7 +19,7 @@ Every Workspace has an **ODM state directory** at `<workspace>/.odm/`. It holds 
       <progen-name>/          # gitignored — ODM-side index/cache per Progen name
   worktrees/                  # NOT under .odm/
     <project-name>/
-      <slot-name>/            # Worktree slot working tree (lazy; sketch details in worktrees.md)
+      <slot-name>/            # Worktree slot working tree (v1; deferred items in worktrees.md)
   # Project / Progen paths — only where Workspace config declares them
 ```
 
@@ -137,7 +137,7 @@ odm-core               # Workspace, config, pin, discovery, paths
 odm-git                # multi-git lifecycle (shells git)
 odm-progen             # federation/scope + façade over progen crates
 odm-actions            # load/run Action bundles
-odm-agent              # pack link/install (sketch-depth OK; may start thin in bin/core)
+# no odm-agent crate yet — agent_pack v1 local lives in odm-core; start/prompt remain stubs
 # progen upstream crates (path or vendored) — store / index / query
 # no odm-serve in v1
 ```
@@ -157,7 +157,7 @@ Rules:
 - Config schema: `config.md`
 - Multi-git + pin semantics: `multi-git.md`
 - Progen federation: `progen.md`
-- Worktree slots (sketch): `worktrees.md`
+- Worktree slots (v1 + deferred): `worktrees.md`
 - Code↔doc index (sketch): `graph.md`
 - Env / generators / packs: `env-gen-packs.md`
 - CLI (`--root`, init): `cli.md`

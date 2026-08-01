@@ -64,7 +64,7 @@ odm init [<path>] [--interactive|-i] [--no-git]
 
 - **Default path**: cwd.
 - **Headless (default)**: create `.odm/odm.config.yaml` (minimal; optional `name` later via flags if added), ensure `.odm/` layout as needed. Empty `projects` / `progens` maps are valid.
-- **`--interactive` / `-i`**: prompt for name, git y/n, optional first Project/Progen.
+- **`--interactive` / `-i`**: **not implemented** (flag reserved; exits `1` with not-implemented until shipped). Headless init above remains full.
 - **Git**: `git init` at Workspace root **by default**; **`--no-git`** skips.
 - **Gitignore**: when git repo and `manage_gitignore` default true, seed ignore rules (`multi-git.md`, `architecture.md`).
 - **Pin file**: not created until first managed materialize.
@@ -165,23 +165,26 @@ ODM resolves Progen **name → path** via Workspace config, then runs single-roo
 
 Federated defaults live at **top level** (`find`, `context`) — not under `odm progen`.
 
-Re-exported / mapped store commands (hot set):
+**Implemented** store façade (today):
 
 ```text
 odm progen get <id>
 odm progen body <id>
 odm progen ls | tree
-odm progen refs | backlinks …
-odm progen task|issue|idea|decision|doc …
-odm progen archive | rm …
-odm progen log | glossary | plan …
-odm progen reindex | doctor | watch …
+odm progen backlinks …
+odm progen reindex | doctor
 ```
+
+Federated query/context live at **top level** (`odm find`, `odm context`) — not under `odm progen`.
+
+**Reserved / deferred** (not in CLI today; do not treat as shipped):
+
+- `refs`, typed node verbs (`task` | `issue` | `idea` | `decision` | `doc`), `archive`, `log`, `glossary`, `plan`, `watch`, `scan`
+- Store-side mutate beyond the current façade
 
 - Node **`get`** keeps upstream meaning (id → node). Entity summary is **`info`**.
 - Writes: exactly one Progen (`--progen` or sole configured).
 - Reads under `odm progen`: single-root (pass `--progen` when multiple configured), except where a command doc explicitly federates.
-- **`scan`**: deferred / sketch later.
 - **`serve`**: absent (non-goal).
 - **`prompt`**: primary home is `odm agent prompt` (sketch); not duplicated as a second full surface under `progen` in this doc.
 
@@ -287,8 +290,8 @@ odm agent prompt <id> --progen …     # thin wrap of progen prompt when specifi
 
 ## Full vs sketch matrix
 
-- **Full**: global flags (including `--wt` path binding); `init`; `sync`; `pin apply|status`; `status`; `doctor`; `project list|add|rm|info|git|worktree` (v1); `progen` lifecycle + store façade mapping; `find`; `context`; `run`; `generate` (v1 local template only); `agent pack` (v1 local install/link/list only).
-- **Sketch**: `agent start` / `agent prompt`; deferred worktree features (config slots, GC, pin↔slot, doctor orphans — `worktrees.md`); generate remote/templating; pack marketplace/manifest/config declarations (`env-gen-packs.md`).
+- **Full**: global flags (including `--wt` path binding); `init` (headless; `--interactive` not implemented); `sync`; `pin apply|status`; `status`; `doctor`; `project list|add|rm|info|git|worktree` (v1); `progen` lifecycle + **partial** store façade (implemented verbs above); `find`; `context`; `run`; `generate` (v1 local template only); `agent pack` (v1 local install/link/list only).
+- **Sketch / deferred**: `init --interactive`; reserved progen store verbs; `agent start` / `agent prompt`; deferred worktree features (config slots, GC, pin↔slot, doctor orphans — `worktrees.md`); generate remote/templating; pack marketplace/manifest/config declarations (`env-gen-packs.md`).
 - **Absent**: `serve`, MCP, top-level action verbs, `ops` namespace, path-valued scope flags.
 
 ## Related

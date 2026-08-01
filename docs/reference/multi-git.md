@@ -5,7 +5,7 @@ How ODM materializes and maintains **plain git clones** for declared Projects an
 ## Non-goals
 
 - **Git submodules** are not a supported multi-repo model (not clone, not sync, not migration target).
-- **Worktree slots** (parallel agent/human trees on one Project) are sketched elsewhere (`worktrees.md`); this doc covers Primary checkouts and multi-clone via separate config entries.
+- **Worktree slots** (parallel agent/human trees on one Project) are **v1** elsewhere (`worktrees.md`: implemented + deferred); this doc covers Primary checkouts and multi-clone via separate config entries.
 - ODM does not store credentials; auth is whatever `git` already uses (SSH agent, credential helper, etc.).
 
 ## Managed vs unmanaged
@@ -151,5 +151,5 @@ Legacy Go ODM used `git submodule add` / remove. Rust ODM **replaces** that with
 
 - Workspace config keys and entry fields: `config.md`
 - `.odm/` tracked vs ephemeral layout: `architecture.md` / ODM state directory contract
-- Worktree slots (sketch): `worktrees.md`
+- Worktree slots (v1 + deferred): `worktrees.md`
 - CLI verbs: `cli.md`
