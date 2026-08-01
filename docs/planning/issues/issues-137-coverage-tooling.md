@@ -2,7 +2,7 @@
 id: issues-137
 title: "Local coverage tooling script (no CI)"
 description: "Add scripts/coverage.sh using cargo-llvm-cov for local seam measurement; document in README or docs; no GitHub Actions test CI."
-status: open
+status: reviewing
 issue-type: feature-request
 severity: low
 tags:
