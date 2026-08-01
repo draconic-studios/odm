@@ -2,7 +2,7 @@
 id: issues-152
 title: "Shared fsutil tree copy and pack dest prep"
 description: "One copy_tree / dest-prep engine for generate and agent pack; collapse install/link force ladders."
-status: reviewing
+status: closed
 issue-type: feature-request
 severity: medium
 tags:
@@ -68,11 +68,11 @@ None
 
 **Acceptance criteria:**
 
-- [ ] A single shared tree-copy (and count if separate) implementation serves both generate and pack copy paths
-- [ ] Pack install and link dest prep no longer maintain two fully independent nested ladders for the same exists×force policy
-- [ ] All existing generate dry-run/force and pack install/link/rm unit + integration tests pass without relaxing assertions
-- [ ] Touched files ≤1000 LOC preferred, ≤1250 hard
-- [ ] `cargo test` green; `cargo clippy --workspace --all-targets -- -D warnings` clean
+- [x] A single shared tree-copy (and count if separate) implementation serves both generate and pack copy paths
+- [x] Pack install and link dest prep no longer maintain two fully independent nested ladders for the same exists×force policy
+- [x] All existing generate dry-run/force and pack install/link/rm unit + integration tests pass without relaxing assertions
+- [x] Touched files ≤1000 LOC preferred, ≤1250 hard
+- [x] `cargo test` green; `cargo clippy --workspace --all-targets -- -D warnings` clean
 
 **Out of scope:**
 
@@ -84,3 +84,5 @@ None
 ## Comments
 
 From thermo-nuclear review 2026-08-02; parent map [[issues-148-thermo-nuclear-structure-map]].
+
+Implemented: internal `odm_core::fsutil` (`copy_tree` + `ConflictPolicy`, `count_tree`, `remove_path`, `remove_type_conflict`, symlink helpers); generate/agent_pack thin policy; single `prepare_dest` for install/link.

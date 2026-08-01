@@ -1,10 +1,11 @@
 //! Local Generator materialize — copy a template directory under the Workspace.
 
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use crate::config::{GeneratorDef, Workspace};
 use crate::error::OdmError;
+use crate::fsutil::{self, ConflictPolicy};
 use crate::paths::resolve_under_root;
 
 /// Result of a successful local generate.
@@ -77,7 +78,7 @@ pub fn generate_local(
                 "destination exists and is not a directory: {dest_rel}"
             )));
         }
-        if !force && !is_dir_empty(&dest)? {
+        if !force && !fsutil::is_dir_empty(&dest)? {
             return Err(OdmError::operation(format!(
                 "destination is not empty: {dest_rel} (use --force)"
             )));
@@ -101,160 +102,12 @@ pub fn generate_local(
     }
 
     if dry_run {
-        let copied = count_tree(&template_path)?;
+        let copied = fsutil::count_tree(&template_path)?;
         return Ok(GenerateOutcome { copied, dest });
     }
 
-    let copied = copy_tree(&template_path, &dest)?;
+    let copied = fsutil::copy_tree(&template_path, &dest, ConflictPolicy::ResolveTypeConflicts)?;
     Ok(GenerateOutcome { copied, dest })
-}
-
-fn is_dir_empty(path: &Path) -> Result<bool, OdmError> {
-    let mut entries = fs::read_dir(path).map_err(|e| {
-        OdmError::operation(format!("failed to read {}: {e}", path.display()))
-    })?;
-    Ok(entries.next().is_none())
-}
-
-/// Count files and symlinks under `src` the same way [`copy_tree`] would write them.
-/// Directories are recursed into and not counted.
-fn count_tree(src: &Path) -> Result<u32, OdmError> {
-    let mut count = 0u32;
-    let entries = fs::read_dir(src).map_err(|e| {
-        OdmError::operation(format!("failed to read {}: {e}", src.display()))
-    })?;
-    for entry in entries {
-        let entry = entry.map_err(|e| {
-            OdmError::operation(format!("failed to read entry in {}: {e}", src.display()))
-        })?;
-        let from = entry.path();
-        let ft = entry.file_type().map_err(|e| {
-            OdmError::operation(format!("failed to stat {}: {e}", from.display()))
-        })?;
-        if ft.is_dir() {
-            count += count_tree(&from)?;
-        } else {
-            // Regular files and symlinks each count as one would-copy.
-            count += 1;
-        }
-    }
-    Ok(count)
-}
-
-/// If `to` exists with a type that blocks writing `want_dir`, remove it (file or tree).
-fn remove_type_conflict(to: &Path, want_dir: bool) -> Result<(), OdmError> {
-    let meta = match fs::symlink_metadata(to) {
-        Ok(m) => m,
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(()),
-        Err(e) => {
-            return Err(OdmError::operation(format!(
-                "failed to stat {}: {e}",
-                to.display()
-            )));
-        }
-    };
-    let ft = meta.file_type();
-    let is_dir = ft.is_dir();
-    if want_dir == is_dir {
-        return Ok(());
-    }
-    if is_dir {
-        fs::remove_dir_all(to).map_err(|e| {
-            OdmError::operation(format!("failed to remove {}: {e}", to.display()))
-        })
-    } else {
-        fs::remove_file(to).map_err(|e| {
-            OdmError::operation(format!("failed to remove {}: {e}", to.display()))
-        })
-    }
-}
-
-/// Recursively copy `src` directory contents into `dst`. Counts files and symlinks.
-fn copy_tree(src: &Path, dst: &Path) -> Result<u32, OdmError> {
-    let mut copied = 0u32;
-    let entries = fs::read_dir(src).map_err(|e| {
-        OdmError::operation(format!("failed to read {}: {e}", src.display()))
-    })?;
-    for entry in entries {
-        let entry = entry.map_err(|e| {
-            OdmError::operation(format!("failed to read entry in {}: {e}", src.display()))
-        })?;
-        let from = entry.path();
-        let to = dst.join(entry.file_name());
-        let ft = entry.file_type().map_err(|e| {
-            OdmError::operation(format!("failed to stat {}: {e}", from.display()))
-        })?;
-
-        if ft.is_dir() {
-            remove_type_conflict(&to, true)?;
-            fs::create_dir_all(&to).map_err(|e| {
-                OdmError::operation(format!("failed to create {}: {e}", to.display()))
-            })?;
-            copied += copy_tree(&from, &to)?;
-        } else if ft.is_symlink() {
-            copy_symlink(&from, &to)?;
-            copied += 1;
-        } else {
-            if let Some(parent) = to.parent() {
-                fs::create_dir_all(parent).map_err(|e| {
-                    OdmError::operation(format!(
-                        "failed to create {}: {e}",
-                        parent.display()
-                    ))
-                })?;
-            }
-            remove_type_conflict(&to, false)?;
-            fs::copy(&from, &to).map_err(|e| {
-                OdmError::operation(format!(
-                    "failed to copy {} -> {}: {e}",
-                    from.display(),
-                    to.display()
-                ))
-            })?;
-            copied += 1;
-        }
-    }
-    Ok(copied)
-}
-
-fn copy_symlink(from: &Path, to: &Path) -> Result<(), OdmError> {
-    let target = fs::read_link(from).map_err(|e| {
-        OdmError::operation(format!("failed to read symlink {}: {e}", from.display()))
-    })?;
-    // Overwrite existing path when force allowed us to write into a non-empty dest.
-    if to.exists() || to.symlink_metadata().is_ok() {
-        let meta = fs::symlink_metadata(to).map_err(|e| {
-            OdmError::operation(format!("failed to stat {}: {e}", to.display()))
-        })?;
-        if meta.is_dir() {
-            fs::remove_dir_all(to).map_err(|e| {
-                OdmError::operation(format!("failed to remove {}: {e}", to.display()))
-            })?;
-        } else {
-            fs::remove_file(to).map_err(|e| {
-                OdmError::operation(format!("failed to remove {}: {e}", to.display()))
-            })?;
-        }
-    }
-    symlink_at(&target, to).map_err(|e| {
-        OdmError::operation(format!(
-            "failed to create symlink {} -> {}: {e}",
-            to.display(),
-            target.display()
-        ))
-    })
-}
-
-#[cfg(unix)]
-fn symlink_at(target: &Path, link: &Path) -> std::io::Result<()> {
-    std::os::unix::fs::symlink(target, link)
-}
-
-#[cfg(not(unix))]
-fn symlink_at(target: &Path, link: &Path) -> std::io::Result<()> {
-    // Best-effort on non-unix; surface failure as operation error to caller.
-    std::os::windows::fs::symlink_file(target, link)
-        .or_else(|_| std::os::windows::fs::symlink_dir(target, link))
 }
 
 #[cfg(test)]
@@ -262,6 +115,7 @@ mod tests {
     use super::*;
     use std::collections::BTreeMap;
     use std::io::Write;
+    use std::path::Path;
 
     use crate::config::WorkspaceConfig;
     use crate::error::exit_code;

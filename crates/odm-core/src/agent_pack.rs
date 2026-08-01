@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::config::Workspace;
 use crate::error::OdmError;
+use crate::fsutil::{self, ConflictPolicy};
 use crate::io::atomic_write;
 use crate::paths::{agent_packs_path, resolve_under_root};
 
@@ -59,8 +60,8 @@ pub fn pack_install(
     let name = pack_name(&resolved)?;
     let dest = home.as_ref().join(&name);
 
-    prepare_dest_for_install(&dest, force)?;
-    copy_tree(&resolved, &dest)?;
+    prepare_dest(&dest, force, DestPrep::InstallDir)?;
+    fsutil::copy_tree(&resolved, &dest, ConflictPolicy::OverwriteInPlace)?;
 
     let entry = PackEntry {
         name,
@@ -86,8 +87,8 @@ pub fn pack_link(
     let name = pack_name(&resolved)?;
     let dest = home.as_ref().join(&name);
 
-    prepare_dest_for_link(&dest, force)?;
-    create_symlink(&abs_source, &dest)?;
+    prepare_dest(&dest, force, DestPrep::LinkSlot)?;
+    fsutil::create_symlink(&abs_source, &dest)?;
 
     let entry = PackEntry {
         name,
@@ -111,7 +112,7 @@ pub fn pack_rm(ws: &Workspace, name: &str) -> Result<PackEntry, OdmError> {
     })?;
     let entry = packs.remove(idx);
     if entry.path.symlink_metadata().is_ok() {
-        remove_dest(&entry.path)?;
+        fsutil::remove_path(&entry.path)?;
     }
     save_registry(&ws.root, &packs)?;
     Ok(entry)
@@ -174,47 +175,25 @@ fn absolutize(path: &Path) -> Result<PathBuf, OdmError> {
     Ok(cwd.join(path))
 }
 
-fn is_dir_empty(path: &Path) -> Result<bool, OdmError> {
-    let mut entries = fs::read_dir(path).map_err(|e| {
-        OdmError::operation(format!("failed to read {}: {e}", path.display()))
-    })?;
-    Ok(entries.next().is_none())
+/// Terminal shape of the pack destination after prep.
+#[derive(Debug, Clone, Copy)]
+enum DestPrep {
+    /// Empty directory ready for tree copy.
+    InstallDir,
+    /// Path cleared so a symlink can be created.
+    LinkSlot,
 }
 
-fn ensure_home_parent(dest: &Path) -> Result<(), OdmError> {
-    if let Some(parent) = dest.parent() {
-        fs::create_dir_all(parent).map_err(|e| {
-            OdmError::operation(format!(
-                "failed to create pack home {}: {e}",
-                parent.display()
-            ))
-        })?;
-    }
-    Ok(())
+fn dest_exists_err(dest: &Path) -> OdmError {
+    OdmError::operation(format!(
+        "pack destination already exists: {} (use --force)",
+        dest.display()
+    ))
 }
 
-fn remove_dest(dest: &Path) -> Result<(), OdmError> {
-    let meta = fs::symlink_metadata(dest).map_err(|e| {
-        OdmError::operation(format!("failed to stat {}: {e}", dest.display()))
-    })?;
-    if meta.file_type().is_symlink() || meta.is_file() {
-        fs::remove_file(dest).map_err(|e| {
-            OdmError::operation(format!("failed to remove {}: {e}", dest.display()))
-        })?;
-    } else if meta.is_dir() {
-        fs::remove_dir_all(dest).map_err(|e| {
-            OdmError::operation(format!("failed to remove {}: {e}", dest.display()))
-        })?;
-    } else {
-        fs::remove_file(dest).map_err(|e| {
-            OdmError::operation(format!("failed to remove {}: {e}", dest.display()))
-        })?;
-    }
-    Ok(())
-}
-
-fn prepare_dest_for_install(dest: &Path, force: bool) -> Result<(), OdmError> {
-    ensure_home_parent(dest)?;
+/// Shared install/link dest prep: ensure parent → lexists × force/empty-dir → terminal shape.
+fn prepare_dest(dest: &Path, force: bool, prep: DestPrep) -> Result<(), OdmError> {
+    fsutil::ensure_parent(dest)?;
 
     let meta = match fs::symlink_metadata(dest) {
         Ok(m) => Some(m),
@@ -229,164 +208,45 @@ fn prepare_dest_for_install(dest: &Path, force: bool) -> Result<(), OdmError> {
 
     match meta {
         None => {
-            fs::create_dir_all(dest).map_err(|e| {
-                OdmError::operation(format!("failed to create {}: {e}", dest.display()))
-            })?;
+            if matches!(prep, DestPrep::InstallDir) {
+                fsutil::ensure_dir(dest)?;
+            }
         }
         Some(meta) => {
             let ft = meta.file_type();
-            if ft.is_symlink() || meta.is_file() {
-                if !force {
-                    return Err(OdmError::operation(format!(
-                        "pack destination already exists: {} (use --force)",
-                        dest.display()
-                    )));
+            let is_dir = meta.is_dir() && !ft.is_symlink();
+            if is_dir {
+                match prep {
+                    DestPrep::InstallDir => {
+                        if force {
+                            fsutil::remove_path(dest)?;
+                            fsutil::ensure_dir(dest)?;
+                        } else if !fsutil::is_dir_empty(dest)? {
+                            return Err(dest_exists_err(dest));
+                        }
+                        // empty dir: keep and copy into it
+                    }
+                    DestPrep::LinkSlot => {
+                        // empty dir OK without force; non-empty only with force — remove either way
+                        if !force && !fsutil::is_dir_empty(dest)? {
+                            return Err(dest_exists_err(dest));
+                        }
+                        fsutil::remove_path(dest)?;
+                    }
                 }
-                remove_dest(dest)?;
-                fs::create_dir_all(dest).map_err(|e| {
-                    OdmError::operation(format!("failed to create {}: {e}", dest.display()))
-                })?;
-            } else if meta.is_dir() {
-                if force {
-                    remove_dest(dest)?;
-                    fs::create_dir_all(dest).map_err(|e| {
-                        OdmError::operation(format!("failed to create {}: {e}", dest.display()))
-                    })?;
-                } else if !is_dir_empty(dest)? {
-                    return Err(OdmError::operation(format!(
-                        "pack destination already exists: {} (use --force)",
-                        dest.display()
-                    )));
-                }
-                // empty dir: keep and copy into it
-            } else if !force {
-                return Err(OdmError::operation(format!(
-                    "pack destination already exists: {} (use --force)",
-                    dest.display()
-                )));
             } else {
-                remove_dest(dest)?;
-                fs::create_dir_all(dest).map_err(|e| {
-                    OdmError::operation(format!("failed to create {}: {e}", dest.display()))
-                })?;
+                // file, symlink, or other non-dir
+                if !force {
+                    return Err(dest_exists_err(dest));
+                }
+                fsutil::remove_path(dest)?;
+                if matches!(prep, DestPrep::InstallDir) {
+                    fsutil::ensure_dir(dest)?;
+                }
             }
         }
     }
     Ok(())
-}
-
-fn prepare_dest_for_link(dest: &Path, force: bool) -> Result<(), OdmError> {
-    ensure_home_parent(dest)?;
-
-    let meta = match fs::symlink_metadata(dest) {
-        Ok(m) => Some(m),
-        Err(e) if e.kind() == io::ErrorKind::NotFound => None,
-        Err(e) => {
-            return Err(OdmError::operation(format!(
-                "failed to stat {}: {e}",
-                dest.display()
-            )));
-        }
-    };
-
-    if let Some(meta) = meta {
-        let ft = meta.file_type();
-        if ft.is_symlink() || meta.is_file() {
-            if !force {
-                return Err(OdmError::operation(format!(
-                    "pack destination already exists: {} (use --force)",
-                    dest.display()
-                )));
-            }
-            remove_dest(dest)?;
-        } else if meta.is_dir() {
-            if !force && !is_dir_empty(dest)? {
-                return Err(OdmError::operation(format!(
-                    "pack destination already exists: {} (use --force)",
-                    dest.display()
-                )));
-            }
-            // empty dir OK without force; non-empty only with force — remove either way
-            remove_dest(dest)?;
-        } else if !force {
-            return Err(OdmError::operation(format!(
-                "pack destination already exists: {} (use --force)",
-                dest.display()
-            )));
-        } else {
-            remove_dest(dest)?;
-        }
-    }
-    Ok(())
-}
-
-/// Recursively copy `src` directory contents into `dst`.
-fn copy_tree(src: &Path, dst: &Path) -> Result<(), OdmError> {
-    let entries = fs::read_dir(src).map_err(|e| {
-        OdmError::operation(format!("failed to read {}: {e}", src.display()))
-    })?;
-    for entry in entries {
-        let entry = entry.map_err(|e| {
-            OdmError::operation(format!("failed to read entry in {}: {e}", src.display()))
-        })?;
-        let from = entry.path();
-        let to = dst.join(entry.file_name());
-        let ft = entry.file_type().map_err(|e| {
-            OdmError::operation(format!("failed to stat {}: {e}", from.display()))
-        })?;
-
-        if ft.is_dir() {
-            fs::create_dir_all(&to).map_err(|e| {
-                OdmError::operation(format!("failed to create {}: {e}", to.display()))
-            })?;
-            copy_tree(&from, &to)?;
-        } else if ft.is_symlink() {
-            let target = fs::read_link(&from).map_err(|e| {
-                OdmError::operation(format!("failed to read symlink {}: {e}", from.display()))
-            })?;
-            if to.exists() || to.symlink_metadata().is_ok() {
-                remove_dest(&to)?;
-            }
-            create_symlink(&target, &to)?;
-        } else {
-            if let Some(parent) = to.parent() {
-                fs::create_dir_all(parent).map_err(|e| {
-                    OdmError::operation(format!(
-                        "failed to create {}: {e}",
-                        parent.display()
-                    ))
-                })?;
-            }
-            fs::copy(&from, &to).map_err(|e| {
-                OdmError::operation(format!(
-                    "failed to copy {} -> {}: {e}",
-                    from.display(),
-                    to.display()
-                ))
-            })?;
-        }
-    }
-    Ok(())
-}
-
-fn create_symlink(target: &Path, link: &Path) -> Result<(), OdmError> {
-    #[cfg(unix)]
-    {
-        std::os::unix::fs::symlink(target, link).map_err(|e| {
-            OdmError::operation(format!(
-                "failed to create symlink {} -> {}: {e}",
-                link.display(),
-                target.display()
-            ))
-        })
-    }
-    #[cfg(not(unix))]
-    {
-        let _ = (target, link);
-        Err(OdmError::operation(
-            "pack link requires symlink support (not available on this platform)".into(),
-        ))
-    }
 }
 
 fn load_registry(root: &Path) -> Result<Vec<PackEntry>, OdmError> {

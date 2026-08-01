@@ -8,6 +8,7 @@ mod doctor;
 mod doctor_pack;
 mod doctor_worktree;
 mod error;
+mod fsutil;
 mod generate;
 mod gitignore;
 mod init;
