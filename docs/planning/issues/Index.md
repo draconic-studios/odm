@@ -10,10 +10,11 @@ See `docs/agents/issue-tracker.md`.
 
 ## Frontier (open, unblocked)
 
-- [[issues-23-integration-test-harness]]
+_(none — phase-2 decision tickets closed; map open for human acceptance)_
 
 ## Closed (recent)
 
+- [[issues-23-integration-test-harness]]
 - [[issues-15-vertical-slice-order-and-core-acceptance]]
 - [[issues-16-odm-git-shell-contract]]
 - [[issues-17-config-and-pin-serde-model]]

@@ -2,13 +2,12 @@
 id: issues-23
 title: "Integration test harness"
 description: "Lock how cargo tests drive the odm binary against temp core-desk + fixtures."
-status: reviewing
+status: closed
 tags:
   - planning
   - issue
   - wayfinder
   - wayfinder-grilling
-  - ready-for-agent
 ---
 
 # Integration test harness
@@ -68,3 +67,5 @@ Additional recommended (not all required for first green): origin mismatch fails
 Parent map: [[issues-14-implement-core-map]]
 
 Recommended decision locked for agent implement 2026-08-01.
+
+**Done 2026-08-01:** landed `crates/odm/tests/core_desk.rs` (full gate: init empty + temp core-desk sync → pin status/apply → status --json → doctor/--fix) and `cli_init.rs` (init/list/project-add flow). assert_cmd + serde_json; skip if git missing; offline only.
