@@ -135,7 +135,7 @@ fn progen_add_find_context_flow() {
 }
 
 #[test]
-fn generate_and_agent_stubs_exit_1() {
+fn generate_lists_empty_and_agent_stubs_exit_1() {
     let dir = tempdir().unwrap();
     let root = dir.path().join("ws");
     fs::create_dir_all(&root).unwrap();
@@ -144,9 +144,24 @@ fn generate_and_agent_stubs_exit_1() {
         .args(["init", "--no-git", "."])
         .assert()
         .success();
+
+    odm()
+        .current_dir(&root)
+        .args(["generate"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("(no generators)"));
+
+    // name without --dest → usage (not not_implemented)
+    odm()
+        .current_dir(&root)
+        .args(["generate", "foo"])
+        .assert()
+        .failure()
+        .code(1)
+        .stderr(predicate::str::contains("--dest"));
+
     for args in [
-        vec!["generate"],
-        vec!["generate", "foo"],
         vec!["agent", "pack"],
         vec!["agent", "start"],
         vec!["agent", "prompt", "x"],

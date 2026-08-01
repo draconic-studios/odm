@@ -1,6 +1,7 @@
 //! Library command entrypoints returning serializable DTOs.
 
 mod find;
+mod generate;
 mod materialize;
 mod project;
 mod progen;
@@ -9,6 +10,10 @@ mod status;
 mod worktree;
 
 pub use find::{find_notes_dto, FindDto};
+pub use generate::{
+    format_generate_run_human, format_generator_list_human, list_generators_dto, GenerateRunDto,
+    GeneratorListDto, GeneratorListItem,
+};
 pub use materialize::{
     format_progen_add_human, format_project_add_human, materialize_json, materialize_json_opt,
     materialize_sync_human, MaterializeLabel,

@@ -36,7 +36,7 @@ See Agent Brief.
 
 ## Blocked by
 
-- [[issues-48-generate-cli]]
+- ~~[[issues-48-generate-cli]]~~ (closed)
 
 ## Agent Brief
 

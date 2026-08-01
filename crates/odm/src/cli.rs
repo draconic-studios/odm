@@ -104,10 +104,16 @@ pub enum Commands {
         extra: Vec<String>,
     },
 
-    /// Generate from a template (not implemented).
+    /// List generators or materialize a local template.
     Generate {
-        /// Generator name.
+        /// Generator name (omit to list).
         name: Option<String>,
+        /// Destination path relative to Workspace root (required with name).
+        #[arg(long, requires = "name")]
+        dest: Option<PathBuf>,
+        /// Overwrite files when destination is non-empty.
+        #[arg(long, requires = "name")]
+        force: bool,
     },
 
     /// Agent pack / session helpers (not implemented).

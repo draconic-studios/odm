@@ -46,6 +46,7 @@ Productize **Generators** per `docs/reference/config.md`, `cli.md`, and `env-gen
 - **[[issues-47-generator-materialize-core]] closed:** `odm_core::{generate_local, generator, GenerateOutcome}` — local template recursive copy, force/empty-dest/escape/url-only semantics; unit tests; no CLI.
 - Empty template dir → success `copied: 0` (confirmed in core).
 - Symlink in template → copy as symlink when platform allows (unix tested).
+- **[[issues-48-generate-cli]] closed:** `odm generate` list + run via core; `--dest`/`--force`; JSON list/run shapes; stub test no longer expects generate exit 1.
 
 ## Out of scope
 

@@ -2,7 +2,7 @@
 id: issues-48
 title: "odm generate CLI list and run"
 description: "Wire odm generate list + materialize with --dest/--force and JSON shapes; drop not_implemented stub."
-status: open
+status: closed
 issue-type: feature-request
 severity: medium
 tags:
@@ -10,7 +10,6 @@ tags:
   - issue
   - wayfinder
   - wayfinder-task
-  - ready-for-agent
 ---
 
 # odm generate CLI list and run
@@ -71,13 +70,13 @@ See Agent Brief.
 
 **Acceptance criteria:**
 
-- [ ] `odm generate` lists; no longer not_implemented
-- [ ] `odm generate <name> --dest …` materializes via core
-- [ ] `--force` passed through
-- [ ] JSON list + run shapes match map
-- [ ] Stub test no longer requires generate exit 1 for list/run happy paths
-- [ ] `cargo test` green
-- [ ] No remote fetch; no agent pack work
+- [x] `odm generate` lists; no longer not_implemented
+- [x] `odm generate <name> --dest …` materializes via core
+- [x] `--force` passed through
+- [x] JSON list + run shapes match map
+- [x] Stub test no longer requires generate exit 1 for list/run happy paths
+- [x] `cargo test` green
+- [x] No remote fetch; no agent pack work
 
 **Out of scope:**
 
@@ -87,4 +86,14 @@ See Agent Brief.
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met
+
+## Answer
+
+Wired `odm generate` as a thin CLI adapter over `odm_core::generate_local`.
+
+- **Clap:** `Generate { name, dest, force }` — `--dest`/`--force` require `name`; name without dest → usage exit 1
+- **List:** `commands/generate.rs` DTOs — human one-name-per-line (or `(no generators)`); JSON `{ "generators": [{ name, template, url }] }` with nulls for absent optionals
+- **Run:** `generate_local(&ws, name, dest_rel, force)`; human `generated <name> -> <dest> (<n> files)`; JSON `{ generator, dest, copied }` using user-relative dest
+- **Tests:** unit tests for list/run JSON shapes; progen_vault stub updated (list succeeds; agent stubs still not_implemented)
+- Full e2e dogfood/docs left to [[issues-49-generate-integration-and-docs]]

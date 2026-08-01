@@ -6,19 +6,20 @@ use std::process::ExitCode;
 
 use clap::Parser;
 use odm::commands::{
-    find_notes_dto, format_action_list_human, format_progen_add_human, format_progen_info_human,
+    find_notes_dto, format_action_list_human, format_generate_run_human,
+    format_generator_list_human, format_progen_add_human, format_progen_info_human,
     format_progen_list_human, format_project_add_human, format_project_info_human,
     format_project_list_human, format_worktree_add_human, format_worktree_list_human,
-    format_worktree_rm_human, list_actions_dto, list_projects, list_progens, materialize_json,
-    materialize_json_opt, materialize_sync_human, progen_info, project_info, status_snapshot,
-    worktree_list_dto, worktree_slot_action_dto,
+    format_worktree_rm_human, list_actions_dto, list_generators_dto, list_projects, list_progens,
+    materialize_json, materialize_json_opt, materialize_sync_human, progen_info, project_info,
+    status_snapshot, worktree_list_dto, worktree_slot_action_dto, GenerateRunDto,
 };
 use odm_actions::{run_action, CwdTarget, RunOptions, StdioMode};
 use odm_core::{
-    discover_root, format_doctor_human, format_status_human, init_workspace, load_workspace,
-    path_buf_to_rel, pin_apply, pin_status, project_add, project_git, project_rm, run_doctor,
-    sync_managed, worktree_add, worktree_list, worktree_rm, InitOptions, OdmError, ProgenEntry,
-    ProjectEntry,
+    discover_root, format_doctor_human, format_status_human, generate_local, init_workspace,
+    load_workspace, path_buf_to_rel, pin_apply, pin_status, project_add, project_git, project_rm,
+    run_doctor, sync_managed, worktree_add, worktree_list, worktree_rm, InitOptions, OdmError,
+    ProgenEntry, ProjectEntry,
 };
 use odm_git::Git;
 use odm_progen::{
@@ -382,7 +383,41 @@ fn run(cli: Cli, out: &GlobalOut) -> Result<i32, OdmError> {
                 }
             }
         }
-        Commands::Generate { .. } => Err(OdmError::not_implemented("generate")),
+        Commands::Generate { name, dest, force } => {
+            let root = discover_root(cli.root.as_deref(), &std::env::current_dir()?)?;
+            let ws = load_workspace(&root)?;
+            match name {
+                None => {
+                    let dto = list_generators_dto(&ws);
+                    if out.json {
+                        print_json(&dto)?;
+                    } else {
+                        print!("{}", format_generator_list_human(&dto));
+                    }
+                    Ok(0)
+                }
+                Some(name) => {
+                    let dest = dest.ok_or_else(|| {
+                        OdmError::usage("generate requires --dest <path> when a name is given")
+                    })?;
+                    let dest_rel = path_buf_to_rel(&dest)?;
+                    let outcome = generate_local(&ws, &name, &dest_rel, force)?;
+                    if out.json {
+                        print_json(&GenerateRunDto {
+                            generator: name,
+                            dest: dest_rel,
+                            copied: outcome.copied,
+                        })?;
+                    } else {
+                        print!(
+                            "{}",
+                            format_generate_run_human(&name, &dest_rel, outcome.copied)
+                        );
+                    }
+                    Ok(0)
+                }
+            }
+        }
         Commands::Agent { cmd } => {
             let verb = match cmd {
                 AgentCmd::Pack { .. } => "agent pack",
