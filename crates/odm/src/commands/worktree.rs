@@ -83,7 +83,7 @@ pub fn worktree_slot_action_dto(out: &WorktreeSlotOutcome) -> WorktreeSlotAction
     }
 }
 
-fn prune_slot_dto(s: &odm_core::WorktreeSlotInfo) -> WorktreePruneSlotDto {
+fn prune_slot_dto(s: &odm_core::WorktreePruneSlot) -> WorktreePruneSlotDto {
     WorktreePruneSlotDto {
         name: s.name.clone(),
         path: s.path.clone(),
@@ -286,15 +286,13 @@ mod tests {
     fn prune_dto_json_shape() {
         let out = WorktreePruneOutcome {
             project: "alpha".into(),
-            pruned: vec![WorktreeSlotInfo {
+            pruned: vec![odm_core::WorktreePruneSlot {
                 name: "stale".into(),
                 path: "worktrees/alpha/stale".into(),
-                dirty: None,
             }],
-            skipped_nonempty: vec![WorktreeSlotInfo {
+            skipped_nonempty: vec![odm_core::WorktreePruneSlot {
                 name: "full".into(),
                 path: "worktrees/alpha/full".into(),
-                dirty: None,
             }],
         };
         let v = serde_json::to_value(worktree_prune_dto(&out)).unwrap();
@@ -321,15 +319,13 @@ mod tests {
 
         let partial = WorktreePruneOutcome {
             project: "alpha".into(),
-            pruned: vec![WorktreeSlotInfo {
+            pruned: vec![odm_core::WorktreePruneSlot {
                 name: "empty".into(),
                 path: "worktrees/alpha/empty".into(),
-                dirty: None,
             }],
-            skipped_nonempty: vec![WorktreeSlotInfo {
+            skipped_nonempty: vec![odm_core::WorktreePruneSlot {
                 name: "full".into(),
                 path: "worktrees/alpha/full".into(),
-                dirty: None,
             }],
         };
         let h = format_worktree_prune_human(&partial);

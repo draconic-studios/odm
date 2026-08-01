@@ -1,14 +1,52 @@
-use std::collections::BTreeSet;
-
 use odm_git::Git;
 
 use crate::config::Workspace;
 use crate::doctor::{CheckStatus, DoctorCheck};
+use crate::inventory::observe_project_worktrees;
 use crate::paths::abs_checkout;
-use crate::worktree::{worktree_list, worktree_orphan_infos};
+
+/// Orphan + dirty worktree checks from **one** inventory sample per project.
+pub(crate) fn worktree_checks<R: odm_git::CommandRunner>(
+    git: &Git<R>,
+    ws: &Workspace,
+) -> Vec<DoctorCheck> {
+    let mut checks = Vec::new();
+    for project in ws.config.projects.keys() {
+        let Ok(inv) = observe_project_worktrees(git, ws, project) else {
+            continue;
+        };
+        for orphan in inv.orphans {
+            checks.push(DoctorCheck {
+                id: format!("worktree_orphan:{project}:{}", orphan.name),
+                status: CheckStatus::Warn,
+                message: format!(
+                    "orphan worktree slot directory (not a registered git worktree): {}",
+                    orphan.path
+                ),
+                fixable: false,
+            });
+        }
+        for slot in inv.slots {
+            if slot.dirty != Some(true) {
+                continue;
+            }
+            let rel = format!("worktrees/{project}/{}", slot.name);
+            checks.push(DoctorCheck {
+                id: format!("worktree_dirty:{project}:{}", slot.name),
+                status: CheckStatus::Warn,
+                message: format!("dirty worktree slot working tree: {rel}"),
+                fixable: false,
+            });
+        }
+    }
+    checks
+}
 
 /// Warn on `worktrees/<project>/<slot>/` dirs that are not registered git worktrees.
 /// Never fails; swallows git/path errors. Does not scan unknown project names under `worktrees/`.
+///
+/// Prefer [`worktree_checks`] in doctor so orphan+dirty share one sample.
+#[allow(dead_code)]
 pub(crate) fn worktree_orphan_checks<R: odm_git::CommandRunner>(
     git: &Git<R>,
     ws: &Workspace,
@@ -28,14 +66,11 @@ pub(crate) fn worktree_orphan_checks<R: odm_git::CommandRunner>(
             continue;
         }
 
-        // Registered slot names under prefix (same filter as `worktree_list`).
-        // Non-git primary / list errors → skip project (no Fail from this feature).
-        let registered: BTreeSet<String> = match worktree_list(git, ws, project) {
-            Ok(out) => out.slots.into_iter().map(|s| s.name).collect(),
-            Err(_) => continue,
+        let Ok(inv) = observe_project_worktrees(git, ws, project) else {
+            continue;
         };
 
-        for orphan in worktree_orphan_infos(ws, project, &registered) {
+        for orphan in inv.orphans {
             checks.push(DoctorCheck {
                 id: format!("worktree_orphan:{project}:{}", orphan.name),
                 status: CheckStatus::Warn,
@@ -46,23 +81,25 @@ pub(crate) fn worktree_orphan_checks<R: odm_git::CommandRunner>(
                 fixable: false,
             });
         }
+        let _ = inv.slots; // sample includes dirty probes; orphan path ignores them
     }
     checks
 }
 
 /// Warn on dirty registered worktree slots. Not fixable; soft-skips probe errors.
 ///
-/// Uses `dirty` already probed by [`worktree_list`] (no second `is_clean`).
+/// Prefer [`worktree_checks`] in doctor so orphan+dirty share one sample.
+#[allow(dead_code)]
 pub(crate) fn worktree_dirty_checks<R: odm_git::CommandRunner>(
     git: &Git<R>,
     ws: &Workspace,
 ) -> Vec<DoctorCheck> {
     let mut checks = Vec::new();
     for project in ws.config.projects.keys() {
-        let Ok(list) = worktree_list(git, ws, project) else {
+        let Ok(inv) = observe_project_worktrees(git, ws, project) else {
             continue;
         };
-        for slot in list.slots {
+        for slot in inv.slots {
             if slot.dirty != Some(true) {
                 continue;
             }
@@ -215,8 +252,6 @@ mod tests {
         p
     }
 
-    // --- worktree orphan checks ---
-
     #[test]
     fn orphan_slot_dir_warns_not_fixable() {
         let dir = tempdir().unwrap();
@@ -254,7 +289,11 @@ mod tests {
             primary.display(),
             slot.display(),
         );
-        let (runner, _) = ScriptedRunner::new(vec![is_repo_true(), out_ok_stdout(&porcelain)]);
+        let (runner, _) = ScriptedRunner::new(vec![
+            is_repo_true(),
+            out_ok_stdout(&porcelain),
+            out_ok_stdout(""),
+        ]);
         let g = Git::with_runner(runner);
         let checks = worktree_orphan_checks(&g, &ws);
         assert!(
@@ -269,7 +308,6 @@ mod tests {
         let root = dir.path();
         ensure_primary(root, "projects/alpha");
         let ws = ws_with_project(root.to_path_buf(), "alpha", "projects/alpha");
-        // No git calls expected — worktrees/ absent short-circuits.
         let (runner, calls) = ScriptedRunner::new(vec![]);
         let g = Git::with_runner(runner);
         let checks = worktree_orphan_checks(&g, &ws);
@@ -296,7 +334,6 @@ mod tests {
         let dir = tempdir().unwrap();
         let root = dir.path();
         ensure_primary(root, "projects/alpha");
-        // Configured project has no worktrees dir; stray unconfigured name under worktrees/.
         fs::create_dir_all(root.join("worktrees/ghost/slot")).unwrap();
         let ws = ws_with_project(root.to_path_buf(), "alpha", "projects/alpha");
         let (runner, calls) = ScriptedRunner::new(vec![]);
@@ -342,16 +379,11 @@ mod tests {
             "worktree {}\nHEAD abc\nbranch refs/heads/main\n\n",
             primary.display()
         );
-        // observe: is_repo + head + origin + dirty; orphan: is_repo + worktree list;
-        // dirty: is_repo + worktree list (no registered slots → no is_clean).
-        // manage_gitignore off → no workspace is_repo. apply_fixes only ensures .odm layout.
         let (runner, _) = ScriptedRunner::new(vec![
             is_repo_true(),
-            out_ok_stdout("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"), // head_sha
-            out_ok_stdout("https://example.com/alpha.git\n"),             // origin
-            out_ok_stdout(""),                                             // is_clean
-            is_repo_true(),
-            out_ok_stdout(&porcelain),
+            out_ok_stdout("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"),
+            out_ok_stdout("https://example.com/alpha.git\n"),
+            out_ok_stdout(""),
             is_repo_true(),
             out_ok_stdout(&porcelain),
         ]);
@@ -365,7 +397,7 @@ mod tests {
             .expect("orphan warn present");
         assert_eq!(c.status, CheckStatus::Warn);
         assert!(!c.fixable);
-        assert!(report.ok); // Warn only
+        assert!(report.ok);
         assert!(
             report
                 .checks
@@ -381,10 +413,6 @@ mod tests {
         let dir = tempdir().unwrap();
         let root = dir.path();
         let primary = ensure_primary(root, "projects/alpha");
-        // "a/b" can't be a single dir name; use ".." which validate_slot_name rejects.
-        // Creating ".." as a directory name is awkward; use a name with invalid chars if possible.
-        // On disk we can create a dir named with spaces-only? empty rejected after trim.
-        // Create "." is the current dir. Use a file (not dir) and a valid orphan to prove filter.
         let project_wt = root.join("worktrees/alpha");
         fs::create_dir_all(&project_wt).unwrap();
         fs::write(project_wt.join("not-a-dir"), b"x").unwrap();
@@ -401,8 +429,6 @@ mod tests {
         assert_eq!(checks.len(), 1);
         assert_eq!(checks[0].id, "worktree_orphan:alpha:real");
     }
-
-    // --- worktree dirty checks ---
 
     #[test]
     fn dirty_registered_slot_warns_not_fixable() {
@@ -421,7 +447,7 @@ mod tests {
         let (runner, _) = ScriptedRunner::new(vec![
             is_repo_true(),
             out_ok_stdout(&porcelain),
-            out_ok_stdout(" M dirty.txt\n"), // is_clean → dirty
+            out_ok_stdout(" M dirty.txt\n"),
         ]);
         let g = Git::with_runner(runner);
         let checks = worktree_dirty_checks(&g, &ws);
@@ -450,7 +476,7 @@ mod tests {
         let (runner, _) = ScriptedRunner::new(vec![
             is_repo_true(),
             out_ok_stdout(&porcelain),
-            out_ok_stdout(""), // is_clean → clean
+            out_ok_stdout(""),
         ]);
         let g = Git::with_runner(runner);
         let checks = worktree_dirty_checks(&g, &ws);
@@ -472,22 +498,20 @@ mod tests {
             "worktree {}\nHEAD abc\nbranch refs/heads/main\n\n",
             primary.display()
         );
-        // orphan scan + dirty scan each call worktree_list once
-        let (runner, _) = ScriptedRunner::new(vec![
-            is_repo_true(),
-            out_ok_stdout(&porcelain),
-            is_repo_true(),
-            out_ok_stdout(&porcelain),
-        ]);
+        let (runner, _) = ScriptedRunner::new(vec![is_repo_true(), out_ok_stdout(&porcelain)]);
         let g = Git::with_runner(runner);
-        let orphans = worktree_orphan_checks(&g, &ws);
-        let dirty = worktree_dirty_checks(&g, &ws);
+        let checks = worktree_checks(&g, &ws);
+        let orphans: Vec<_> = checks
+            .iter()
+            .filter(|c| c.id.starts_with("worktree_orphan:"))
+            .collect();
+        let dirty: Vec<_> = checks
+            .iter()
+            .filter(|c| c.id.starts_with("worktree_dirty:"))
+            .collect();
         assert_eq!(orphans.len(), 1);
         assert_eq!(orphans[0].id, "worktree_orphan:alpha:stale");
-        assert!(
-            dirty.iter().all(|c| !c.id.starts_with("worktree_dirty:")),
-            "orphan must not get dirty check: {dirty:?}"
-        );
+        assert!(dirty.is_empty(), "orphan must not get dirty check: {dirty:?}");
     }
 
     #[test]
@@ -568,19 +592,14 @@ mod tests {
             primary.display(),
             slot.display(),
         );
-        // observe: is_repo + head + origin + dirty(primary);
-        // orphan/dirty each: is_repo + worktree list + is_clean(slot) inside list.
         let (runner, _) = ScriptedRunner::new(vec![
             is_repo_true(),
             out_ok_stdout("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"),
             out_ok_stdout("https://example.com/alpha.git\n"),
-            out_ok_stdout(""), // primary clean
+            out_ok_stdout(""),
             is_repo_true(),
             out_ok_stdout(&porcelain),
-            out_ok_stdout("?? dirty.txt\n"), // slot dirty (orphan list probe)
-            is_repo_true(),
-            out_ok_stdout(&porcelain),
-            out_ok_stdout("?? dirty.txt\n"), // slot dirty (dirty list probe)
+            out_ok_stdout("?? dirty.txt\n"),
         ]);
         let g = Git::with_runner(runner);
         let report = run_doctor(&g, &ws, true).unwrap();
@@ -595,6 +614,34 @@ mod tests {
             .expect("dirty warn present");
         assert_eq!(c.status, CheckStatus::Warn);
         assert!(!c.fixable);
-        assert!(report.ok); // Warn only
+        assert!(report.ok);
+    }
+
+    #[test]
+    fn combined_checks_one_list_per_project() {
+        let dir = tempdir().unwrap();
+        let root = dir.path();
+        let primary = ensure_primary(root, "projects/alpha");
+        let slot = worktree_slot_path(root, "alpha", "feat");
+        let orphan = worktree_slot_path(root, "alpha", "stale");
+        fs::create_dir_all(&slot).unwrap();
+        fs::create_dir_all(&orphan).unwrap();
+        let ws = ws_with_project(root.to_path_buf(), "alpha", "projects/alpha");
+        let porcelain = format!(
+            "worktree {}\nHEAD abc\nbranch refs/heads/main\n\n\
+             worktree {}\nHEAD def\nbranch refs/heads/feat\n\n",
+            primary.display(),
+            slot.display(),
+        );
+        let (runner, calls) = ScriptedRunner::new(vec![
+            is_repo_true(),
+            out_ok_stdout(&porcelain),
+            out_ok_stdout(" M x\n"),
+        ]);
+        let g = Git::with_runner(runner);
+        let checks = worktree_checks(&g, &ws);
+        assert!(checks.iter().any(|c| c.id == "worktree_orphan:alpha:stale"));
+        assert!(checks.iter().any(|c| c.id == "worktree_dirty:alpha:feat"));
+        assert_eq!(calls.lock().unwrap().len(), 3);
     }
 }

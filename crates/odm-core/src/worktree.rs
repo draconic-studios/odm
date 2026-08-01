@@ -46,14 +46,22 @@ pub struct WorktreeListOutcome {
     pub slots: Vec<WorktreeSlotInfo>,
 }
 
+/// One pruned/skipped orphan row (name + path only — no dirty).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct WorktreePruneSlot {
+    pub name: String,
+    /// Relative to workspace root: `worktrees/<project>/<slot>`.
+    pub path: String,
+}
+
 /// Outcome of pruning orphan slot directories.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct WorktreePruneOutcome {
     pub project: String,
     /// Orphans successfully removed.
-    pub pruned: Vec<WorktreeSlotInfo>,
+    pub pruned: Vec<WorktreePruneSlot>,
     /// Non-empty orphans left when `force` was false (caller should exit 3 if non-empty).
-    pub skipped_nonempty: Vec<WorktreeSlotInfo>,
+    pub skipped_nonempty: Vec<WorktreePruneSlot>,
 }
 
 /// One pruned/skipped slot under `worktree_prune_all` (includes project).
@@ -102,14 +110,7 @@ pub fn worktree_list<R: odm_git::CommandRunner>(
     ws: &Workspace,
     project: &str,
 ) -> Result<WorktreeListOutcome, OdmError> {
-    let primary = resolve_primary_git(git, ws, project)?;
-    let prefix = ws.root.join("worktrees").join(project);
-    let entries = git.worktree_list(&primary)?;
-    let mut slots: Vec<WorktreeSlotInfo> = entries
-        .into_iter()
-        .filter_map(|e| slot_info_under_prefix(&prefix, project, &e.path))
-        .collect();
-    slots.sort_by(|a, b| a.name.cmp(&b.name));
+    let mut slots = list_registered_slots(git, ws, project)?;
     for slot in &mut slots {
         let abs = worktree_slot_path(&ws.root, project, &slot.name);
         slot.dirty = git.is_clean(&abs).ok().map(|c| !c);
@@ -118,6 +119,32 @@ pub fn worktree_list<R: odm_git::CommandRunner>(
         project: project.to_string(),
         slots,
     })
+}
+
+/// Registered slot names under `worktrees/<project>/` without dirty probes.
+pub fn worktree_registered_names<R: odm_git::CommandRunner>(
+    git: &Git<R>,
+    ws: &Workspace,
+    project: &str,
+) -> Result<BTreeSet<String>, OdmError> {
+    let slots = list_registered_slots(git, ws, project)?;
+    Ok(slots.into_iter().map(|s| s.name).collect())
+}
+
+fn list_registered_slots<R: odm_git::CommandRunner>(
+    git: &Git<R>,
+    ws: &Workspace,
+    project: &str,
+) -> Result<Vec<WorktreeSlotInfo>, OdmError> {
+    let primary = resolve_primary_git(git, ws, project)?;
+    let prefix = ws.root.join("worktrees").join(project);
+    let entries = git.worktree_list(&primary)?;
+    let mut slots: Vec<WorktreeSlotInfo> = entries
+        .into_iter()
+        .filter_map(|e| slot_info_under_prefix(&prefix, project, &e.path))
+        .collect();
+    slots.sort_by(|a, b| a.name.cmp(&b.name));
+    Ok(slots)
 }
 
 /// Add a worktree slot at `worktrees/<project>/<slot>/`.
@@ -202,8 +229,7 @@ pub fn worktree_prune<R: odm_git::CommandRunner>(
     project: &str,
     force: bool,
 ) -> Result<WorktreePruneOutcome, OdmError> {
-    let list = worktree_list(git, ws, project)?;
-    let registered: BTreeSet<String> = list.slots.into_iter().map(|s| s.name).collect();
+    let registered = worktree_registered_names(git, ws, project)?;
     let orphans = orphan_slot_names(ws, project, &registered);
 
     let mut pruned = Vec::new();
@@ -211,10 +237,9 @@ pub fn worktree_prune<R: odm_git::CommandRunner>(
 
     for slot in orphans {
         let abs = worktree_slot_path(&ws.root, project, &slot);
-        let info = WorktreeSlotInfo {
+        let info = WorktreePruneSlot {
             name: slot.clone(),
             path: rel_slot_path(project, &slot),
-            dirty: None,
         };
         if force {
             fs::remove_dir_all(&abs).map_err(|e| {
@@ -294,8 +319,7 @@ pub fn worktree_orphans<R: odm_git::CommandRunner>(
     ws: &Workspace,
     project: &str,
 ) -> Result<Vec<WorktreeOrphanInfo>, OdmError> {
-    let list = worktree_list(git, ws, project)?;
-    let registered: BTreeSet<String> = list.slots.into_iter().map(|s| s.name).collect();
+    let registered = worktree_registered_names(git, ws, project)?;
     Ok(worktree_orphan_infos(ws, project, &registered))
 }
 

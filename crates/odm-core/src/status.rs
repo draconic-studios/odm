@@ -1,13 +1,12 @@
-use std::collections::BTreeSet;
-
 use odm_git::Git;
 use serde::Serialize;
 
-use crate::agent_pack::{pack_list, PackMode};
+use crate::agent_pack::PackMode;
 use crate::config::Workspace;
 use crate::error::OdmError;
+use crate::inventory::{observe_agent_packs, observe_project_worktrees_soft};
 use crate::pin::load_pin;
-use crate::worktree::{worktree_list, worktree_orphan_infos, WorktreeOrphanInfo, WorktreeSlotInfo};
+use crate::worktree::{WorktreeOrphanInfo, WorktreeSlotInfo};
 
 /// `odm status --json` snapshot.
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
@@ -84,40 +83,27 @@ pub fn build_status<R: odm_git::CommandRunner>(
     let obs = crate::observation::observe_workspace(git, &ws.root, &ws.config, pin.as_ref())?;
     let mut snap = status_from_observation(&obs);
     for p in &mut snap.projects {
-        match worktree_list(git, ws, &p.name) {
-            Ok(out) => {
-                let registered: BTreeSet<String> =
-                    out.slots.iter().map(|s| s.name.clone()).collect();
-                p.worktree_orphans =
-                    Some(worktree_orphan_infos(ws, &p.name, &registered));
-                p.worktree_slots = Some(out.slots);
-            }
-            Err(_) => {
-                p.worktree_slots = Some(vec![]);
-                p.worktree_orphans = Some(vec![]);
-            }
-        }
+        let inv = observe_project_worktrees_soft(git, ws, &p.name);
+        p.worktree_slots = Some(inv.slots);
+        p.worktree_orphans = Some(inv.orphans);
     }
-    snap.agent_packs = match pack_list(ws) {
-        Ok(entries) => entries
-            .into_iter()
-            .map(|e| StatusPackInfo {
-                name: e.name,
-                source: e.source,
-                path: e.path.display().to_string(),
-                mode: e.mode,
-                missing: e.path.symlink_metadata().is_err(),
-            })
-            .collect(),
-        Err(_) => vec![],
-    };
+    snap.agent_packs = observe_agent_packs(ws)
+        .into_iter()
+        .map(|p| StatusPackInfo {
+            name: p.entry.name,
+            source: p.entry.source,
+            path: p.entry.path.display().to_string(),
+            mode: p.entry.mode,
+            missing: p.missing,
+        })
+        .collect();
     Ok(snap)
 }
 
 /// Pure projection: observation → status snapshot.
 ///
 /// `worktree_slots` / `worktree_orphans` stay `None` and `agent_packs` empty here;
-/// [`build_status`] fills them.
+/// [`build_status`] fills them from inventory.
 pub fn status_from_observation(obs: &crate::observation::WorkspaceObservation) -> StatusSnapshot {
     StatusSnapshot {
         root: obs.root.clone(),

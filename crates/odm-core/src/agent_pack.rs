@@ -30,6 +30,15 @@ pub struct PackEntry {
     pub mode: PackMode,
 }
 
+impl PackEntry {
+    /// `true` when destination has no path/symlink entry.
+    ///
+    /// Dangling symlink counts as present (lexists via `symlink_metadata`).
+    pub fn is_missing(&self) -> bool {
+        self.path.symlink_metadata().is_err()
+    }
+}
+
 /// List registered agent packs (sorted by name). Missing registry → empty.
 pub fn pack_list(ws: &Workspace) -> Result<Vec<PackEntry>, OdmError> {
     let mut packs = load_registry(&ws.root)?;

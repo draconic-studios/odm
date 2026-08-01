@@ -2,13 +2,12 @@
 id: issues-149
 title: "Workspace inventory sample for worktrees and packs"
 description: "One sample API for project worktrees (slots/orphans/dirty) and agent packs (including missing); status, doctor, project info, and prune name-sets consume it."
-status: reviewing
+status: closed
 issue-type: feature-request
 severity: high
 tags:
   - planning
   - issue
-  - ready-for-agent
   - wayfinder
   - wayfinder-task
   - architecture
@@ -77,15 +76,15 @@ None
 
 **Acceptance criteria:**
 
-- [ ] Status, doctor worktree checks, and project info do not each maintain independent worktree list+orphan attach loops
-- [ ] Doctor orphan + dirty checks together perform at most one `worktree_list` (or equivalent full sample) per project per doctor run
-- [ ] Pack missing is computed in exactly one shared place; status, doctor, and pack list/DTO use it
-- [ ] Prune (single-project and `--all`) does not dirty-probe slots solely to learn registered names
-- [ ] Prune core/JSON row shape has no meaningful dirty field (name+path only)
-- [ ] Existing CLI/core-desk/doctor tests for status slots/orphans, pack missing, prune, doctor warns still pass without relaxing product assertions
-- [ ] Unit tests cover inventory soft-fail and pack missing (including dangling symlink not missing)
-- [ ] No touched `.rs` file exceeds 1250 LOC; prefer ≤1000
-- [ ] `cargo test` green; `cargo clippy --workspace --all-targets -- -D warnings` clean
+- [x] Status, doctor worktree checks, and project info do not each maintain independent worktree list+orphan attach loops
+- [x] Doctor orphan + dirty checks together perform at most one `worktree_list` (or equivalent full sample) per project per doctor run
+- [x] Pack missing is computed in exactly one shared place; status, doctor, and pack list/DTO use it
+- [x] Prune (single-project and `--all`) does not dirty-probe slots solely to learn registered names
+- [x] Prune core/JSON row shape has no meaningful dirty field (name+path only)
+- [x] Existing CLI/core-desk/doctor tests for status slots/orphans, pack missing, prune, doctor warns still pass without relaxing product assertions
+- [x] Unit tests cover inventory soft-fail and pack missing (including dangling symlink not missing)
+- [x] No touched `.rs` file exceeds 1250 LOC; prefer ≤1000
+- [x] `cargo test` green; `cargo clippy --workspace --all-targets -- -D warnings` clean
 
 **Out of scope:**
 

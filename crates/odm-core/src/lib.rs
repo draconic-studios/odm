@@ -11,6 +11,7 @@ mod error;
 mod generate;
 mod gitignore;
 mod init;
+mod inventory;
 mod io;
 mod membership;
 mod observation;
@@ -42,11 +43,14 @@ pub use gitignore::{
     update_workspace_gitignore, workspace_gitignore_has_drift, BEGIN_MARKER, END_MARKER,
 };
 pub use init::{init_workspace, InitOptions, InitResult};
+pub use inventory::{
+    observe_agent_packs, observe_project_worktrees, observe_project_worktrees_soft,
+    observe_worktree_registered_names, PackInventoryEntry, ProjectWorktreeInventory,
+};
 pub use membership::{
     membership_add, membership_rm, progen_add, progen_rm, project_add, project_rm,
     MembershipEntry, MembershipKind,
 };
-pub use project_git::project_git;
 pub use observation::{
     observe_entity, observe_workspace, EntityObservation, WorkspaceObservation,
 };
@@ -60,6 +64,7 @@ pub use pin::{
 pub use pin_maintain::{
     pin_apply, pin_status, PinApplyResult, PinStatusEntry, PinStatusReport,
 };
+pub use project_git::project_git;
 pub use status::{
     build_status, compute_pin_state, format_status_human, status_from_observation, EntityStatus,
     PinState, StatusPackInfo, StatusSnapshot,
@@ -67,7 +72,7 @@ pub use status::{
 pub use url_match::{normalize_git_url, urls_match, urls_match_with_root};
 pub use worktree::{
     validate_slot_name, worktree_add, worktree_list, worktree_orphan_infos, worktree_orphans,
-    worktree_prune, worktree_prune_all, worktree_rm, WorktreeListOutcome, WorktreeOrphanInfo,
-    WorktreePruneAllOutcome, WorktreePruneAllSlot, WorktreePruneOutcome, WorktreeSlotInfo,
-    WorktreeSlotOutcome,
+    worktree_prune, worktree_prune_all, worktree_registered_names, worktree_rm, WorktreeListOutcome,
+    WorktreeOrphanInfo, WorktreePruneAllOutcome, WorktreePruneAllSlot, WorktreePruneOutcome,
+    WorktreePruneSlot, WorktreeSlotInfo, WorktreeSlotOutcome,
 };

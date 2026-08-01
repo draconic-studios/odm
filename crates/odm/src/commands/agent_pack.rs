@@ -27,7 +27,7 @@ impl From<&PackEntry> for PackEntryDto {
             source: e.source.clone(),
             path: e.path.display().to_string(),
             mode: mode_str(e.mode).into(),
-            missing: e.path.symlink_metadata().is_err(),
+            missing: e.is_missing(),
         }
     }
 }

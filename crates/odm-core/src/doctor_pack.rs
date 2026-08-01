@@ -11,8 +11,7 @@ pub(crate) fn pack_missing_checks(ws: &Workspace) -> Vec<DoctorCheck> {
     };
     let mut checks = Vec::new();
     for entry in packs {
-        // lexists: path or symlink entry present (even if dangling) → not missing
-        if entry.path.symlink_metadata().is_ok() {
+        if !entry.is_missing() {
             continue;
         }
         checks.push(DoctorCheck {

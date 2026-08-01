@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Workspace inventory sample** — one injectable sample API for per-project worktree slots/orphans and agent packs (`observe_project_worktrees` / `observe_agent_packs`); status, doctor (single list per project), project info, and prune name-sets consume it; `PackEntry::is_missing()` is the shared missing rule; prune rows are name+path only (no fake dirty).
+
 - **CLI exit-code matrix** — table-driven bin tests locking exit codes 1–4 (+ action passthrough) and JSON `{ok:false,error:{code,message}}` across primary failure modes (`crates/odm/tests/cli_exit_code_matrix.rs`).
 - **core-desk `scripts/dogfood.sh`** — fail-fast offline full tour of shipped `odm` commands against a temp copy of `examples/core-desk` (sync → pin → status → doctor → project git → worktree → progen façade → find groups → context/prompt → run → generate → packs → `agent start` exit 1); README quick start points at the script.
 - **`core_desk_full_tour` integration gate** — one composition test on temp `examples/core-desk` covering sync/reindex, find + `--progen-group`, context/agent prompt, store façade, `project git`, worktree + `run --project/--wt`, pack link/list, and `generate --force` (`crates/odm/tests/core_desk_full_tour.rs`).

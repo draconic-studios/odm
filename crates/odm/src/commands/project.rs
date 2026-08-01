@@ -1,11 +1,8 @@
 //! `odm project list` / `info` — config ⨝ observation → DTO.
 
-use std::collections::BTreeSet;
-
 use odm_core::{
-    build_status, load_pin, observe_workspace, worktree_list, worktree_orphan_infos,
-    EntityObservation, OdmError, PinState, StatusSnapshot, Workspace, WorktreeOrphanInfo,
-    WorktreeSlotInfo,
+    build_status, load_pin, observe_project_worktrees_soft, observe_workspace, EntityObservation,
+    OdmError, PinState, StatusSnapshot, Workspace, WorktreeOrphanInfo, WorktreeSlotInfo,
 };
 use odm_git::Git;
 use serde::Serialize;
@@ -143,17 +140,9 @@ pub fn project_info<R: odm_git::CommandRunner>(
         entry.type_.as_deref(),
         st,
     );
-    match worktree_list(git, ws, name) {
-        Ok(out) => {
-            let registered: BTreeSet<String> = out.slots.iter().map(|s| s.name.clone()).collect();
-            dto.worktree_orphans = worktree_orphan_infos(ws, name, &registered);
-            dto.worktree_slots = out.slots;
-        }
-        Err(_) => {
-            dto.worktree_slots = vec![];
-            dto.worktree_orphans = vec![];
-        }
-    }
+    let inv = observe_project_worktrees_soft(git, ws, name);
+    dto.worktree_slots = inv.slots;
+    dto.worktree_orphans = inv.orphans;
     Ok(dto)
 }
 
