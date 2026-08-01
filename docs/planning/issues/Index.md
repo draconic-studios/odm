@@ -49,7 +49,6 @@ See `docs/agents/issue-tracker.md`.
 
 - [[issues-140-cli-exit-code-matrix]] — prefer after 127+129
 - [[issues-145-core-desk-dogfood-script]] — blocked by 144
-- [[issues-146-core-desk-full-tour-gate]] — blocked by 144
 - [[issues-147-demo-gap-followups]] — blocked by 145+146
 
 ## Architecture deepen (post-0.1.0)

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`core_desk_full_tour` integration gate** — one composition test on temp `examples/core-desk` covering sync/reindex, find + `--progen-group`, context/agent prompt, store façade, `project git`, worktree + `run --project/--wt`, pack link/list, and `generate --force` (`crates/odm/tests/core_desk_full_tour.rs`).
 - **CLI pin/sync/rm integration tests** — `crates/odm/tests/cli_pin_sync_rm.rs`: pin apply dirty→3 / `--force`, pin status JSON fields, named sync + unknown exit `1`, project/progen `rm` keep-vs-`--delete` and dirty `--force`.
 - **odm-core error/io unit matrix** — table-driven tests for `exit_code` 1–4, `code()`/`detail()`, and `atomic_write` create/replace plus failure hygiene (untorn final, temp cleanup).
 - **`find --progen-group` CLI integration tests** — multi-progen fixture: group narrows hits, unknown group exit `1`, `--progen` ∪ `--progen-group`, JSON `progen` field (`crates/odm/tests/cli_progen_group.rs`).

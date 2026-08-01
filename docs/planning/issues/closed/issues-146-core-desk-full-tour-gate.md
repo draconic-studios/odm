@@ -2,7 +2,7 @@
 id: issues-146
 title: "Integration gate: core_desk_full_tour"
 description: "Thin Rust integration test covering the biggest core-desk composition holes (groups, context/prompt, project git, run --project, pack link, store façade)."
-status: open
+status: closed
 issue-type: feature-request
 severity: high
 tags:
@@ -56,13 +56,13 @@ Keep existing focused gates; this is additive.
 
 **Acceptance criteria:**
 
-- [ ] New test file green in `cargo test -p odm`
-- [ ] Covers items 1–8 above
-- [ ] File size limits; harness shared if extracted
-- [ ] Does not require network
+- [x] New test file green in `cargo test -p odm`
+- [x] Covers items 1–8 above
+- [x] File size limits; harness shared if extracted
+- [x] Does not require network
 
 **Out of scope:** Every negative exit path (140); website.
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met
