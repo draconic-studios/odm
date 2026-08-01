@@ -2,7 +2,7 @@
 
 Poly-repo workspace OS for humans and AI agents: one config, one CLI, and orchestrated Projects + Progens without submodules or a second brain product.
 
-**Status:** v0.1.0 spine (multi-git, Progen, Actions) plus post-0.1.0 **worktree slots** and local **`odm generate`**. Agent pack install/link/list is local v1; **`odm agent prompt`** is v1 thin (context work-package); `agent start` remains sketch.
+**Status:** v0.1.0 spine (multi-git, Progen, Actions) plus post-0.1.0 **worktree slots** (add/list/prune; doctor orphan/dirty warns) and local **`odm generate`**. Agent pack install/link/list is local v1; **`odm agent prompt`** is v1 thin (context work-package); `agent start` remains sketch.
 
 ## Install
 
@@ -53,11 +53,14 @@ Progen (docs/memory stores) and Actions:
 
 ```bash
 odm progen list
-odm find <query>
+odm find <query>                 # default --limit 200
+odm find <query> --limit 5
 odm context <id>
 odm run            # list actions
 odm run <name>
 ```
+
+`odm status` and `odm project info` report registered worktree slots.
 
 Generators (local template) and worktree slots:
 
@@ -66,9 +69,10 @@ odm generate                              # list Generators
 odm generate <name> --dest <rel-path>     # materialize local template
 odm project worktree list <project>
 odm project worktree add <project> <slot> [--branch <b>]
+odm project worktree prune <project> [--force]
 ```
 
-See [docs/reference/cli.md](docs/reference/cli.md) for full surfaces (including `agent pack`).
+See [docs/reference/cli.md](docs/reference/cli.md) for full surfaces (including `agent pack`) and [examples/core-desk/README.md](examples/core-desk/README.md) for dogfood depth.
 
 Dogfood Workspace (offline fixtures):
 

@@ -2,7 +2,7 @@
 id: issues-76
 title: "README honesty for slot-depth surfaces"
 description: "Root README status/quickstart mention prune, find --limit, and project info slots without false deferred claims."
-status: open
+status: closed
 issue-type: feature-request
 severity: low
 tags:
@@ -57,10 +57,10 @@ None
 
 **Acceptance criteria:**
 
-- [ ] README mentions `project worktree prune`
-- [ ] README mentions `find --limit` (or equivalent)
-- [ ] Status/quickstart does not claim deferred features (agent start, graph, auto-prune on doctor) as shipped
-- [ ] `cargo test` green
+- [x] README mentions `project worktree prune`
+- [x] README mentions `find --limit` (or equivalent)
+- [x] Status/quickstart does not claim deferred features (agent start, graph, auto-prune on doctor) as shipped
+- [x] `cargo test` green
 
 **Out of scope:**
 
@@ -72,3 +72,7 @@ None
 ## Acceptance
 
 Mirror Agent Brief checklist.
+
+## Answer
+
+Docs-only root README honesty: Status notes worktree add/list/prune + doctor orphan/dirty warns (`agent start` still sketch). Quickstart shows `find --limit` (default 200), one-liner that status/info report registered slots, and `project worktree prune [--force]`. Links cli.md + core-desk for depth. No Rust changes; `cargo test` green.

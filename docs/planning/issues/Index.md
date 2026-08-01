@@ -6,11 +6,11 @@ See `docs/agents/issue-tracker.md`.
 
 ## Maps
 
-- [[issues-72-post-v1-honesty-dogfood-map]] — Post-v1 honesty + dogfood after slot depth
+_(none open)_
 
 ## Frontier (open, unblocked)
 
-- [[issues-76-readme-slot-depth-honesty]] — root README slot-depth honesty
+_(none)_
 
 ## Blocked
 
@@ -35,3 +35,4 @@ _(none remaining)_
 - [[issues-55-post-v1-hardening-map]] — Post-v1 hardening + agent prompt thin
 - [[issues-60-post-v1-polish-map]] — Post-v1 polish (docs honesty, doctor split, find limit, status slots)
 - [[issues-66-post-v1-dogfood-slot-depth-map]] — Post-v1 dogfood + worktree slot depth (CHANGELOG, core-desk, info slots, dirty doctor, orphan prune)
+- [[issues-72-post-v1-honesty-dogfood-map]] — Post-v1 honesty + dogfood after slot depth (phased-delivery/CHANGELOG, core-desk prune/dirty, clippy, README)

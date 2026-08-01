@@ -2,7 +2,7 @@
 id: issues-72
 title: "Post-v1 honesty + dogfood after slot depth map"
 description: "Wayfinder map: phased-delivery/CHANGELOG/README honesty after prune+dirty+info slots; core-desk dogfood; clippy on doctor_worktree."
-status: open
+status: closed
 issue-type: feature-request
 tags:
   - planning
@@ -38,6 +38,8 @@ After dogfood/slot-depth map [[issues-66-post-v1-dogfood-slot-depth-map]] closed
 - **issues-73 closed** — CHANGELOG Unreleased records `project info` `worktree_slots`; phased-delivery Phase spine includes prune, dirty-slot doctor, find `--limit`, status+info slots; deferred no longer lists bare GC (aligns with `worktrees.md`).
 - **issues-74 closed** — core-desk README + `core_desk_prune_dirty_doctor_gate` dogfood orphan/dirty doctor warns and `project worktree prune` (empty orphan removed; registered slot kept).
 - **issues-75 closed** — `doctor_worktree.rs` clippy `for_kv_map` + `single_match` cleaned in dirty checks only; behavior unchanged.
+- **issues-76 closed** — root README Status/quickstart mention prune, find `--limit`, status/info slots; `agent start` remains sketch; no deferred product claimed shipped.
+- **Map destination met** — all children 73–76 closed; map closed.
 
 ## Not yet specified
 
