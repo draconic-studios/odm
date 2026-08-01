@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Install — ODM</title>
+  <meta name="description" content="Install the odm binary from GitHub Releases or build from source." />
+  <link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <div class="shell">
+    <aside class="side">
+      <a class="brand" href="index.html">OD<span>M</span></a>
+      <p class="tagline">Workspace OS for humans &amp; agents</p>
+      <nav aria-label="Site">
+        <a href="index.html">Home</a>
+        <div class="group">Start</div>
+        <a href="install.html" aria-current="page">Install</a>
+        <a href="quickstart.html">Quickstart</a>
+        <a href="concepts.html">Concepts</a>
+        <a href="features.html">Features</a>
+        <div class="group">Guides</div>
+        <a href="guides.html">Guides overview</a>
+        <a href="guide-workspace.html">Workspace &amp; config</a>
+        <a href="guide-projects.html">Projects &amp; pins</a>
+        <a href="guide-progen.html">Progen memory</a>
+        <a href="guide-worktrees.html">Worktree slots</a>
+        <a href="guide-actions.html">Actions &amp; generate</a>
+        <a href="guide-agents.html">Agent packs</a>
+        <div class="group">Reference</div>
+        <a href="cli.html">CLI</a>
+        <a href="config.html">Config shape</a>
+        <div class="ext">
+          <a href="https://github.com/hembrow-innovations/odm">GitHub</a>
+          <a href="https://github.com/hembrow-innovations/odm/releases">Releases</a>
+        </div>
+      </nav>
+    </aside>
+    <main class="main" id="main">
+      <div class="wrap">
+        <p class="kicker">Start</p>
+        <h1>Install</h1>
+        <p class="muted">Get the <code>odm</code> binary on your PATH, then verify. Product overview is on the <a href="index.html">home page</a>.</p>
+
+        <div class="toc">
+          <strong>On this page</strong>
+          <ul>
+            <li><a href="#requirements">Requirements</a></li>
+            <li><a href="#releases">GitHub Releases (primary)</a></li>
+            <li><a href="#source">Build from source</a></li>
+            <li><a href="#verify">Verify</a></li>
+            <li><a href="#non-goals">Not in this release</a></li>
+          </ul>
+        </div>
+
+        <h2 id="requirements">Requirements</h2>
+        <ul>
+          <li><strong>Runtime:</strong> <code>git</code> on <code>PATH</code></li>
+          <li><strong>Actions</strong> (<code>odm run</code>): Unix shell</li>
+          <li><strong>Build from source:</strong> Rust 1.70+</li>
+        </ul>
+
+        <h2 id="releases">GitHub Releases (primary)</h2>
+        <ol>
+          <li>Open the latest release: <a href="https://github.com/hembrow-innovations/odm/releases">github.com/hembrow-innovations/odm/releases</a></li>
+          <li>Download <code>odm-&lt;version&gt;-&lt;target&gt;.tar.gz</code> for your host triple
+            (e.g. <code>aarch64-apple-darwin</code>, <code>x86_64-unknown-linux-musl</code>).</li>
+          <li>Extract and place <code>odm</code> on your <code>PATH</code>:</li>
+        </ol>
+        <pre><code>tar xzf odm-&lt;version&gt;-&lt;target&gt;.tar.gz
+# archive contains: odm, README-release.txt
+sudo mv odm /usr/local/bin/   # or another directory on PATH
+odm --version</code></pre>
+        <div class="callout">
+          <p>Example for 0.1.0 on Apple Silicon:</p>
+          <pre><code>tar xzf odm-0.1.0-aarch64-apple-darwin.tar.gz
+# move ./odm somewhere on PATH
+odm --version</code></pre>
+        </div>
+
+        <h2 id="source">Build from source</h2>
+        <pre><code>git clone https://github.com/hembrow-innovations/odm.git
+cd odm
+cargo build -p odm --release
+# → target/release/odm
+
+cargo install --path crates/odm
+# → ~/.cargo/bin/odm (typically)</code></pre>
+
+        <h3>Release tarball locally</h3>
+        <pre><code>./scripts/release-build.sh
+# → dist/odm-&lt;version&gt;-&lt;host-triple&gt;.tar.gz</code></pre>
+        <ul>
+          <li><strong><code>ODM_TARGET=&lt;triple&gt;</code></strong> — build for a specific triple</li>
+          <li><strong><code>ODM_RELEASE_PUBLISH=1</code></strong> — after build, run <code>gh release create</code> (authenticated <code>gh</code>)</li>
+        </ul>
+
+        <h2 id="verify">Verify</h2>
+        <pre><code>odm --version
+odm init --help</code></pre>
+        <p>Next: <a href="quickstart.html">Quickstart</a> — bootstrap a Workspace and run your first sync.</p>
+
+        <h2 id="non-goals">Not in this release</h2>
+        <ul>
+          <li>Homebrew formula</li>
+          <li>crates.io publish of the binary crate</li>
+          <li>Signed/notarized macOS binaries</li>
+          <li>Windows as a primary supported channel</li>
+        </ul>
+
+        <div class="callout">
+          <p>Repo install doc: <a href="https://github.com/hembrow-innovations/odm/blob/main/docs/reference/install.md">docs/reference/install.md</a>
+          · Changelog: <a href="https://github.com/hembrow-innovations/odm/blob/main/CHANGELOG.md">CHANGELOG.md</a></p>
+        </div>
+
+        <footer class="site-foot">
+          <p><a href="quickstart.html">Quickstart →</a> · <a href="index.html">Home</a></p>
+        </footer>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

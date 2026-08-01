@@ -6,15 +6,17 @@ See `docs/agents/issue-tracker.md`.
 
 ## Maps
 
-_(none open)_
+- [[issues-104-post-v1-pack-list-missing-map]] — Post-v1 pack list `missing` observation (status/doctor parity)
 
 ## Frontier (open, unblocked)
 
-_(none)_
+- [[issues-105-pack-list-missing-dto]] — pack list DTO includes `missing` (`ready-for-agent`)
 
 ## Blocked
 
-_(none)_
+- [[issues-106-pack-list-missing-cli]] — blocked by 105
+- [[issues-107-pack-list-missing-docs-honesty]] — blocked by 105+106
+- [[issues-108-core-desk-pack-list-missing-dogfood]] — blocked by 105+106
 
 ## Architecture deepen (post-0.1.0)
 
@@ -41,3 +43,4 @@ _(none remaining)_
 - [[issues-89-post-v1-status-packs-map]] — Post-v1 status packs + pack observation dogfood
 - [[issues-94-post-v1-status-orphans-map]] — Post-v1 status/info worktree orphans + dogfood
 - [[issues-99-post-v1-generate-dry-run-map]] — Post-v1 generate `--dry-run` (local template preview)
+- [[issues-109-project-website-github-pages-map]] — Project website via GitHub Pages (static `website/`, no Actions)

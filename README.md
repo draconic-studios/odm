@@ -2,6 +2,8 @@
 
 Poly-repo workspace OS for humans and AI agents: one config, one CLI, and orchestrated Projects + Progens without submodules or a second brain product.
 
+**Website:** [hembrow-innovations.github.io/odm](https://hembrow-innovations.github.io/odm/) (source: [`website/`](website/); publish: `./scripts/pages-publish.sh`)
+
 **Status:** v0.1.0 spine (multi-git, Progen, Actions) plus post-0.1.0 **worktree slots** (add/list/prune; doctor orphan/dirty warns) and local **`odm generate`**. Agent pack install/link/list/rm is local v1 (`odm status` `agent_packs` inventory; doctor `pack_missing` warn); **`odm agent prompt`** is v1 thin (context work-package); `agent start` remains sketch.
 
 ## Install
@@ -91,7 +93,8 @@ odm generate hello --dest out/hello
 
 ## Docs
 
-- **Install**: [docs/reference/install.md](docs/reference/install.md)
+- **Website** (guides + quickstart): https://hembrow-innovations.github.io/odm/
+- **Install**: [docs/reference/install.md](docs/reference/install.md) · [site install](https://hembrow-innovations.github.io/odm/install.html)
 - **Vision**: [docs/reference/vision.md](docs/reference/vision.md)
 - **CLI**: [docs/reference/cli.md](docs/reference/cli.md)
 - **Architecture**: [docs/reference/architecture.md](docs/reference/architecture.md)
