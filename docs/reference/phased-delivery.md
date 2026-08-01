@@ -34,7 +34,7 @@ Still deferred / sketch (not Ship gates unless pulled in deliberately):
 - Graph/tags, env productization
 - Generate remote and full `template.toml` depth
 - Agent `start` / `prompt`
-- Worktree deferred items (config slots, GC, pin↔slot, doctor orphans — `worktrees.md`)
+- Worktree deferred items (config slots, GC, pin↔slot — `worktrees.md`; doctor orphan warn landed)
 
 ### 1. Design package
 

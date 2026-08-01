@@ -2,7 +2,7 @@
 id: issues-57
 title: "Doctor warn on worktree slot orphans"
 description: "odm doctor warns when worktrees/<project>/<slot> dirs exist but are not registered git worktrees."
-status: open
+status: closed
 issue-type: feature-request
 severity: medium
 tags:
@@ -69,12 +69,12 @@ None
 
 **Acceptance criteria:**
 
-- [ ] Orphan slot dir → doctor report includes `worktree_orphan:…` Warn, fixable false
-- [ ] Healthy registered slot (after real or mocked worktree list match) does not warn as orphan
-- [ ] `doctor --fix` does not delete orphan dirs
-- [ ] Missing `worktrees/` → no failure from this feature
-- [ ] Docs: `worktrees.md` no longer lists “doctor obligations for orphans” as fully deferred if warn is landed (one honest sentence)
-- [ ] `cargo test` green
+- [x] Orphan slot dir → doctor report includes `worktree_orphan:…` Warn, fixable false
+- [x] Healthy registered slot (after real or mocked worktree list match) does not warn as orphan
+- [x] `doctor --fix` does not delete orphan dirs
+- [x] Missing `worktrees/` → no failure from this feature
+- [x] Docs: `worktrees.md` no longer lists “doctor obligations for orphans” as fully deferred if warn is landed (one honest sentence)
+- [x] `cargo test` green
 
 **Out of scope:**
 
@@ -87,4 +87,8 @@ None
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met
+
+## Answer
+
+Landed `worktree_orphan_checks` in `odm-core` doctor: for each configured Project with a git primary and existing `worktrees/<project>/`, disk slot dirs (valid names) not present in `worktree_list` emit `DoctorCheck` id `worktree_orphan:<project>:<slot>`, status **Warn**, `fixable: false`. Non-git primaries and unknown top-level `worktrees/` names are skipped. `doctor --fix` does not delete orphans. Docs updated in `worktrees.md`, `cli.md`, `phased-delivery.md`. Unit tests cover orphan, healthy slot, missing dir, non-git, unknown project, and fix-no-delete.

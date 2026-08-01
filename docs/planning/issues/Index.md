@@ -10,7 +10,6 @@ See `docs/agents/issue-tracker.md`.
 
 ## Frontier (open, unblocked)
 
-- [[issues-57-doctor-worktree-orphans]] — Doctor warn on worktree slot orphans
 - [[issues-58-agent-prompt-thin]] — Agent prompt thin v1 (CLI over context)
 
 ## Blocked

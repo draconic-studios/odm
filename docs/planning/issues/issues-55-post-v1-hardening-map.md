@@ -36,11 +36,12 @@ After worktree/generate/pack v1 landed, close the next AFK-ready slice:
 
 - Child tickets: [[issues-56-reference-docs-v1-honesty]], [[issues-57-doctor-worktree-orphans]], [[issues-58-agent-prompt-thin]], [[issues-59-agent-prompt-integration-docs]].
 - [[issues-56-reference-docs-v1-honesty]] closed — reference docs honesty: worktree/pack v1 markers, progen façade implemented vs reserved, `init --interactive` not-implemented.
+- [[issues-57-doctor-worktree-orphans]] closed — doctor Warn on orphan `worktrees/<project>/<slot>` dirs (`worktree_orphan:…`, fixable false); configured Projects only; docs honesty in worktrees/cli/phased-delivery.
+- Orphan scan lock: configured Projects only (ignore unknown names under `worktrees/`).
 
 ## Not yet specified
 
 - Exact human header string for prompt vs context (implementer may reuse `format_context_human` or twin with `# agent prompt <id>`).
-- Whether orphan check walks only configured Projects or any dir under `worktrees/` — **lock:** configured Projects only + best-effort scan of `worktrees/*/` names that match config project names.
 
 ## Out of scope
 

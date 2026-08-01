@@ -117,9 +117,9 @@ Workspace snapshot: configured Projects/Progens, on-disk presence, git/pin drift
 odm doctor [--fix]
 ```
 
-**ODM-side** checks only: config load, declared paths, gitignore management drift, pin file consistency basics. Not store-content doctor (`odm progen doctor`).
+**ODM-side** checks only: config load, declared paths, gitignore management drift, pin file consistency basics, worktree slot orphan **warns** (configured Project dirs under `worktrees/<project>/` that are not registered git worktrees; not fixable). Not store-content doctor (`odm progen doctor`).
 
-- **`--fix`**: mechanical ODM repairs only (same spirit as upstream progen doctor) — no destructive git rewrites.
+- **`--fix`**: mechanical ODM repairs only (same spirit as upstream progen doctor) — no destructive git rewrites; does not delete orphan worktree dirs.
 
 ---
 
@@ -291,7 +291,7 @@ odm agent prompt <id> --progen …     # thin wrap of progen prompt when specifi
 ## Full vs sketch matrix
 
 - **Full**: global flags (including `--wt` path binding); `init` (headless; `--interactive` not implemented); `sync`; `pin apply|status`; `status`; `doctor`; `project list|add|rm|info|git|worktree` (v1); `progen` lifecycle + **partial** store façade (implemented verbs above); `find`; `context`; `run`; `generate` (v1 local template only); `agent pack` (v1 local install/link/list only).
-- **Sketch / deferred**: `init --interactive`; reserved progen store verbs; `agent start` / `agent prompt`; deferred worktree features (config slots, GC, pin↔slot, doctor orphans — `worktrees.md`); generate remote/templating; pack marketplace/manifest/config declarations (`env-gen-packs.md`).
+- **Sketch / deferred**: `init --interactive`; reserved progen store verbs; `agent start` / `agent prompt`; deferred worktree features (config slots, GC, pin↔slot — `worktrees.md`; doctor orphan **warn** landed); generate remote/templating; pack marketplace/manifest/config declarations (`env-gen-packs.md`).
 - **Absent**: `serve`, MCP, top-level action verbs, `ops` namespace, path-valued scope flags.
 
 ## Related
