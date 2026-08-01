@@ -1,5 +1,6 @@
 use std::path::{Path, PathBuf};
 
+use odm_core::OdmError;
 use regex::Regex;
 use serde_json::Value;
 
@@ -27,13 +28,24 @@ pub struct NoteDoc {
 }
 
 /// Parse YAML frontmatter + body from Markdown text.
-pub fn parse_markdown(rel_path: &str, abs: &Path, text: &str) -> NoteDoc {
+/// Invalid YAML between `---` markers is a hard error (includes `rel_path`).
+pub fn parse_markdown(rel_path: &str, abs: &Path, text: &str) -> Result<NoteDoc, OdmError> {
     let (fm_raw, body) = split_frontmatter(text);
-    let frontmatter = fm_raw.and_then(|y| serde_yaml::from_str::<Value>(y).ok());
+    let frontmatter = match fm_raw {
+        None => None,
+        Some(y) => match serde_yaml::from_str::<Value>(y) {
+            Ok(v) => Some(v),
+            Err(e) => {
+                return Err(OdmError::operation(format!(
+                    "invalid frontmatter in {rel_path}: {e}"
+                )));
+            }
+        },
+    };
     let id = id_from_frontmatter(&frontmatter).unwrap_or_else(|| path_id(rel_path));
     let title = title_from(&frontmatter, &body, rel_path);
     let wikilinks = parse_wikilinks(&body);
-    NoteDoc {
+    Ok(NoteDoc {
         id: NoteId(id),
         path: abs.to_path_buf(),
         rel_path: rel_path.to_string(),
@@ -41,20 +53,77 @@ pub fn parse_markdown(rel_path: &str, abs: &Path, text: &str) -> NoteDoc {
         body,
         frontmatter,
         wikilinks,
-    }
+    })
 }
 
 /// Extract `[[target]]` and `[[target|alias]]` targets (Obsidian-style).
+/// Fenced code blocks and inline `` `spans` `` are skipped.
 pub fn parse_wikilinks(body: &str) -> Vec<String> {
-    // Avoid code fences roughly by not matching across ][
+    let scan = strip_code_for_wikilinks(body);
     let re = Regex::new(r"\[\[([^\]|#]+)(?:[|#][^\]]*)?\]\]").expect("wikilink regex");
     let mut out = Vec::new();
-    for cap in re.captures_iter(body) {
+    for cap in re.captures_iter(&scan) {
         let t = cap[1].trim();
         if !t.is_empty() && !out.iter().any(|x: &String| x == t) {
             out.push(t.to_string());
         }
     }
+    out
+}
+
+/// Drop fenced ```/~~~ blocks and inline `code` so they cannot yield wikilinks.
+fn strip_code_for_wikilinks(body: &str) -> String {
+    let mut out = String::with_capacity(body.len());
+    let mut in_fence = false;
+    for line in body.split_inclusive('\n') {
+        let core = line.trim_end_matches(['\n', '\r']);
+        let trimmed = core.trim_start();
+        if !in_fence {
+            if is_fence_line(trimmed) {
+                in_fence = true;
+                continue;
+            }
+            out.push_str(&strip_inline_code(core));
+            if line.ends_with('\n') {
+                out.push('\n');
+            }
+        } else if is_fence_line(trimmed) {
+            in_fence = false;
+        }
+    }
+    out
+}
+
+fn is_fence_line(trimmed: &str) -> bool {
+    let b = trimmed.as_bytes();
+    if b.len() < 3 {
+        return false;
+    }
+    let ch = b[0];
+    if ch != b'`' && ch != b'~' {
+        return false;
+    }
+    let n = b.iter().take_while(|&&c| c == ch).count();
+    n >= 3
+}
+
+fn strip_inline_code(line: &str) -> String {
+    let mut out = String::with_capacity(line.len());
+    let mut rest = line;
+    while let Some(start) = rest.find('`') {
+        out.push_str(&rest[..start]);
+        rest = &rest[start..];
+        let open = rest.chars().take_while(|c| *c == '`').count();
+        rest = &rest[open..];
+        let needle = "`".repeat(open);
+        if let Some(end) = rest.find(&needle) {
+            rest = &rest[end + open..];
+            out.push(' ');
+        } else {
+            break;
+        }
+    }
+    out.push_str(rest);
     out
 }
 
@@ -126,7 +195,7 @@ title: Hello
 ---
 See [[Other Note]] and [[foo|bar]].
 "#;
-        let n = parse_markdown("a/b.md", &PathBuf::from("/x/a/b.md"), text);
+        let n = parse_markdown("a/b.md", &PathBuf::from("/x/a/b.md"), text).unwrap();
         assert_eq!(n.id.as_str(), "n1");
         assert_eq!(n.title.as_deref(), Some("Hello"));
         assert_eq!(n.wikilinks, vec!["Other Note", "foo"]);
@@ -134,7 +203,69 @@ See [[Other Note]] and [[foo|bar]].
 
     #[test]
     fn path_id_fallback() {
-        let n = parse_markdown("notes/hi.md", &PathBuf::from("/v/notes/hi.md"), "hi\n");
+        let n = parse_markdown("notes/hi.md", &PathBuf::from("/v/notes/hi.md"), "hi\n").unwrap();
         assert_eq!(n.id.as_str(), "notes/hi");
+    }
+
+    #[test]
+    fn wikilinks_skip_fenced_code() {
+        let body = r#"Real [[KeepMe]].
+
+```rust
+let x = [[NotALink]];
+```
+
+After [[AlsoKeep]].
+"#;
+        assert_eq!(
+            parse_wikilinks(body),
+            vec!["KeepMe".to_string(), "AlsoKeep".to_string()]
+        );
+    }
+
+    #[test]
+    fn wikilinks_skip_tilde_fences_and_inline() {
+        let body = "Before [[A]]\n~~~\n[[FenceOnly]]\n~~~\nAnd `[[InlineOnly]]` plus [[B]].\n";
+        assert_eq!(parse_wikilinks(body), vec!["A".to_string(), "B".to_string()]);
+    }
+
+    #[test]
+    fn invalid_frontmatter_errors_with_path() {
+        let text = r#"---
+id: [broken
+title: x
+---
+Body [[Link]].
+"#;
+        let err = parse_markdown("notes/bad.md", &PathBuf::from("/v/notes/bad.md"), text)
+            .unwrap_err();
+        let msg = err.to_string();
+        assert!(
+            msg.contains("notes/bad.md") && msg.to_lowercase().contains("frontmatter"),
+            "expected path + frontmatter in error, got: {msg}"
+        );
+    }
+
+    #[test]
+    fn happy_frontmatter_and_body_link() {
+        let text = r#"---
+id: ok1
+---
+See [[Target]].
+
+```
+[[No]]
+```
+"#;
+        let n = parse_markdown("ok.md", &PathBuf::from("/v/ok.md"), text).unwrap();
+        assert_eq!(n.id.as_str(), "ok1");
+        assert_eq!(n.wikilinks, vec!["Target"]);
+    }
+
+    #[test]
+    fn empty_frontmatter_ok() {
+        let text = "---\n---\nBody [[X]].\n";
+        let n = parse_markdown("e.md", &PathBuf::from("/v/e.md"), text).unwrap();
+        assert_eq!(n.wikilinks, vec!["X"]);
     }
 }

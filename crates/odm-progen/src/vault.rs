@@ -102,7 +102,7 @@ fn walk_dir(root: &Path, dir: &Path, out: &mut Vec<NoteDoc>) -> Result<(), OdmEr
             let text = fs::read_to_string(&path).map_err(|e| {
                 OdmError::operation(format!("read {}: {e}", path.display()))
             })?;
-            out.push(parse_markdown(&rel, &path, &text));
+            out.push(parse_markdown(&rel, &path, &text)?);
         }
     }
     Ok(())

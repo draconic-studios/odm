@@ -2,7 +2,7 @@
 id: issues-134
 title: "Wikilinks skip code fences; surface bad frontmatter"
 description: "parse_wikilinks indexes links inside fenced code; invalid YAML frontmatter is silently dropped causing id drift."
-status: open
+status: closed
 issue-type: bug
 severity: medium
 tags:
@@ -53,13 +53,13 @@ None
 
 **Acceptance criteria:**
 
-- [ ] No links from fenced code
-- [ ] Bad frontmatter fails reindex with path
-- [ ] Tests cover both
-- [ ] `cargo test -p odm-progen` green
+- [x] No links from fenced code
+- [x] Bad frontmatter fails reindex with path
+- [x] Tests cover both
+- [x] `cargo test -p odm-progen` green
 
 **Out of scope:** full CommonMark parser; title-collision backlinks (low priority observation).
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met

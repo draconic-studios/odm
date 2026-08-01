@@ -637,6 +637,41 @@ mod tests {
     }
 
     #[test]
+    fn reindex_invalid_frontmatter_errors_with_path() {
+        let d = tempdir().unwrap();
+        let root = d.path();
+        let (ws, sp) = ws_sp(root, "mem", "main");
+        fs::write(
+            sp.path.join("broken.md"),
+            "---\nid: [not closed\n---\nBody.\n",
+        )
+        .unwrap();
+
+        let err = reindex_progen(&ws, &sp).unwrap_err();
+        let msg = err.to_string();
+        assert!(
+            msg.contains("broken.md") && msg.to_lowercase().contains("frontmatter"),
+            "expected path + frontmatter error, got: {msg}"
+        );
+    }
+
+    #[test]
+    fn reindex_skips_wikilinks_in_fences() {
+        let d = tempdir().unwrap();
+        let root = d.path();
+        let (ws, sp) = ws_sp(root, "mem", "main");
+        fs::write(
+            sp.path.join("n.md"),
+            "---\nid: n1\n---\n[[Real]]\n```\n[[Fake]]\n```\n",
+        )
+        .unwrap();
+        reindex_progen(&ws, &sp).unwrap();
+        let conn = open_index(root, "main").unwrap();
+        let links = outgoing_links(&conn, "n1").unwrap();
+        assert_eq!(links, vec!["Real".to_string()]);
+    }
+
+    #[test]
     fn ensure_rebuilds_after_note_deleted() {
         let d = tempdir().unwrap();
         let root = d.path();
