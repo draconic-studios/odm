@@ -16,6 +16,8 @@ pub struct PackEntryDto {
     pub source: String,
     pub path: String,
     pub mode: String,
+    /// `true` when destination has no path/symlink entry (same rule as doctor/status).
+    pub missing: bool,
 }
 
 impl From<&PackEntry> for PackEntryDto {
@@ -25,6 +27,7 @@ impl From<&PackEntry> for PackEntryDto {
             source: e.source.clone(),
             path: e.path.display().to_string(),
             mode: mode_str(e.mode).into(),
+            missing: e.path.symlink_metadata().is_err(),
         }
     }
 }
@@ -43,7 +46,7 @@ pub fn pack_list_dto(entries: &[PackEntry]) -> PackListDto {
     }
 }
 
-/// Human one-name-per-line list.
+/// Human one-name-per-line list; suffix ` missing` when dest absent.
 pub fn format_pack_list_human(dto: &PackListDto) -> String {
     if dto.packs.is_empty() {
         return "(no agent packs)\n".into();
@@ -51,6 +54,9 @@ pub fn format_pack_list_human(dto: &PackListDto) -> String {
     let mut out = String::new();
     for p in &dto.packs {
         out.push_str(&p.name);
+        if p.missing {
+            out.push_str(" missing");
+        }
         out.push('\n');
     }
     out
@@ -79,30 +85,92 @@ pub fn pack_entry_dto(entry: &PackEntry) -> PackEntryDto {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs;
     use std::path::PathBuf;
 
-    fn entry(name: &str, mode: PackMode) -> PackEntry {
+    fn entry_at(name: &str, mode: PackMode, path: PathBuf) -> PackEntry {
         PackEntry {
             name: name.into(),
             source: format!("packs/{name}"),
-            path: PathBuf::from(format!("/home/agent/{name}")),
+            path,
             mode,
         }
     }
 
+    fn entry(name: &str, mode: PackMode) -> PackEntry {
+        entry_at(name, mode, PathBuf::from(format!("/home/agent/{name}")))
+    }
+
     #[test]
     fn pack_list_dto_json_shape() {
-        let entries = vec![entry("alpha", PackMode::Install), entry("zeta", PackMode::Link)];
+        let dir = tempfile::tempdir().unwrap();
+        let present = dir.path().join("alpha");
+        fs::create_dir_all(&present).unwrap();
+        let entries = vec![
+            entry_at("alpha", PackMode::Install, present.clone()),
+            entry("zeta", PackMode::Link),
+        ];
         let dto = pack_list_dto(&entries);
         let v = serde_json::to_value(&dto).unwrap();
         let arr = v["packs"].as_array().unwrap();
         assert_eq!(arr.len(), 2);
         assert_eq!(arr[0]["name"], "alpha");
         assert_eq!(arr[0]["source"], "packs/alpha");
-        assert_eq!(arr[0]["path"], "/home/agent/alpha");
+        assert_eq!(arr[0]["path"], present.display().to_string());
         assert_eq!(arr[0]["mode"], "install");
+        assert_eq!(arr[0]["missing"], false);
         assert_eq!(arr[1]["name"], "zeta");
         assert_eq!(arr[1]["mode"], "link");
+        assert_eq!(arr[1]["missing"], true);
+    }
+
+    #[test]
+    fn missing_false_when_path_exists() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("pack");
+        fs::create_dir_all(&path).unwrap();
+        let v = serde_json::to_value(pack_entry_dto(&entry_at(
+            "a",
+            PackMode::Install,
+            path,
+        )))
+        .unwrap();
+        assert_eq!(v["missing"], false);
+    }
+
+    #[test]
+    fn missing_true_when_path_absent() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("no-such");
+        let v = serde_json::to_value(pack_entry_dto(&entry_at(
+            "a",
+            PackMode::Install,
+            path,
+        )))
+        .unwrap();
+        assert_eq!(v["missing"], true);
+    }
+
+    #[test]
+    fn missing_false_for_dangling_symlink() {
+        let dir = tempfile::tempdir().unwrap();
+        let link = dir.path().join("dangling");
+        #[cfg(unix)]
+        std::os::unix::fs::symlink(dir.path().join("gone-target"), &link).unwrap();
+        #[cfg(not(unix))]
+        {
+            let _ = link;
+            return;
+        }
+        assert!(link.symlink_metadata().is_ok());
+        assert!(!link.exists());
+        let v = serde_json::to_value(pack_entry_dto(&entry_at(
+            "a",
+            PackMode::Link,
+            link,
+        )))
+        .unwrap();
+        assert_eq!(v["missing"], false);
     }
 
     #[test]
@@ -113,8 +181,39 @@ mod tests {
 
     #[test]
     fn pack_list_human_names() {
-        let dto = pack_list_dto(&[entry("a", PackMode::Install), entry("b", PackMode::Link)]);
-        assert_eq!(format_pack_list_human(&dto), "a\nb\n");
+        let dir = tempfile::tempdir().unwrap();
+        let a = dir.path().join("a");
+        fs::create_dir_all(&a).unwrap();
+        let b = dir.path().join("no-b");
+        let dto = pack_list_dto(&[
+            entry_at("a", PackMode::Install, a),
+            entry_at("b", PackMode::Link, b),
+        ]);
+        assert_eq!(format_pack_list_human(&dto), "a\nb missing\n");
+    }
+
+    #[test]
+    fn pack_list_human_present_and_missing() {
+        let present = PackListDto {
+            packs: vec![PackEntryDto {
+                name: "a".into(),
+                source: "s".into(),
+                path: "/p".into(),
+                mode: "install".into(),
+                missing: false,
+            }],
+        };
+        assert_eq!(format_pack_list_human(&present), "a\n");
+        let missing = PackListDto {
+            packs: vec![PackEntryDto {
+                name: "a".into(),
+                source: "s".into(),
+                path: "/p".into(),
+                mode: "install".into(),
+                missing: true,
+            }],
+        };
+        assert_eq!(format_pack_list_human(&missing), "a missing\n");
     }
 
     #[test]
@@ -134,6 +233,7 @@ mod tests {
         assert_eq!(v["mode"], "install");
         assert_eq!(v["path"], "/home/agent/core-desk");
         assert_eq!(v["source"], "packs/core-desk");
+        assert_eq!(v["missing"], true);
     }
 
     #[test]

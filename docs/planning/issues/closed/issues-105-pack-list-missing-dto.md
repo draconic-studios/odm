@@ -2,7 +2,7 @@
 id: issues-105
 title: "pack list DTO includes missing"
 description: "PackEntryDto gains missing bool (doctor/status path rule); list + install/link/rm JSON share fields."
-status: reviewing
+status: closed
 issue-type: feature-request
 severity: medium
 tags:
@@ -66,11 +66,11 @@ None
 
 **Acceptance criteria:**
 
-- [ ] `PackEntryDto` serializes `missing` bool
-- [ ] Present path → false; absent path → true; dangling symlink → false
-- [ ] `pack_list_dto` and `pack_entry_dto` both set `missing`
-- [ ] Human list suffix only when missing; empty message unchanged
-- [ ] Unit tests cover above; `cargo test` green
+- [x] `PackEntryDto` serializes `missing` bool
+- [x] Present path → false; absent path → true; dangling symlink → false
+- [x] `pack_list_dto` and `pack_entry_dto` both set `missing`
+- [x] Human list suffix only when missing; empty message unchanged
+- [x] Unit tests cover above; `cargo test` green
 
 **Out of scope:**
 
@@ -82,4 +82,8 @@ None
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met
+
+## Answer
+
+`PackEntryDto` gains `missing: bool` via `entry.path.symlink_metadata().is_err()` (status/doctor parity). List + install/link/rm JSON share the field; human list suffixes ` missing` only when absent; empty list and install/link/rm human lines unchanged. Unit tests cover present/absent/dangling symlink + human formatter. `cargo test -p odm` green; clippy `-D warnings` clean.

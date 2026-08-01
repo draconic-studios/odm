@@ -39,6 +39,7 @@ After generate dry-run map [[issues-99-post-v1-generate-dry-run-map]] closed, pu
 
 - Child tickets: [[issues-105-pack-list-missing-dto]], [[issues-106-pack-list-missing-cli]], [[issues-107-pack-list-missing-docs-honesty]], [[issues-108-core-desk-pack-list-missing-dogfood]].
 - Prefer order: 105 unblocked first; 106 blocked by 105; 107 blocked by 105+106; 108 blocked by 105+106.
+- [[issues-105-pack-list-missing-dto]]: `PackEntryDto.missing` via `symlink_metadata().is_err()`; human list ` name missing` suffix; unit tests green.
 
 ## Not yet specified
 

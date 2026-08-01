@@ -15,7 +15,7 @@ See `docs/agents/issue-tracker.md`.
 
 ### Pre-existing
 
-- [[issues-105-pack-list-missing-dto]] — pack list DTO includes `missing` (`ready-for-agent`, may be reviewing)
+- [[issues-106-pack-list-missing-cli]] — pack list CLI missing coverage (`ready-for-agent`; unblocked by 105)
 - [[issues-117-website-playwright-tests]] — full website e2e matrix (`ready-for-agent`)
 
 ### Swarm audit — critical / high (prefer first)
@@ -53,9 +53,8 @@ See `docs/agents/issue-tracker.md`.
 
 ### Pre-existing
 
-- [[issues-106-pack-list-missing-cli]] — blocked by 105
-- [[issues-107-pack-list-missing-docs-honesty]] — blocked by 105+106
-- [[issues-108-core-desk-pack-list-missing-dogfood]] — blocked by 105+106
+- [[issues-107-pack-list-missing-docs-honesty]] — blocked by 106
+- [[issues-108-core-desk-pack-list-missing-dogfood]] — blocked by 106
 - [[issues-118-website-playwright-review-improve]] — blocked by 117
 
 ### Coverage / demo chain
