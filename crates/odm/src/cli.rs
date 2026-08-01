@@ -13,6 +13,14 @@ pub struct Cli {
     #[arg(long, global = true)]
     pub json: bool,
 
+    /// Include/select Progen by config name (repeatable).
+    #[arg(long = "progen", global = true)]
+    pub progen: Vec<String>,
+
+    /// Include members of a Progen group (repeatable).
+    #[arg(long = "progen-group", global = true)]
+    pub progen_group: Vec<String>,
+
     #[command(subcommand)]
     pub command: Commands,
 }
@@ -59,6 +67,24 @@ pub enum Commands {
     Project {
         #[command(subcommand)]
         cmd: ProjectCmd,
+    },
+
+    /// Progen lifecycle + store façade.
+    Progen {
+        #[command(subcommand)]
+        cmd: ProgenCmd,
+    },
+
+    /// Federated vault search (FTS).
+    Find {
+        /// Free-text query (empty = list scoped notes).
+        query: Option<String>,
+    },
+
+    /// In-store note neighborhood via wikilinks.
+    Context {
+        /// Note id, or `progen:id`.
+        id: String,
     },
 }
 
@@ -110,4 +136,40 @@ pub enum ProjectCmd {
         #[arg(last = true)]
         git_args: Vec<String>,
     },
+}
+
+#[derive(Debug, Subcommand)]
+pub enum ProgenCmd {
+    /// List configured progens.
+    List,
+    /// Add a progen (Obsidian-compatible vault path).
+    Add {
+        name: String,
+        #[arg(long)]
+        path: PathBuf,
+        #[arg(long)]
+        url: Option<String>,
+        #[arg(long)]
+        branch: Option<String>,
+        #[arg(long)]
+        no_clone: bool,
+    },
+    /// Remove a progen entry.
+    Rm {
+        name: String,
+        #[arg(long)]
+        delete: bool,
+        #[arg(long)]
+        force: bool,
+    },
+    /// Show one progen / vault info.
+    Info { name: String },
+    /// Get a note by id (single-root).
+    Get { id: String },
+    /// List notes in a progen (single-root).
+    Ls,
+    /// Rebuild disposable index under `.odm/progen/<name>/`.
+    Reindex,
+    /// Store-side health (path + index).
+    Doctor,
 }

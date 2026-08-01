@@ -9,6 +9,7 @@ mod init;
 mod io;
 mod lifecycle;
 mod pin;
+mod progen_lifecycle;
 mod status;
 mod url_match;
 
@@ -37,6 +38,7 @@ pub use lifecycle::{
 pub use pin::{
     is_full_sha, load_pin, parse_pin_yaml, prune_pins, save_pin, PinEntry, PinFile,
 };
+pub use progen_lifecycle::{path_buf_to_rel, progen_add, progen_rm};
 pub use status::{
     build_status, compute_pin_state, format_status_human, EntityStatus, PinState, StatusSnapshot,
 };

@@ -1,6 +1,6 @@
 # core-desk
 
-Offline dogfood Workspace for ODM **core** only (multi-git sync, pin, status, doctor). No progens, actions, or generators.
+Offline dogfood Workspace for ODM **core** + a path-only **Progen** vault (Obsidian-compatible). No actions or generators.
 
 ## Layout
 
@@ -11,11 +11,13 @@ examples/core-desk/
     README.md
     alpha.git/    # bare fixture
     beta.git/     # bare fixture
+  progens/
+    notes/        # path-only Progen = Obsidian vault (plain Markdown)
   .odm/
     odm.config.yaml
 ```
 
-Managed checkouts (`projects/alpha`, `projects/beta`) and `odm.lock.yaml` are **not** committed — they appear after `odm sync`.
+Managed checkouts (`projects/alpha`, `projects/beta`) and `odm.lock.yaml` are **not** committed — they appear after `odm sync`. Progen index lives under `.odm/progen/notes/` after `odm progen reindex` (gitignored).
 
 Config URLs are relative (`fixtures/alpha.git`). Integration harnesses should rewrite them to absolute `file://` paths against a temp copy when needed. Plain `git clone` from this directory root works as-is.
 
@@ -48,6 +50,13 @@ odm doctor
 # optional
 odm project list
 odm pin apply
+
+# Progen / Obsidian vault
+odm progen list
+odm progen reindex
+odm find DeskUniqueToken
+odm context welcome
+# Open progens/notes in Obsidian or: obsidian-cli … against that folder
 ```
 
 ## Fixtures

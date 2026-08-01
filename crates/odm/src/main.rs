@@ -7,12 +7,18 @@ use std::process::ExitCode;
 use clap::Parser;
 use odm_core::{
     abs_checkout, build_status, discover_root, format_doctor_human, format_status_human,
-    init_workspace, load_workspace, pin_apply, pin_status, project_add, project_git, project_rm,
-    run_doctor, sync_managed, InitOptions, MaterializeOutcome, OdmError, ProjectEntry,
+    init_workspace, load_workspace, path_buf_to_rel, pin_apply, pin_status, progen_add, progen_rm,
+    project_add, project_git, project_rm, run_doctor, sync_managed, InitOptions, MaterializeOutcome,
+    OdmError, ProgenEntry, ProjectEntry,
 };
 use odm_git::Git;
+use odm_progen::{
+    context_notes, doctor_progens, ensure_vault, find_notes, format_context_human,
+    format_find_human, format_get_human, format_ls_human, get_note, list_notes, reindex_progen,
+    resolve_read_scope, resolve_single_read, vault_info, ScopedProgen,
+};
 
-use cli::{Cli, Commands, PinCmd, ProjectCmd};
+use cli::{Cli, Commands, PinCmd, ProgenCmd, ProjectCmd};
 use output::{print_error, print_json, GlobalOut};
 
 fn main() -> ExitCode {
@@ -111,7 +117,12 @@ fn run(cli: Cli, out: &GlobalOut) -> Result<i32, OdmError> {
                         }))?;
                     } else {
                         for r in &results {
-                            println!("{}\t{}\t{}", r.name, r.status, r.rev.as_deref().unwrap_or("-"));
+                            println!(
+                                "{}\t{}\t{}",
+                                r.name,
+                                r.status,
+                                r.rev.as_deref().unwrap_or("-")
+                            );
                         }
                         if results.is_empty() {
                             println!("(nothing to apply)");
@@ -330,15 +341,250 @@ fn run(cli: Cli, out: &GlobalOut) -> Result<i32, OdmError> {
                 }
             }
         }
+        Commands::Progen { cmd } => run_progen(cli.root.as_deref(), &cli.progen, out, cmd),
+        Commands::Find { query } => {
+            let root = discover_root(cli.root.as_deref(), &std::env::current_dir()?)?;
+            let ws = load_workspace(&root)?;
+            let q = query.unwrap_or_default();
+            let hits = find_notes(&ws, &q, &cli.progen, &cli.progen_group, 200)?;
+            if out.json {
+                print_json(&serde_json::json!({ "hits": hits }))?;
+            } else {
+                print!("{}", format_find_human(&hits));
+            }
+            Ok(0)
+        }
+        Commands::Context { id } => {
+            let root = discover_root(cli.root.as_deref(), &std::env::current_dir()?)?;
+            let ws = load_workspace(&root)?;
+            let progen = cli.progen.first().map(|s| s.as_str());
+            if cli.progen.len() > 1 {
+                return Err(OdmError::usage(
+                    "context accepts at most one --progen (or use name:id)",
+                ));
+            }
+            let hit = context_notes(&ws, &id, progen)?;
+            if out.json {
+                print_json(&hit)?;
+            } else {
+                print!("{}", format_context_human(&hit));
+            }
+            Ok(0)
+        }
+    }
+}
+
+fn run_progen(
+    root_flag: Option<&Path>,
+    global_progen: &[String],
+    out: &GlobalOut,
+    cmd: ProgenCmd,
+) -> Result<i32, OdmError> {
+    let root = discover_root(root_flag, &std::env::current_dir()?)?;
+    let mut ws = load_workspace(&root)?;
+    let git = Git::new();
+    let progen_flag = global_progen.first().map(|s| s.as_str());
+
+    match cmd {
+        ProgenCmd::List => {
+            if out.json {
+                let list: Vec<_> = ws
+                    .config
+                    .progens
+                    .iter()
+                    .map(|(name, e)| {
+                        serde_json::json!({
+                            "name": name,
+                            "path": e.path,
+                            "url": e.url,
+                            "branch": e.branch,
+                        })
+                    })
+                    .collect();
+                print_json(&serde_json::json!({ "progens": list }))?;
+            } else if ws.config.progens.is_empty() {
+                println!("(no progens)");
+            } else {
+                for (name, e) in &ws.config.progens {
+                    let managed = if e.url.is_some() { "managed" } else { "path" };
+                    println!("{name}\t{}\t{managed}", e.path);
+                }
+            }
+            Ok(0)
+        }
+        ProgenCmd::Add {
+            name,
+            path,
+            url,
+            branch,
+            no_clone,
+        } => {
+            let rel = path_buf_to_rel(&path)?;
+            let entry = ProgenEntry {
+                path: rel,
+                url,
+                branch,
+            };
+            let outcome = progen_add(
+                &git,
+                &ws.root,
+                &mut ws.config,
+                &name,
+                entry,
+                no_clone,
+                ensure_vault,
+            )?;
+            if out.json {
+                print_json(&serde_json::json!({
+                    "ok": true,
+                    "name": name,
+                    "materialized": outcome.map(|o| match o {
+                        MaterializeOutcome::Cloned => "cloned",
+                        MaterializeOutcome::AlreadyPresent => "already_present",
+                    }),
+                }))?;
+            } else {
+                match outcome {
+                    Some(MaterializeOutcome::Cloned) => {
+                        println!("added progen {name} (cloned vault)")
+                    }
+                    Some(MaterializeOutcome::AlreadyPresent) => {
+                        println!("added progen {name} (already present)")
+                    }
+                    None => println!("added progen {name} (vault ready)"),
+                }
+            }
+            Ok(0)
+        }
+        ProgenCmd::Rm {
+            name,
+            delete,
+            force,
+        } => {
+            progen_rm(&git, &ws.root, &mut ws.config, &name, delete, force)?;
+            if out.json {
+                print_json(&serde_json::json!({ "ok": true, "name": name }))?;
+            } else {
+                println!("removed progen {name}");
+            }
+            Ok(0)
+        }
+        ProgenCmd::Info { name } => {
+            let entry = ws
+                .config
+                .progens
+                .get(&name)
+                .ok_or_else(|| OdmError::usage(format!("unknown progen '{name}'")))?;
+            let sp = ScopedProgen {
+                name: name.clone(),
+                path: abs_checkout(&ws.root, &entry.path),
+            };
+            let info = vault_info(&sp)?;
+            if out.json {
+                print_json(&serde_json::json!({
+                    "name": name,
+                    "path": entry.path,
+                    "url": entry.url,
+                    "branch": entry.branch,
+                    "on_disk": info.on_disk,
+                    "note_count": info.note_count,
+                    "has_obsidian": info.has_obsidian,
+                    "abs_path": info.path,
+                }))?;
+            } else {
+                println!("name: {name}");
+                println!("path: {}", entry.path);
+                if let Some(u) = &entry.url {
+                    println!("url: {u}");
+                }
+                println!("on_disk: {}", info.on_disk);
+                println!("notes: {}", info.note_count);
+                println!("obsidian: {}", info.has_obsidian);
+                println!("abs: {}", info.path.display());
+            }
+            Ok(0)
+        }
+        ProgenCmd::Get { id } => {
+            if global_progen.len() > 1 {
+                return Err(OdmError::usage(
+                    "progen get accepts at most one --progen (or use name:id)",
+                ));
+            }
+            let g = get_note(&ws, &id, progen_flag)?;
+            if out.json {
+                print_json(&g)?;
+            } else {
+                print!("{}", format_get_human(&g));
+            }
+            Ok(0)
+        }
+        ProgenCmd::Ls => {
+            if global_progen.len() > 1 {
+                return Err(OdmError::usage("progen ls accepts at most one --progen"));
+            }
+            let hits = list_notes(&ws, progen_flag)?;
+            if out.json {
+                print_json(&serde_json::json!({ "notes": hits }))?;
+            } else {
+                print!("{}", format_ls_human(&hits));
+            }
+            Ok(0)
+        }
+        ProgenCmd::Reindex => {
+            let scope = if let Some(n) = progen_flag {
+                if global_progen.len() > 1 {
+                    return Err(OdmError::usage(
+                        "progen reindex: pass one --progen or none for all",
+                    ));
+                }
+                vec![resolve_single_read(&ws, Some(n))?]
+            } else {
+                resolve_read_scope(&ws, &[], &[])?
+            };
+            let mut stats = Vec::new();
+            for sp in scope {
+                stats.push(reindex_progen(&ws, &sp)?);
+            }
+            if out.json {
+                print_json(&serde_json::json!({ "results": stats.iter().map(|s| {
+                    serde_json::json!({
+                        "progen": s.progen,
+                        "notes": s.notes,
+                        "links": s.links,
+                    })
+                }).collect::<Vec<_>>() }))?;
+            } else {
+                for s in stats {
+                    println!("{}\t{} notes\t{} links", s.progen, s.notes, s.links);
+                }
+            }
+            Ok(0)
+        }
+        ProgenCmd::Doctor => {
+            if global_progen.len() > 1 {
+                return Err(OdmError::usage("progen doctor accepts at most one --progen"));
+            }
+            let checks = doctor_progens(&ws, progen_flag)?;
+            let ok = checks.iter().all(|c| c.ok);
+            if out.json {
+                print_json(&serde_json::json!({ "ok": ok, "checks": checks }))?;
+            } else if checks.is_empty() {
+                println!("(no progens)");
+            } else {
+                for c in &checks {
+                    let mark = if c.ok { "ok" } else { "FAIL" };
+                    println!("{}\t{}\t{}\t{}", c.progen, c.id, mark, c.message);
+                }
+            }
+            if ok {
+                Ok(0)
+            } else {
+                Ok(3)
+            }
+        }
     }
 }
 
 fn path_to_rel(path: &Path) -> Result<String, OdmError> {
-    let s = path.to_string_lossy();
-    if path.is_absolute() {
-        return Err(OdmError::usage(format!(
-            "project path must be relative, got '{s}'"
-        )));
-    }
-    Ok(s.replace('\\', "/"))
+    path_buf_to_rel(path)
 }

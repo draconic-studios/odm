@@ -2,7 +2,7 @@
 id: issues-14
 title: "Implement core map"
 description: "Wayfinder map: working Rust ODM core (phase 2) plus examples/core-desk dogfood Workspace."
-status: open
+status: closed
 tags:
   - planning
   - issue
@@ -75,3 +75,5 @@ Working **Implement core** in this repo per `docs/reference/phased-delivery.md` 
 Charted from wayfinder session after design package close. Destination = phase-2 working core + `examples/core-desk`.
 
 **2026-08-01:** Acceptance checklist green (cargo test; core CLI cut; multi-git; core-desk; integration harness gate; full v1 schema load; no phase 3–5 scope). Human may close this map.
+
+**2026-08-01:** Map closed by maintainer. Phase 2 Implement core complete.
