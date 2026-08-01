@@ -21,6 +21,14 @@ pub struct Cli {
     #[arg(long = "progen-group", global = true)]
     pub progen_group: Vec<String>,
 
+    /// Project name for commands that target a project (e.g. run).
+    #[arg(long, global = true)]
+    pub project: Option<String>,
+
+    /// Worktree slot name (with --project).
+    #[arg(long, global = true)]
+    pub wt: Option<String>,
+
     #[command(subcommand)]
     pub command: Commands,
 }
@@ -91,13 +99,21 @@ pub enum Commands {
     Run {
         /// Action name (omit to list).
         action: Option<String>,
-        #[arg(long)]
-        project: Option<String>,
-        #[arg(long)]
-        wt: Option<String>,
         /// Extra args after `--`
         #[arg(last = true)]
         extra: Vec<String>,
+    },
+
+    /// Generate from a template (not implemented).
+    Generate {
+        /// Generator name.
+        name: Option<String>,
+    },
+
+    /// Agent pack / session helpers (not implemented).
+    Agent {
+        #[command(subcommand)]
+        cmd: AgentCmd,
     },
 }
 
@@ -149,6 +165,11 @@ pub enum ProjectCmd {
         #[arg(last = true)]
         git_args: Vec<String>,
     },
+    /// Worktree slot helpers (not implemented).
+    Worktree {
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+        rest: Vec<String>,
+    },
 }
 
 #[derive(Debug, Subcommand)]
@@ -179,10 +200,35 @@ pub enum ProgenCmd {
     Info { name: String },
     /// Get a note by id (single-root).
     Get { id: String },
+    /// Print note body only (single-root).
+    Body { id: String },
+    /// List note paths as a sorted tree (single-root).
+    Tree,
+    /// Notes that wikilink to id (single-root).
+    Backlinks { id: String },
     /// List notes in a progen (single-root).
     Ls,
     /// Rebuild disposable index under `.odm/progen/<name>/`.
     Reindex,
     /// Store-side health (path + index).
     Doctor,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum AgentCmd {
+    /// Install/link an agent pack (not implemented).
+    Pack {
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+        rest: Vec<String>,
+    },
+    /// Start an agent session (not implemented).
+    Start {
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+        rest: Vec<String>,
+    },
+    /// Prompt helpers (not implemented).
+    Prompt {
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+        rest: Vec<String>,
+    },
 }

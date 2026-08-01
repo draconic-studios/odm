@@ -10,16 +10,17 @@ use odm_core::{
     abs_checkout, build_status, discover_root, format_doctor_human, format_status_human,
     init_workspace, load_workspace, path_buf_to_rel, pin_apply, pin_status, progen_add, progen_rm,
     project_add, project_git, project_rm, run_doctor, sync_managed, InitOptions, MaterializeOutcome,
-    OdmError, ProgenEntry, ProjectEntry,
+    OdmError, PinState, ProgenEntry, ProjectEntry,
 };
 use odm_git::Git;
 use odm_progen::{
     context_notes, doctor_progens, ensure_vault, find_notes, format_context_human,
-    format_find_human, format_get_human, format_ls_human, get_note, list_notes, reindex_progen,
-    resolve_read_scope, resolve_single_read, vault_info, ScopedProgen,
+    format_find_human, format_get_human, format_ls_human, get_note, list_notes, note_backlinks,
+    note_body, note_tree, reindex_progen, resolve_read_scope, resolve_single_read, vault_info,
+    ScopedProgen,
 };
 
-use cli::{Cli, Commands, PinCmd, ProgenCmd, ProjectCmd};
+use cli::{AgentCmd, Cli, Commands, PinCmd, ProgenCmd, ProjectCmd};
 use output::{print_error, print_json, GlobalOut};
 
 fn main() -> ExitCode {
@@ -37,6 +38,8 @@ fn main() -> ExitCode {
 }
 
 fn run(cli: Cli, out: &GlobalOut) -> Result<i32, OdmError> {
+    let global_project = cli.project.clone();
+    let global_wt = cli.wt.clone();
     match cli.command {
         Commands::Init {
             path,
@@ -197,18 +200,23 @@ fn run(cli: Cli, out: &GlobalOut) -> Result<i32, OdmError> {
             let git = Git::new();
             match cmd {
                 ProjectCmd::List => {
+                    let snap = build_status(&ws)?;
                     if out.json {
                         let list: Vec<_> = ws
                             .config
                             .projects
                             .iter()
                             .map(|(name, e)| {
+                                let st = snap.projects.iter().find(|p| p.name == *name);
                                 serde_json::json!({
                                     "name": name,
                                     "path": e.path,
                                     "url": e.url,
                                     "branch": e.branch,
                                     "type": e.type_,
+                                    "on_disk": st.map(|s| s.on_disk).unwrap_or(false),
+                                    "is_git": st.map(|s| s.is_git).unwrap_or(false),
+                                    "pin_state": st.map(|s| s.pin_state),
                                 })
                             })
                             .collect();
@@ -218,7 +226,14 @@ fn run(cli: Cli, out: &GlobalOut) -> Result<i32, OdmError> {
                     } else {
                         for (name, e) in &ws.config.projects {
                             let managed = if e.url.is_some() { "managed" } else { "path" };
-                            println!("{name}\t{}\t{managed}", e.path);
+                            let st = snap.projects.iter().find(|p| p.name == *name);
+                            let on_disk = st.map(|s| s.on_disk).unwrap_or(false);
+                            let is_git = st.map(|s| s.is_git).unwrap_or(false);
+                            let pin = st.map(|s| pin_state_label(s.pin_state)).unwrap_or("-");
+                            println!(
+                                "{name}\t{}\t{managed}\ton_disk={on_disk}\tis_git={is_git}\tpin={pin}",
+                                e.path
+                            );
                         }
                     }
                     Ok(0)
@@ -334,12 +349,14 @@ fn run(cli: Cli, out: &GlobalOut) -> Result<i32, OdmError> {
                     wt,
                     git_args,
                 } => {
-                    if wt.is_some() {
+                    let effective_wt = wt.or(global_wt);
+                    if effective_wt.is_some() {
                         return Err(OdmError::not_implemented("project git --wt"));
                     }
                     let status = project_git(&git, &ws, &name, &git_args)?;
                     Ok(status.code().unwrap_or(1))
                 }
+                ProjectCmd::Worktree { .. } => Err(OdmError::not_implemented("project worktree")),
             }
         }
         Commands::Progen { cmd } => run_progen(cli.root.as_deref(), &cli.progen, out, cmd),
@@ -372,12 +389,7 @@ fn run(cli: Cli, out: &GlobalOut) -> Result<i32, OdmError> {
             }
             Ok(0)
         }
-        Commands::Run {
-            action,
-            project,
-            wt,
-            extra,
-        } => {
+        Commands::Run { action, extra } => {
             let root = discover_root(cli.root.as_deref(), &std::env::current_dir()?)?;
             let ws = load_workspace(&root)?;
             match action {
@@ -413,8 +425,8 @@ fn run(cli: Cli, out: &GlobalOut) -> Result<i32, OdmError> {
                         &ws,
                         &name,
                         RunOptions {
-                            project: project.as_deref(),
-                            wt: wt.as_deref(),
+                            project: global_project.as_deref(),
+                            wt: global_wt.as_deref(),
                             extra_args: &extra,
                         },
                     )?;
@@ -427,6 +439,15 @@ fn run(cli: Cli, out: &GlobalOut) -> Result<i32, OdmError> {
                     Ok(code)
                 }
             }
+        }
+        Commands::Generate { .. } => Err(OdmError::not_implemented("generate")),
+        Commands::Agent { cmd } => {
+            let verb = match cmd {
+                AgentCmd::Pack { .. } => "agent pack",
+                AgentCmd::Start { .. } => "agent start",
+                AgentCmd::Prompt { .. } => "agent prompt",
+            };
+            Err(OdmError::not_implemented(verb))
         }
     }
 }
@@ -444,17 +465,22 @@ fn run_progen(
 
     match cmd {
         ProgenCmd::List => {
+            let snap = build_status(&ws)?;
             if out.json {
                 let list: Vec<_> = ws
                     .config
                     .progens
                     .iter()
                     .map(|(name, e)| {
+                        let st = snap.progens.iter().find(|p| p.name == *name);
                         serde_json::json!({
                             "name": name,
                             "path": e.path,
                             "url": e.url,
                             "branch": e.branch,
+                            "on_disk": st.map(|s| s.on_disk).unwrap_or(false),
+                            "is_git": st.map(|s| s.is_git).unwrap_or(false),
+                            "pin_state": st.map(|s| s.pin_state),
                         })
                     })
                     .collect();
@@ -464,7 +490,14 @@ fn run_progen(
             } else {
                 for (name, e) in &ws.config.progens {
                     let managed = if e.url.is_some() { "managed" } else { "path" };
-                    println!("{name}\t{}\t{managed}", e.path);
+                    let st = snap.progens.iter().find(|p| p.name == *name);
+                    let on_disk = st.map(|s| s.on_disk).unwrap_or(false);
+                    let is_git = st.map(|s| s.is_git).unwrap_or(false);
+                    let pin = st.map(|s| pin_state_label(s.pin_state)).unwrap_or("-");
+                    println!(
+                        "{name}\t{}\t{managed}\ton_disk={on_disk}\tis_git={is_git}\tpin={pin}",
+                        e.path
+                    );
                 }
             }
             Ok(0)
@@ -575,6 +608,57 @@ fn run_progen(
             }
             Ok(0)
         }
+        ProgenCmd::Body { id } => {
+            if global_progen.len() > 1 {
+                return Err(OdmError::usage(
+                    "progen body accepts at most one --progen (or use name:id)",
+                ));
+            }
+            let g = note_body(&ws, &id, progen_flag)?;
+            if out.json {
+                print_json(&serde_json::json!({
+                    "progen": g.progen,
+                    "id": g.id,
+                    "body": g.body,
+                }))?;
+            } else {
+                print!("{}", g.body);
+                if !g.body.ends_with('\n') {
+                    println!();
+                }
+            }
+            Ok(0)
+        }
+        ProgenCmd::Tree => {
+            if global_progen.len() > 1 {
+                return Err(OdmError::usage("progen tree accepts at most one --progen"));
+            }
+            let paths = note_tree(&ws, progen_flag)?;
+            if out.json {
+                print_json(&serde_json::json!({ "paths": paths }))?;
+            } else if paths.is_empty() {
+                println!("(no notes)");
+            } else {
+                for p in paths {
+                    println!("{p}");
+                }
+            }
+            Ok(0)
+        }
+        ProgenCmd::Backlinks { id } => {
+            if global_progen.len() > 1 {
+                return Err(OdmError::usage(
+                    "progen backlinks accepts at most one --progen (or use name:id)",
+                ));
+            }
+            let hits = note_backlinks(&ws, &id, progen_flag)?;
+            if out.json {
+                print_json(&serde_json::json!({ "backlinks": hits }))?;
+            } else {
+                print!("{}", format_ls_human(&hits));
+            }
+            Ok(0)
+        }
         ProgenCmd::Ls => {
             if global_progen.len() > 1 {
                 return Err(OdmError::usage("progen ls accepts at most one --progen"));
@@ -644,4 +728,15 @@ fn run_progen(
 
 fn path_to_rel(path: &Path) -> Result<String, OdmError> {
     path_buf_to_rel(path)
+}
+
+fn pin_state_label(s: PinState) -> &'static str {
+    match s {
+        PinState::None => "none",
+        PinState::MissingPath => "missing_path",
+        PinState::Unpinned => "unpinned",
+        PinState::InSync => "in_sync",
+        PinState::Drift => "drift",
+        PinState::MissingPinFile => "missing_pin_file",
+    }
 }

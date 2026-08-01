@@ -236,6 +236,23 @@ fn run_project_cwd() {
 }
 
 #[test]
+fn run_global_project_cwd() {
+    let (_dir, root) = setup_cwd_workspace();
+    odm()
+        .args([
+            "--root",
+            root.to_str().unwrap(),
+            "--project",
+            "alpha",
+            "run",
+            "pwdhere",
+        ])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("from-project"));
+}
+
+#[test]
 fn run_wt_cwd() {
     let (_dir, root) = setup_cwd_workspace();
     odm()
