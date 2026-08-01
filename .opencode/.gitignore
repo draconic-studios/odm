@@ -2,3 +2,8 @@ node_modules
 package.json
 package-lock.json
 bun.lock
+
+# Swarm runtime (prompts/agents/scripts stay tracked)
+swarm/state.json
+swarm/log/
+swarm/STOP
