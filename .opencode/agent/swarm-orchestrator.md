@@ -85,11 +85,28 @@ If implementer fails tests → one orchestrator fix attempt, then full `cargo te
 
 ### 6. Review
 
-Task **swarm-reviewer** with: ticket path, fixed point SHA, `git diff <sha>...HEAD`. Expect PASS or FAIL + concrete fix list (Standards + Spec).
+**Inline review (preferred for AFK reliability)** — do not Task a subagent unless the diff is huge and you need a second model pass. Yourself:
+
+1. Re-read ticket Agent Brief + acceptance criteria.
+2. `git diff <fixed-point>` / changed files — Standards (`AGENTS.md`, scope, file size, no secrets) + Spec (each AC met or gap).
+3. Emit compact verdict in the session log:
+
+```markdown
+## Verdict
+PASS | FAIL
+## Standards
+- ...
+## Spec
+- <criterion>: met | gap
+## Must fix
+1. ...
+```
+
+Optional: Task **swarm-reviewer** only if you are unsure; do not block the cycle waiting on a hung subagent — if Task does not return promptly, fall back to inline PASS/FAIL and continue.
 
 ### 7. Fix loop
 
-Max **2** rounds: apply fixes → `cargo test` → re-review. Still FAIL → unclaim, leave WIP uncommitted if unsafe, or commit only if tests green and ticket partial is honest; prefer unclaim + no commit. `SWARM_EXIT:2`.
+Max **2** rounds: apply fixes → `cargo test` → re-review (inline). Still FAIL → unclaim, leave WIP uncommitted if unsafe, or commit only if tests green and ticket partial is honest; prefer unclaim + no commit. `SWARM_EXIT:2`.
 
 ### 8. Land (PASS + green)
 
