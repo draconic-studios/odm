@@ -196,11 +196,13 @@ Flag parity with upstream: pass through where it does not fight ODM globals; do 
 ### `odm find` — **full**
 
 ```text
-odm find [query] [facet-flags…] [--progen …] [--progen-group …] [--json]
+odm find [query] [--progen …] [--progen-group …] [--json]
 ```
 
-- Federated **query** (FTS + facets): fan-out progen `query` per selected store; merge per `progen.md` (tag `"progen"`, identity `(progen, id)`, stable Progen order).
-- Default scope: all configured Progens.
+- Federated **FTS** query: fan-out per selected store; merge per `progen.md` (tag `"progen"`, identity `(progen, id)`, stable Progen order). No facet flags on the ODM CLI.
+- Default scope: all configured Progens (`--progen` / `--progen-group` narrow).
+- Empty query → list scoped notes (same path as a free-text query).
+- Default max hits: **200** per store (hardcoded today; no `--limit` flag until shipped).
 - Zero hits → exit `0`, empty list.
 - Empty `progens` map → error (no progen scope) — exit `2` or `1` as fits “no scope configured”.
 - Not named `query` on the ODM binary.
@@ -210,13 +212,13 @@ odm find [query] [facet-flags…] [--progen …] [--progen-group …] [--json]
 ### `odm context` — **full**
 
 ```text
-odm context <id> [--progen <name>] [upstream scope flags…] [--json]
+odm context <id> [--progen <name>] [--json]
 odm context <progen-name>:<id> …
 ```
 
 - In-store neighborhood only — **no** cross-store graph walk.
-- Disambiguation: require `--progen` when more than one Progen is in play, **or** accept `name:id` prefix. Sole configured Progen → bare `id` OK.
-- Thin-pass upstream scope flags (`--depth`, etc.) where applicable.
+- Fixed one-hop neighborhood as `ContextHit` (`anchor` / `outgoing` / `incoming`). No `--depth` or other upstream scope flags.
+- Disambiguation: require `--progen` when more than one Progen is in play, **or** accept `name:id` prefix. Sole configured Progen → bare `id` OK. At most one `--progen` (or use `name:id`).
 
 ---
 

@@ -36,9 +36,10 @@ After post-v1 hardening (map [[issues-55-post-v1-hardening-map]]) closed, close 
 
 ## Decisions so far
 
-- Child tickets: [[issues-61-phased-delivery-changelog-honesty]] (closed), [[issues-62-cli-find-context-docs-honesty]], [[issues-63-doctor-split-worktree-orphan]], [[issues-64-find-limit-flag]], [[issues-65-status-worktree-slots]].
+- Child tickets: [[issues-61-phased-delivery-changelog-honesty]] (closed), [[issues-62-cli-find-context-docs-honesty]] (closed), [[issues-63-doctor-split-worktree-orphan]], [[issues-64-find-limit-flag]], [[issues-65-status-worktree-slots]].
 - Order preference: 61 → 62 (docs, unblocked) in parallel with 63; 64 and 65 independent of docs; no hard edges unless noted on tickets.
 - **61:** `phased-delivery.md` + CHANGELOG Unreleased honesty — prompt v1 thin + doctor orphan warn recorded; `agent start` remains deferred/stubbed.
+- **62:** `cli.md` find/context match shipped clap — no facet-flags/`--depth`; default find limit 200 documented; no Rust.
 
 ## Not yet specified
 

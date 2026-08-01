@@ -2,13 +2,12 @@
 id: issues-62
 title: "cli.md find/context honesty (no fake facets/--depth)"
 description: "Align odm find and odm context docs with real CLI flags; document default find limit 200."
-status: open
+status: closed
 issue-type: observation
 severity: low
 tags:
   - planning
   - issue
-  - ready-for-agent
   - wayfinder
   - wayfinder-task
 ---
@@ -72,11 +71,11 @@ None
 
 **Acceptance criteria:**
 
-- [ ] find synopsis has no facet-flags placeholder as current CLI
-- [ ] find text does not claim facets as implemented
-- [ ] context text does not claim `--depth` (or other unshipped upstream flags) as available
-- [ ] default find limit 200 is documented honestly
-- [ ] No Rust change
+- [x] find synopsis has no facet-flags placeholder as current CLI
+- [x] find text does not claim facets as implemented
+- [x] context text does not claim `--depth` (or other unshipped upstream flags) as available
+- [x] default find limit 200 is documented honestly
+- [x] No Rust change
 
 **Out of scope:**
 
@@ -85,4 +84,12 @@ None
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met
+
+## Answer
+
+Docs-only honesty in `docs/reference/cli.md`:
+
+- **`odm find`:** synopsis drops `[facet-flags…]`; body is federated FTS only (explicitly no facet flags); documents default max hits **200** per store hardcoded, no `--limit` until shipped; empty query = list scoped notes.
+- **`odm context`:** synopsis drops upstream scope flags; fixed one-hop `ContextHit` (anchor/outgoing/incoming); explicitly no `--depth`; keeps real disambiguation (`--progen`, `name:id`).
+- No Rust changes. `progen.md` / research docs left alone.
