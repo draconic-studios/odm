@@ -5,18 +5,23 @@ use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
 use clap::Parser;
-use odm_actions::{list_actions, run_action, RunOptions};
+use odm::commands::{
+    find_notes_dto, format_action_list_human, format_progen_add_human, format_progen_info_human,
+    format_progen_list_human, format_project_add_human, format_project_info_human,
+    format_project_list_human, list_actions_dto, list_projects, list_progens, materialize_json,
+    materialize_json_opt, materialize_sync_human, progen_info, project_info, status_snapshot,
+};
+use odm_actions::{run_action, RunOptions};
 use odm_core::{
-    abs_checkout, build_status, discover_root, format_doctor_human, format_status_human,
-    init_workspace, load_workspace, path_buf_to_rel, pin_apply, pin_status, project_add,
-    project_git, project_rm, run_doctor, sync_managed, InitOptions, MaterializeOutcome, OdmError,
-    PinState, ProgenEntry, ProjectEntry,
+    discover_root, format_doctor_human, format_status_human, init_workspace, load_workspace,
+    path_buf_to_rel, pin_apply, pin_status, project_add, project_git, project_rm, run_doctor,
+    sync_managed, InitOptions, OdmError, ProgenEntry, ProjectEntry,
 };
 use odm_git::Git;
 use odm_progen::{
-    add_progen, context_notes, doctor_progens, find_notes, format_context_human, format_find_human,
+    add_progen, context_notes, doctor_progens, format_context_human, format_find_human,
     format_get_human, format_ls_human, get_note, list_notes, one_progen_flag, open_for_id,
-    open_single, reindex_for_cli, rm_progen, vault_info, ScopedProgen,
+    open_single, reindex_for_cli, rm_progen,
 };
 
 use cli::{AgentCmd, Cli, Commands, PinCmd, ProgenCmd, ProjectCmd};
@@ -79,10 +84,7 @@ fn run(cli: Cli, out: &GlobalOut) -> Result<i32, OdmError> {
                     "results": results.iter().map(|r| {
                         serde_json::json!({
                             "name": r.name,
-                            "materialized": match r.materialized {
-                                MaterializeOutcome::Cloned => "cloned",
-                                MaterializeOutcome::AlreadyPresent => "already_present",
-                            },
+                            "materialized": materialize_json(r.materialized),
                             "fetched": r.fetched,
                             "head": r.head,
                         })
@@ -92,11 +94,11 @@ fn run(cli: Cli, out: &GlobalOut) -> Result<i32, OdmError> {
                 println!("(no managed entries)");
             } else {
                 for r in &results {
-                    let mat = match r.materialized {
-                        MaterializeOutcome::Cloned => "cloned",
-                        MaterializeOutcome::AlreadyPresent => "present",
-                    };
-                    println!("{}\t{}\tfetched", r.name, mat);
+                    println!(
+                        "{}\t{}\tfetched",
+                        r.name,
+                        materialize_sync_human(r.materialized)
+                    );
                 }
             }
             Ok(0)
@@ -171,7 +173,7 @@ fn run(cli: Cli, out: &GlobalOut) -> Result<i32, OdmError> {
             let root = discover_root(cli.root.as_deref(), &std::env::current_dir()?)?;
             let ws = load_workspace(&root)?;
             let git = Git::new();
-            let snap = build_status(&git, &ws)?;
+            let snap = status_snapshot(&git, &ws)?;
             if out.json {
                 print_json(&snap)?;
             } else {
@@ -201,41 +203,11 @@ fn run(cli: Cli, out: &GlobalOut) -> Result<i32, OdmError> {
             let git = Git::new();
             match cmd {
                 ProjectCmd::List => {
-                    let snap = build_status(&git, &ws)?;
                     if out.json {
-                        let list: Vec<_> = ws
-                            .config
-                            .projects
-                            .iter()
-                            .map(|(name, e)| {
-                                let st = snap.projects.iter().find(|p| p.name == *name);
-                                serde_json::json!({
-                                    "name": name,
-                                    "path": e.path,
-                                    "url": e.url,
-                                    "branch": e.branch,
-                                    "type": e.type_,
-                                    "on_disk": st.map(|s| s.on_disk).unwrap_or(false),
-                                    "is_git": st.map(|s| s.is_git).unwrap_or(false),
-                                    "pin_state": st.map(|s| s.pin_state),
-                                })
-                            })
-                            .collect();
-                        print_json(&serde_json::json!({ "projects": list }))?;
-                    } else if ws.config.projects.is_empty() {
-                        println!("(no projects)");
+                        print_json(&list_projects(&git, &ws)?)?;
                     } else {
-                        for (name, e) in &ws.config.projects {
-                            let managed = if e.url.is_some() { "managed" } else { "path" };
-                            let st = snap.projects.iter().find(|p| p.name == *name);
-                            let on_disk = st.map(|s| s.on_disk).unwrap_or(false);
-                            let is_git = st.map(|s| s.is_git).unwrap_or(false);
-                            let pin = st.map(|s| pin_state_label(s.pin_state)).unwrap_or("-");
-                            println!(
-                                "{name}\t{}\t{managed}\ton_disk={on_disk}\tis_git={is_git}\tpin={pin}",
-                                e.path
-                            );
-                        }
+                        let snap = status_snapshot(&git, &ws)?;
+                        print!("{}", format_project_list_human(&ws, &snap));
                     }
                     Ok(0)
                 }
@@ -247,7 +219,7 @@ fn run(cli: Cli, out: &GlobalOut) -> Result<i32, OdmError> {
                     type_,
                     no_clone,
                 } => {
-                    let rel = path_to_rel(&path)?;
+                    let rel = path_buf_to_rel(&path)?;
                     let entry = ProjectEntry {
                         path: rel,
                         url,
@@ -260,21 +232,10 @@ fn run(cli: Cli, out: &GlobalOut) -> Result<i32, OdmError> {
                         print_json(&serde_json::json!({
                             "ok": true,
                             "name": name,
-                            "materialized": outcome.map(|o| match o {
-                                MaterializeOutcome::Cloned => "cloned",
-                                MaterializeOutcome::AlreadyPresent => "already_present",
-                            }),
+                            "materialized": materialize_json_opt(outcome),
                         }))?;
                     } else {
-                        match outcome {
-                            Some(MaterializeOutcome::Cloned) => {
-                                println!("added project {name} (cloned)")
-                            }
-                            Some(MaterializeOutcome::AlreadyPresent) => {
-                                println!("added project {name} (already present)")
-                            }
-                            None => println!("added project {name}"),
-                        }
+                        println!("{}", format_project_add_human(&name, outcome));
                     }
                     Ok(0)
                 }
@@ -292,56 +253,11 @@ fn run(cli: Cli, out: &GlobalOut) -> Result<i32, OdmError> {
                     Ok(0)
                 }
                 ProjectCmd::Info { name } => {
-                    let entry = ws.config.projects.get(&name).ok_or_else(|| {
-                        OdmError::usage(format!("unknown project '{name}'"))
-                    })?;
-                    let snap = build_status(&git, &ws)?;
-                    let st = snap
-                        .projects
-                        .iter()
-                        .find(|p| p.name == name)
-                        .ok_or_else(|| OdmError::usage(format!("unknown project '{name}'")))?;
-                    let origin = if st.is_git {
-                        git.origin_url(&abs_checkout(&ws.root, &entry.path)?).ok()
-                    } else {
-                        None
-                    };
+                    let dto = project_info(&git, &ws, &name)?;
                     if out.json {
-                        print_json(&serde_json::json!({
-                            "name": name,
-                            "path": entry.path,
-                            "url": entry.url,
-                            "branch": entry.branch,
-                            "type": entry.type_,
-                            "on_disk": st.on_disk,
-                            "is_git": st.is_git,
-                            "head": st.head,
-                            "origin": origin,
-                            "dirty": st.dirty,
-                            "pin_rev": st.pin_rev,
-                            "pin_state": st.pin_state,
-                        }))?;
+                        print_json(&dto)?;
                     } else {
-                        println!("name: {name}");
-                        println!("path: {}", entry.path);
-                        if let Some(u) = &entry.url {
-                            println!("url: {u}");
-                        }
-                        if let Some(b) = &entry.branch {
-                            println!("branch: {b}");
-                        }
-                        if let Some(t) = &entry.type_ {
-                            println!("type: {t}");
-                        }
-                        println!("on_disk: {}", st.on_disk);
-                        println!("is_git: {}", st.is_git);
-                        if let Some(h) = &st.head {
-                            println!("head: {h}");
-                        }
-                        if let Some(o) = &origin {
-                            println!("origin: {o}");
-                        }
-                        println!("pin_state: {:?}", st.pin_state);
+                        print!("{}", format_project_info_human(&dto));
                     }
                     Ok(0)
                 }
@@ -365,11 +281,11 @@ fn run(cli: Cli, out: &GlobalOut) -> Result<i32, OdmError> {
             let root = discover_root(cli.root.as_deref(), &std::env::current_dir()?)?;
             let ws = load_workspace(&root)?;
             let q = query.unwrap_or_default();
-            let hits = find_notes(&ws, &q, &cli.progen, &cli.progen_group, 200)?;
+            let dto = find_notes_dto(&ws, &q, &cli.progen, &cli.progen_group, 200)?;
             if out.json {
-                print_json(&serde_json::json!({ "hits": hits }))?;
+                print_json(&dto)?;
             } else {
-                print!("{}", format_find_human(&hits));
+                print!("{}", format_find_human(&dto.hits));
             }
             Ok(0)
         }
@@ -393,29 +309,11 @@ fn run(cli: Cli, out: &GlobalOut) -> Result<i32, OdmError> {
             let ws = load_workspace(&root)?;
             match action {
                 None => {
-                    let listed = list_actions(&ws);
+                    let dto = list_actions_dto(&ws);
                     if out.json {
-                        let actions: Vec<_> = listed
-                            .iter()
-                            .map(|(name, def)| {
-                                serde_json::json!({
-                                    "name": name,
-                                    "tasks": def.tasks.iter().map(|t| {
-                                        serde_json::json!({
-                                            "run": t.run,
-                                            "dir": t.dir,
-                                        })
-                                    }).collect::<Vec<_>>(),
-                                })
-                            })
-                            .collect();
-                        print_json(&serde_json::json!({ "actions": actions }))?;
-                    } else if listed.is_empty() {
-                        println!("(no actions)");
+                        print_json(&dto)?;
                     } else {
-                        for (name, _) in listed {
-                            println!("{name}");
-                        }
+                        print!("{}", format_action_list_human(&dto));
                     }
                     Ok(0)
                 }
@@ -463,40 +361,11 @@ fn run_progen(
 
     match cmd {
         ProgenCmd::List => {
-            let snap = build_status(&git, &ws)?;
             if out.json {
-                let list: Vec<_> = ws
-                    .config
-                    .progens
-                    .iter()
-                    .map(|(name, e)| {
-                        let st = snap.progens.iter().find(|p| p.name == *name);
-                        serde_json::json!({
-                            "name": name,
-                            "path": e.path,
-                            "url": e.url,
-                            "branch": e.branch,
-                            "on_disk": st.map(|s| s.on_disk).unwrap_or(false),
-                            "is_git": st.map(|s| s.is_git).unwrap_or(false),
-                            "pin_state": st.map(|s| s.pin_state),
-                        })
-                    })
-                    .collect();
-                print_json(&serde_json::json!({ "progens": list }))?;
-            } else if ws.config.progens.is_empty() {
-                println!("(no progens)");
+                print_json(&list_progens(&git, &ws)?)?;
             } else {
-                for (name, e) in &ws.config.progens {
-                    let managed = if e.url.is_some() { "managed" } else { "path" };
-                    let st = snap.progens.iter().find(|p| p.name == *name);
-                    let on_disk = st.map(|s| s.on_disk).unwrap_or(false);
-                    let is_git = st.map(|s| s.is_git).unwrap_or(false);
-                    let pin = st.map(|s| pin_state_label(s.pin_state)).unwrap_or("-");
-                    println!(
-                        "{name}\t{}\t{managed}\ton_disk={on_disk}\tis_git={is_git}\tpin={pin}",
-                        e.path
-                    );
-                }
+                let snap = status_snapshot(&git, &ws)?;
+                print!("{}", format_progen_list_human(&ws, &snap));
             }
             Ok(0)
         }
@@ -518,21 +387,10 @@ fn run_progen(
                 print_json(&serde_json::json!({
                     "ok": true,
                     "name": name,
-                    "materialized": outcome.map(|o| match o {
-                        MaterializeOutcome::Cloned => "cloned",
-                        MaterializeOutcome::AlreadyPresent => "already_present",
-                    }),
+                    "materialized": materialize_json_opt(outcome),
                 }))?;
             } else {
-                match outcome {
-                    Some(MaterializeOutcome::Cloned) => {
-                        println!("added progen {name} (cloned vault)")
-                    }
-                    Some(MaterializeOutcome::AlreadyPresent) => {
-                        println!("added progen {name} (already present)")
-                    }
-                    None => println!("added progen {name} (vault ready)"),
-                }
+                println!("{}", format_progen_add_human(&name, outcome));
             }
             Ok(0)
         }
@@ -550,37 +408,11 @@ fn run_progen(
             Ok(0)
         }
         ProgenCmd::Info { name } => {
-            let entry = ws
-                .config
-                .progens
-                .get(&name)
-                .ok_or_else(|| OdmError::usage(format!("unknown progen '{name}'")))?;
-            let sp = ScopedProgen {
-                name: name.clone(),
-                path: abs_checkout(&ws.root, &entry.path)?,
-            };
-            let info = vault_info(&sp)?;
+            let dto = progen_info(&ws, &name)?;
             if out.json {
-                print_json(&serde_json::json!({
-                    "name": name,
-                    "path": entry.path,
-                    "url": entry.url,
-                    "branch": entry.branch,
-                    "on_disk": info.on_disk,
-                    "note_count": info.note_count,
-                    "has_obsidian": info.has_obsidian,
-                    "abs_path": info.path,
-                }))?;
+                print_json(&dto)?;
             } else {
-                println!("name: {name}");
-                println!("path: {}", entry.path);
-                if let Some(u) = &entry.url {
-                    println!("url: {u}");
-                }
-                println!("on_disk: {}", info.on_disk);
-                println!("notes: {}", info.note_count);
-                println!("obsidian: {}", info.has_obsidian);
-                println!("abs: {}", info.path.display());
+                print!("{}", format_progen_info_human(&dto));
             }
             Ok(0)
         }
@@ -697,12 +529,4 @@ fn run_progen(
             }
         }
     }
-}
-
-fn path_to_rel(path: &Path) -> Result<String, OdmError> {
-    path_buf_to_rel(path)
-}
-
-fn pin_state_label(s: PinState) -> &'static str {
-    s.as_str()
 }

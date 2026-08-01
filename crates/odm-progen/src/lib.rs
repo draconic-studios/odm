@@ -15,7 +15,7 @@ pub use ops::{
     doctor_progens, format_context_human, format_find_human, format_get_human, format_ls_human,
     ProgenDoctorCheck,
 };
-pub use scope::{resolve_read_scope, resolve_write_progen, ScopedProgen};
+pub use scope::{resolve_read_scope, resolve_write_progen, scoped_from_config, ScopedProgen};
 pub use store::{
     context_notes, find_notes, get_note, list_notes, one_progen_flag, open_for_id, open_single,
     reindex_for_cli, reindex_scope, ContextHit, FindHit, GetResult, LsHit, ProgenStore,

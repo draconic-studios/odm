@@ -2,7 +2,7 @@
 id: issues-38
 title: "CLI command DTOs and thin bin"
 description: "Move product shapes and multi-crate composition out of main into library command modules returning serializable DTOs."
-status: open
+status: closed
 issue-type: feature-request
 severity: medium
 tags:
@@ -73,18 +73,22 @@ See Agent Brief.
 - Workspace discovery and `--root` / global flags unchanged
 
 **Acceptance criteria:**
-- [ ] main contains no duplicated MaterializeOutcome → string tables (single shared mapping)
-- [ ] Project list and Progen list JSON are produced by library DTOs, not ad-hoc maps only in main
-- [ ] Bin does not hand-build progen scope/store types when a library helper exists
-- [ ] All existing CLI integration tests pass without relaxing assertions
-- [ ] At least the heaviest command paths (status, project list, progen find/list, run list) have library-callable entrypoints returning DTOs
-- [ ] `cargo test` and `cargo clippy -- -D warnings` clean for touched crates
+- [x] main contains no duplicated MaterializeOutcome → string tables (single shared mapping)
+- [x] Project list and Progen list JSON are produced by library DTOs, not ad-hoc maps only in main
+- [x] Bin does not hand-build progen scope/store types when a library helper exists
+- [x] All existing CLI integration tests pass without relaxing assertions
+- [x] At least the heaviest command paths (status, project list, progen find/list, run list) have library-callable entrypoints returning DTOs
+- [x] `cargo test` and `cargo clippy -- -D warnings` clean for touched crates
 
 **Out of scope:**
 - New commands (generate, agent, worktree) beyond keeping stubs thin
 - Redesigning JSON schemas
 - Full extraction of every format_*_human in core/progen in one go
 - MCP/TUI clients (only enable them via DTOs)
+
+## Answer
+
+Added `crates/odm` library (`odm::commands`) with serializable DTOs and entrypoints: `materialize_*` (single MaterializeOutcome label map), `status_snapshot`, `list_projects`/`project_info`, `list_progens`/`progen_info` (via `scoped_from_config`), `find_notes_dto`, `list_actions_dto`. Human formatters for new list/info/add paths live beside DTOs. Bin is a thin adapter (parse → call → print/exit). JSON field contracts and exit codes unchanged; unit + integration tests green.
 
 ## Comments
 

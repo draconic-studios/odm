@@ -87,7 +87,8 @@ fn require_progen(config: &WorkspaceConfig, name: &str) -> Result<(), OdmError> 
     }
 }
 
-fn scoped_from_config(
+/// Resolve a configured Progen name to an absolute [`ScopedProgen`].
+pub fn scoped_from_config(
     root: &Path,
     config: &WorkspaceConfig,
     name: &str,
