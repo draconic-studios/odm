@@ -95,6 +95,32 @@ pub fn get_note(
     Ok(to_get(&sp, &n))
 }
 
+/// Note body only (single-root).
+pub fn note_body(
+    ws: &Workspace,
+    id_arg: &str,
+    progen: Option<&str>,
+) -> Result<GetResult, OdmError> {
+    get_note(ws, id_arg, progen)
+}
+
+/// Sorted note paths in one Progen (single-root).
+pub fn note_tree(ws: &Workspace, progen: Option<&str>) -> Result<Vec<String>, OdmError> {
+    let hits = list_notes(ws, progen)?;
+    let mut paths: Vec<String> = hits.into_iter().map(|h| h.path).collect();
+    paths.sort();
+    Ok(paths)
+}
+
+/// Notes that wikilink to id (single-root).
+pub fn note_backlinks(
+    ws: &Workspace,
+    id_arg: &str,
+    progen: Option<&str>,
+) -> Result<Vec<LsHit>, OdmError> {
+    Ok(context_notes(ws, id_arg, progen)?.incoming)
+}
+
 /// In-store wikilink neighborhood (no cross-store walk).
 pub fn context_notes(
     ws: &Workspace,

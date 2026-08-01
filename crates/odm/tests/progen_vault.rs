@@ -91,6 +91,36 @@ fn progen_add_find_context_flow() {
 
     odm()
         .current_dir(&root)
+        .args(["progen", "body", "a1"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("UniqueZebra"));
+
+    let tree = json_stdout(
+        odm()
+            .current_dir(&root)
+            .args(["progen", "tree", "--json"]),
+    );
+    let paths = tree["paths"].as_array().unwrap();
+    assert!(paths.iter().any(|p| p.as_str() == Some("alpha.md")));
+
+    let bl = json_stdout(
+        odm()
+            .current_dir(&root)
+            .args(["progen", "backlinks", "b1", "--json"]),
+    );
+    let links = bl["backlinks"].as_array().unwrap();
+    assert!(links.iter().any(|h| h["id"] == "a1"));
+
+    odm()
+        .current_dir(&root)
+        .args(["progen", "get", "nope-missing"])
+        .assert()
+        .failure()
+        .code(4);
+
+    odm()
+        .current_dir(&root)
         .args(["progen", "doctor"])
         .assert()
         .success()
@@ -102,6 +132,82 @@ fn progen_add_find_context_flow() {
         .assert()
         .success()
         .stdout(predicate::str::contains("has_obsidian"));
+}
+
+#[test]
+fn generate_and_agent_stubs_exit_1() {
+    let dir = tempdir().unwrap();
+    let root = dir.path().join("ws");
+    fs::create_dir_all(&root).unwrap();
+    odm()
+        .current_dir(&root)
+        .args(["init", "--no-git", "."])
+        .assert()
+        .success();
+    for args in [
+        vec!["generate"],
+        vec!["generate", "foo"],
+        vec!["agent", "pack"],
+        vec!["agent", "start"],
+        vec!["agent", "prompt", "x"],
+        vec!["project", "worktree"],
+        vec!["project", "worktree", "add", "x"],
+    ] {
+        odm()
+            .current_dir(&root)
+            .args(&args)
+            .assert()
+            .failure()
+            .code(1)
+            .stderr(predicate::str::contains("not implemented"));
+    }
+}
+
+#[test]
+fn list_includes_disk_summary() {
+    let dir = tempdir().unwrap();
+    let root = dir.path().join("ws");
+    fs::create_dir_all(&root).unwrap();
+    odm()
+        .current_dir(&root)
+        .args(["init", "--no-git", "."])
+        .assert()
+        .success();
+    fs::create_dir_all(root.join("projects/alpha")).unwrap();
+    fs::write(
+        root.join(".odm/odm.config.yaml"),
+        "\
+name: t
+projects:
+  alpha:
+    path: projects/alpha
+progens:
+  notes:
+    path: progens/notes
+",
+    )
+    .unwrap();
+    fs::create_dir_all(root.join("progens/notes")).unwrap();
+
+    let pj = json_stdout(
+        odm()
+            .current_dir(&root)
+            .args(["project", "list", "--json"]),
+    );
+    let projects = pj["projects"].as_array().unwrap();
+    assert_eq!(projects[0]["name"], "alpha");
+    assert_eq!(projects[0]["on_disk"].as_bool(), Some(true));
+    assert!(projects[0].get("is_git").is_some());
+    assert!(projects[0].get("pin_state").is_some());
+
+    let pg = json_stdout(
+        odm()
+            .current_dir(&root)
+            .args(["progen", "list", "--json"]),
+    );
+    let progens = pg["progens"].as_array().unwrap();
+    assert_eq!(progens[0]["name"], "notes");
+    assert_eq!(progens[0]["on_disk"].as_bool(), Some(true));
 }
 
 #[test]
