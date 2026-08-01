@@ -2,7 +2,7 @@
 id: issues-127
 title: "Align missing --wt / project path exit codes to 4"
 description: "run treats missing worktree/project path as usage exit 1; project git and docs use not_found exit 4."
-status: open
+status: reviewing
 issue-type: bug
 severity: high
 tags:
