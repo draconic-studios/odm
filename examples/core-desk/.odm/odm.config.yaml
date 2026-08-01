@@ -11,9 +11,14 @@ projects:
 progens:
   notes:
     path: progens/notes
+  ops:
+    path: progens/ops
 progen_groups:
   default:
     - notes
+  all-docs:
+    - notes
+    - ops
 actions:
   core: actions/core.yaml
 generators:

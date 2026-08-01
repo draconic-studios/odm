@@ -8,3 +8,10 @@ chain:
   tasks:
     - run: echo step1
     - run: echo step2
+in-alpha:
+  tasks:
+    - run: test -f README.md
+in-alpha-dir:
+  tasks:
+    - run: test -f README.md
+      dir: projects/alpha

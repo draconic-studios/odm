@@ -1,3 +1,11 @@
 # Produced by odm sync — never commit managed checkouts or the pin file
 /projects/
 .odm/odm.lock.yaml
+
+# Dogfood debris (worktrees, generate out, progen indexes, caches, pack registry)
+worktrees/
+out/
+.odm/progen/
+.odm/cache/
+.odm/log/
+.odm/agent-packs.json

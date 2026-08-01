@@ -2,7 +2,7 @@
 id: issues-144
 title: "core-desk assets: multi-progen, groups, scoped actions"
 description: "Expand examples/core-desk so all shipped surfaces can be dogfooded offline (second progen, groups, vault ids, project-scoped actions, gitignore)."
-status: reviewing
+status: closed
 issue-type: feature-request
 severity: high
 tags:
@@ -56,15 +56,15 @@ None
 
 **Acceptance criteria:**
 
-- [ ] Two progens + groups in config
-- [ ] Distinct FTS tokens in each progen
-- [ ] Wikilink targets have ids
-- [ ] Project-scoped action present
-- [ ] gitignore complete for dogfood debris
-- [ ] Existing tests green (update if needed)
+- [x] Two progens + groups in config
+- [x] Distinct FTS tokens in each progen
+- [x] Wikilink targets have ids
+- [x] Project-scoped action present
+- [x] gitignore complete for dogfood debris
+- [x] Existing tests green (update if needed)
 
 **Out of scope:** dogfood.sh (145); full tour test (146); managed Progen bare remote (stretch — skip unless trivial).
 
 ## Acceptance
 
-- [ ] Agent Brief acceptance criteria all met
+- [x] Agent Brief acceptance criteria all met

@@ -1,6 +1,6 @@
 # core-desk
 
-Offline dogfood Workspace for ODM **core**, path-only **Progen** vault, shell **Actions**, a tiny local **Generator**, and a demo **Agent pack**.
+Offline dogfood Workspace for ODM **core**, multi-**Progen** vaults + groups, shell **Actions** (including project-scoped cwd), a tiny local **Generator**, and a demo **Agent pack**.
 
 ## Layout
 
@@ -12,9 +12,10 @@ examples/core-desk/
     alpha.git/    # bare fixture
     beta.git/     # bare fixture
   progens/
-    notes/        # path-only Progen = Obsidian vault (plain Markdown)
+    notes/        # path-only Progen = Obsidian vault (DeskUniqueToken / id welcome+readme)
+    ops/          # second Progen (OpsUniqueToken / id ops-note)
   actions/
-    core.yaml     # hello / fail / chain
+    core.yaml     # hello / fail / chain / in-alpha / in-alpha-dir
   generators/
     core.yaml     # hello → templates/hello
   templates/
@@ -25,7 +26,9 @@ examples/core-desk/
     odm.config.yaml
 ```
 
-Managed checkouts (`projects/alpha`, `projects/beta`) and `odm.lock.yaml` are **not** committed — they appear after `odm sync`. Progen index lives under `.odm/progen/notes/` after `odm progen reindex` (gitignored).
+Managed checkouts (`projects/alpha`, `projects/beta`) and `odm.lock.yaml` are **not** committed — they appear after `odm sync`. Progen indexes live under `.odm/progen/<name>/` after `odm progen reindex` (gitignored). Worktree slots, `out/`, caches, and `.odm/agent-packs.json` are also gitignored.
+
+**Assets note:** two progens (`notes`, `ops`), groups `default` → notes and `all-docs` → notes+ops, vault note ids for wikilink/backlink demos, and `in-alpha` for `run --project` / `--wt`. Full shell tour script is a separate work package.
 
 Config URLs are relative (`fixtures/alpha.git`). Integration harnesses should rewrite them to absolute `file://` paths against a temp copy when needed. Plain `git clone` from this directory root works as-is.
 
@@ -93,21 +96,32 @@ odm project worktree prune --all
 # odm project worktree prune --all --force
 # --json: { "all": true, "pruned": [{ "project", "name", "path" }], "skipped_nonempty": [...] }
 
-# Progen / Obsidian vault
+# Progen / Obsidian vaults (notes + ops)
 odm progen list
 odm progen reindex
 odm find DeskUniqueToken
 odm find DeskUniqueToken --limit 5
-odm context welcome
-odm agent prompt welcome
-# Open progens/notes in Obsidian or: obsidian-cli … against that folder
+odm find OpsUniqueToken --progen ops
+odm find UniqueToken --progen-group all-docs
+odm context welcome --progen notes
+odm agent prompt welcome --progen notes
+# multi-progen: context/prompt need --progen (or a single-progen workspace)
+# store façade: backlinks to readme id (Welcome → [[README]] resolves)
+#   odm progen backlinks readme --progen notes
+# Open progens/notes or progens/ops in Obsidian
 
 # Actions
-odm run                 # list: hello, fail, chain
+odm run                 # list: hello, fail, chain, in-alpha, in-alpha-dir
 odm run hello           # prints hello-desk
 odm run chain           # step1 then step2
 odm run fail            # exit 7
 odm --json run hello    # {"action":"hello","exitCode":0}
+# project-scoped cwd (after sync; primary has README.md):
+odm run in-alpha --project alpha
+# optional fixed dir (no --project needed):
+odm run in-alpha-dir
+# worktree slot cwd (after worktree add):
+# odm run in-alpha --project alpha --wt dogfood
 
 # Generators (local template copy)
 odm generate            # list: hello
