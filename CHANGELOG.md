@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Progen wikilinks in code** — fenced ```/~~~ blocks and inline `` `code` `` no longer contribute graph edges; invalid YAML frontmatter hard-fails reindex with the note path.
 - **Clap usage exit codes** — parse failures (unknown command / bad flags) exit `1` (not clap’s default `2`), matching library usage errors; with `--json` on argv, stdout is the standard `{ ok: false, error: { code: "usage", … } }` envelope.
 - **`odm-git` non-interactive lifecycle** — captured git ops set `GIT_TERMINAL_PROMPT=0` so clone/fetch fail fast instead of hanging on auth prompts; `Git::run` passthrough stays user-facing.
 - **Progen index freshness** — `ensure_index` rebuilds when vault note paths/mtimes change (meta `vault_fp`); edits and deletes show up on next open/find without manual `reindex`.
