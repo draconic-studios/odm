@@ -154,3 +154,138 @@ fn run_no_actions_message() {
         .success()
         .stdout(predicate::str::contains("(no actions)"));
 }
+
+/// Minimal workspace with project path + optional worktree slot + action bundle.
+fn setup_cwd_workspace() -> (tempfile::TempDir, PathBuf) {
+    let dir = tempdir().unwrap();
+    let root = dir.path().join("ws");
+    assert!(Command::new(cargo_bin("odm"))
+        .args(["init", root.to_str().unwrap(), "--no-git"])
+        .status()
+        .unwrap()
+        .success());
+    fs::create_dir_all(root.join("projects/alpha")).unwrap();
+    fs::write(root.join("projects/alpha/marker"), "from-project\n").unwrap();
+    fs::create_dir_all(root.join("worktrees/alpha/slot1")).unwrap();
+    fs::write(root.join("worktrees/alpha/slot1/marker"), "from-wt\n").unwrap();
+    fs::create_dir_all(root.join("actions")).unwrap();
+    fs::write(
+        root.join("actions/core.yaml"),
+        "\
+pwdhere:
+  tasks:
+    - run: cat marker
+echoargs:
+  tasks:
+    - run: printf '%s\\n'
+",
+    )
+    .unwrap();
+    fs::write(
+        root.join(".odm/odm.config.yaml"),
+        "\
+name: cwd-ws
+projects:
+  alpha:
+    path: projects/alpha
+actions:
+  core: actions/core.yaml
+",
+    )
+    .unwrap();
+    (dir, root)
+}
+
+#[test]
+fn run_missing_bundle_exit_2() {
+    let dir = tempdir().unwrap();
+    let root = dir.path().join("ws");
+    assert!(Command::new(cargo_bin("odm"))
+        .args(["init", root.to_str().unwrap(), "--no-git"])
+        .status()
+        .unwrap()
+        .success());
+    fs::write(
+        root.join(".odm/odm.config.yaml"),
+        "name: t\nactions:\n  core: actions/missing.yaml\n",
+    )
+    .unwrap();
+    odm()
+        .args(["--root", root.to_str().unwrap(), "run"])
+        .assert()
+        .failure()
+        .code(2)
+        .stderr(predicate::str::contains("path does not exist"));
+}
+
+#[test]
+fn run_project_cwd() {
+    let (_dir, root) = setup_cwd_workspace();
+    odm()
+        .args([
+            "--root",
+            root.to_str().unwrap(),
+            "run",
+            "pwdhere",
+            "--project",
+            "alpha",
+        ])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("from-project"));
+}
+
+#[test]
+fn run_wt_cwd() {
+    let (_dir, root) = setup_cwd_workspace();
+    odm()
+        .args([
+            "--root",
+            root.to_str().unwrap(),
+            "run",
+            "pwdhere",
+            "--project",
+            "alpha",
+            "--wt",
+            "slot1",
+        ])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("from-wt"));
+}
+
+#[test]
+fn run_wt_requires_project_exit_1() {
+    let (_dir, root) = setup_cwd_workspace();
+    odm()
+        .args([
+            "--root",
+            root.to_str().unwrap(),
+            "run",
+            "pwdhere",
+            "--wt",
+            "slot1",
+        ])
+        .assert()
+        .failure()
+        .code(1)
+        .stderr(predicate::str::contains("--wt requires --project"));
+}
+
+#[test]
+fn run_extra_args_via_cli() {
+    let (_dir, root) = setup_cwd_workspace();
+    odm()
+        .args([
+            "--root",
+            root.to_str().unwrap(),
+            "run",
+            "echoargs",
+            "--",
+            "one",
+            "two",
+        ])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("one\ntwo\n"));
+}

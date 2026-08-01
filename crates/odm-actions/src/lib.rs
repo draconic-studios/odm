@@ -357,4 +357,78 @@ mod tests {
         let base = resolve_cwd(root, None, None, None).unwrap();
         assert_eq!(base, root);
     }
+
+    #[test]
+    fn run_action_project_cwd() {
+        let dir = tempdir().unwrap();
+        let root = dir.path();
+        fs::create_dir_all(root.join("projects/alpha")).unwrap();
+        fs::write(root.join("projects/alpha/marker"), "proj\n").unwrap();
+        let out = root.join("out.txt");
+        let mut actions = BTreeMap::new();
+        actions.insert(
+            "cat".into(),
+            single(&format!("cat marker > {}", out.display()), None),
+        );
+        let ws = ws_with_actions(root.to_path_buf(), actions);
+        let code = run_action(
+            &ws,
+            "cat",
+            RunOptions {
+                project: Some("alpha"),
+                wt: None,
+                extra_args: &[],
+            },
+        )
+        .unwrap();
+        assert_eq!(code, 0);
+        assert_eq!(fs::read_to_string(&out).unwrap(), "proj\n");
+    }
+
+    #[test]
+    fn run_action_wt_cwd() {
+        let dir = tempdir().unwrap();
+        let root = dir.path();
+        fs::create_dir_all(root.join("projects/alpha")).unwrap();
+        fs::create_dir_all(root.join("worktrees/alpha/slot1")).unwrap();
+        fs::write(root.join("worktrees/alpha/slot1/marker"), "wt\n").unwrap();
+        let out = root.join("out.txt");
+        let mut actions = BTreeMap::new();
+        actions.insert(
+            "cat".into(),
+            single(&format!("cat marker > {}", out.display()), None),
+        );
+        let ws = ws_with_actions(root.to_path_buf(), actions);
+        let code = run_action(
+            &ws,
+            "cat",
+            RunOptions {
+                project: Some("alpha"),
+                wt: Some("slot1"),
+                extra_args: &[],
+            },
+        )
+        .unwrap();
+        assert_eq!(code, 0);
+        assert_eq!(fs::read_to_string(&out).unwrap(), "wt\n");
+    }
+
+    #[test]
+    fn run_action_wt_requires_project() {
+        let dir = tempdir().unwrap();
+        let mut actions = BTreeMap::new();
+        actions.insert("x".into(), single("true", None));
+        let ws = ws_with_actions(dir.path().to_path_buf(), actions);
+        let err = run_action(
+            &ws,
+            "x",
+            RunOptions {
+                project: None,
+                wt: Some("slot1"),
+                extra_args: &[],
+            },
+        )
+        .unwrap_err();
+        assert!(err.to_string().contains("--wt requires --project"));
+    }
 }

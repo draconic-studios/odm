@@ -425,6 +425,16 @@ progen_groups:
     }
 
     #[test]
+    fn action_bundle_missing_path() {
+        let dir = tempdir().unwrap();
+        let c = parse_config_yaml("actions:\n  core: actions/missing.yaml\n").unwrap();
+        let err = validate_and_load_bundles(dir.path(), c).unwrap_err();
+        assert!(err.to_string().contains("path does not exist"));
+        assert!(matches!(err, OdmError::Workspace(_)));
+        assert_eq!(crate::error::exit_code(&err), 2);
+    }
+
+    #[test]
     fn action_bundle_eager_and_dedupe() {
         let dir = tempdir().unwrap();
         let root = dir.path();
