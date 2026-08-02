@@ -4,7 +4,7 @@ Poly-repo workspace OS for humans and AI agents: one config, one CLI, and orches
 
 **Website:** [hembrow-innovations.github.io/odm](https://hembrow-innovations.github.io/odm/) (source: [`website/`](website/) on `main`; Pages via GitHub Actions)
 
-**Status:** v0.1.0 spine (multi-git, Progen, Actions) plus post-0.1.0 **worktree slots** (add/list/rm/prune; doctor orphan/dirty warns) and local **`odm generate`**. Agent pack install/link/list/rm is local v1 (`odm status` `agent_packs` inventory; doctor `pack_missing` warn); **`odm agent prompt`** is v1 thin (context work-package); **`odm agent start`** is v1 one-shot exec (runtime matrix / pack auto-apply / serve deferred).
+**Status:** **v0.1.1** — multi-platform GitHub Releases + curl install; spine (multi-git, Progen, Actions) plus **worktree slots** (add/list/rm/prune; doctor orphan/dirty warns) and local **`odm generate`**. Agent pack install/link/list/rm is local v1 (`odm status` `agent_packs` inventory; doctor `pack_missing` warn); **`odm agent prompt`** is v1 thin (context work-package); **`odm agent start`** is v1 one-shot exec (runtime matrix / pack auto-apply / serve deferred).
 
 ## Install
 
@@ -18,7 +18,7 @@ curl -fsSL https://raw.githubusercontent.com/hembrow-innovations/odm/main/script
 
 Installs to `~/.local/bin` by default (put it on your `PATH`). The script pulls from [GitHub Releases](https://github.com/hembrow-innovations/odm/releases), verifies **SHA256**, and supports `ODM_VERSION=` / `ODM_INSTALL_DIR=`. Four host triples: `aarch64-apple-darwin`, `x86_64-apple-darwin`, `x86_64-unknown-linux-gnu`, `aarch64-unknown-linux-gnu`.
 
-Direct tarball download: same [Releases](https://github.com/hembrow-innovations/odm/releases) page (latest when assets are published). Windows is not a primary channel; macOS binaries are **unsigned** (no Homebrew / notarization in v1).
+Direct tarball download: [Releases](https://github.com/hembrow-innovations/odm/releases) (latest / [`v0.1.1`](https://github.com/hembrow-innovations/odm/releases/tag/v0.1.1)). Windows is not a primary channel; macOS binaries are **unsigned** (no Homebrew / notarization in v1).
 
 See [docs/reference/install.md](docs/reference/install.md) for options, honesty notes, and troubleshooting.
 

@@ -44,12 +44,12 @@ Unsupported OS/arch (including **Windows**) fails clearly — Windows is not a p
 
 ### Script and assets
 
-- **Script path:** `scripts/install.sh` on `main` (raw URL above). Until that script lands on `main`, the URL 404s — use [Releases](https://github.com/hembrow-innovations/odm/releases) direct download or build from source below.
-- **Assets:** multi-platform tarballs + SHA256 on the latest release when published (first cut planned as `v0.1.1`). If Releases has no matching assets yet, prefer build from source or wait for the release page to list them.
+- **Script path:** `scripts/install.sh` on `main` (raw URL above).
+- **Assets:** four-platform tarballs + `SHA256SUMS` on [GitHub Releases](https://github.com/hembrow-innovations/odm/releases) — first multi-platform cut is **`v0.1.1`**; default install uses **latest**.
 
 ## GitHub Releases (direct download)
 
-Browse [github.com/hembrow-innovations/odm/releases](https://github.com/hembrow-innovations/odm/releases) and download `odm-<version>-<triple>.tar.gz` for your host (plus checksums). Prefer the **latest** release when assets are present.
+Browse [github.com/hembrow-innovations/odm/releases](https://github.com/hembrow-innovations/odm/releases) (or the [`v0.1.1`](https://github.com/hembrow-innovations/odm/releases/tag/v0.1.1) tag) and download `odm-<version>-<triple>.tar.gz` for your host plus `SHA256SUMS`. Prefer **latest**.
 
 ```bash
 tar xzf odm-<version>-<triple>.tar.gz
@@ -59,7 +59,7 @@ mv odm ~/.local/bin/   # or another directory on PATH
 odm --version
 ```
 
-Integrity: when using the install script, SHA256 is verified automatically. For manual download, check against the release `SHA256SUMS` (or per-asset `.sha256`) if present.
+Integrity: when using the install script, SHA256 is verified automatically. For manual download, check against the release `SHA256SUMS`.
 
 ## Verify
 

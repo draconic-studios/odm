@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Install docs/site honesty** — drop pre-publish hedging; state `v0.1.1` Releases + curl install as live (README status, `install.md`, website install/index).
+
 ## [0.1.1] - 2026-08-02
 
 First multi-platform binary release (tag `v0.1.1`). Do **not** retag `v0.1.0`.

@@ -92,15 +92,18 @@
         <p>Unsupported OS/arch (including <strong>Windows</strong>) fails clearly — Windows is not a primary channel in v1.</p>
         <div class="callout">
           <p><strong>Script:</strong> <code>scripts/install.sh</code> on <code>main</code> (raw URL above).
-          <strong>Assets:</strong> four-platform tarballs + SHA256 on the
-          <a href="https://github.com/hembrow-innovations/odm/releases">latest release when published</a>
-          (first multi-platform cut planned as <code>v0.1.1</code>). If the script or assets are not on <code>main</code>/Releases yet, use direct download when listed, or <a href="#source">build from source</a>.</p>
+          <strong>Assets:</strong> four-platform tarballs + <code>SHA256SUMS</code> on
+          <a href="https://github.com/hembrow-innovations/odm/releases">GitHub Releases</a>
+          — first multi-platform cut is
+          <a href="https://github.com/hembrow-innovations/odm/releases/tag/v0.1.1"><code>v0.1.1</code></a>;
+          default install uses <strong>latest</strong>. Contributors can still
+          <a href="#source">build from source</a>.</p>
         </div>
 
         <h2 id="releases">GitHub Releases (direct download)</h2>
         <ol>
-          <li>Open <a href="https://github.com/hembrow-innovations/odm/releases">github.com/hembrow-innovations/odm/releases</a></li>
-          <li>Download <code>odm-&lt;version&gt;-&lt;triple&gt;.tar.gz</code> for your host triple (prefer <strong>latest</strong> when assets are present).</li>
+          <li>Open <a href="https://github.com/hembrow-innovations/odm/releases">github.com/hembrow-innovations/odm/releases</a> (or <a href="https://github.com/hembrow-innovations/odm/releases/tag/v0.1.1">v0.1.1</a>)</li>
+          <li>Download <code>odm-&lt;version&gt;-&lt;triple&gt;.tar.gz</code> for your host triple (prefer <strong>latest</strong>) and <code>SHA256SUMS</code>.</li>
           <li>Extract and place <code>odm</code> on your <code>PATH</code> (default recommendation: <code>~/.local/bin</code>):</li>
         </ol>
         <pre><code>tar xzf odm-&lt;version&gt;-&lt;triple&gt;.tar.gz
@@ -108,7 +111,7 @@
 mkdir -p ~/.local/bin
 mv odm ~/.local/bin/
 odm --version</code></pre>
-        <p>For manual downloads, check SHA256 against the release sums file when present. The install script does this automatically.</p>
+        <p>For manual downloads, check SHA256 against the release <code>SHA256SUMS</code>. The install script does this automatically.</p>
 
         <h2 id="verify">Verify</h2>
         <pre><code>odm --version
