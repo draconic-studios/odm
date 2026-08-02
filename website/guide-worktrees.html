@@ -70,6 +70,7 @@ odm project worktree prune --all --force</code></pre>
         <h2>Use a slot</h2>
         <pre><code>odm project git alpha --wt feat -- status
 odm run build --project alpha --wt feat
+odm --project alpha --wt feat agent start -- true
 odm status                 # shows slots + orphans
 odm project info alpha</code></pre>
         <p>Missing slot with <code>--wt</code> → exit <code>4</code> (no auto-create). Pin auto-maintain stays Primary-only.</p>

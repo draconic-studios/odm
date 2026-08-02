@@ -157,7 +157,7 @@ generators:
 - Env profiles
 - `odm.config.json` / root-level `odm.config.yaml` (legacy Go location)
 - Legacy Go `documentaton` / plugin / submodule fields
-- Full generator template package format and Nx shell integration details (`env-gen-packs.md` sketch)
+- Full generator template package format and Nx shell integration details (`env-gen-packs.md`; local generate v1 landed, remote/templating still deferred)
 
 ## Relationship to ODM state directory
 

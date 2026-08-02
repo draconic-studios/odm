@@ -23,7 +23,7 @@ Available on commands that need them (parser-global; unknown entity names → ha
 - **`--project <name>`**: Target **Project** by config name (not a path).
 - **`--progen <name>`**: Include/select **Progen** by config name; **repeatable**; union with other scope flags (`progen.md`).
 - **`--progen-group <name>`**: Include members of a **Progen group**; **repeatable**; union (`progen.md`).
-- **`--wt <slot>`**: **Worktree slot** name → tree at `worktrees/<project>/<slot>/`. Requires a Project context (`--project` or a `project` subcommand). Path binding implemented for `project git` and `run`; missing slot → exit `4` (no auto-create). See `worktrees.md`.
+- **`--wt <slot>`**: **Worktree slot** name → tree at `worktrees/<project>/<slot>/`. Requires a Project context (`--project` or a `project` subcommand). Path binding implemented for `project git`, `run`, and `agent start`; missing slot → exit `4` (no auto-create). See `worktrees.md`.
 
 Rules:
 
@@ -338,4 +338,4 @@ odm --project <name> agent start <program> [args…]
 - Federation and scope: `progen.md`
 - Upstream command inventory: `research/progenitor-surface.md`
 - Worktrees (v1 + deferred): `worktrees.md`
-- Sketch depth: `graph.md`, `env-gen-packs.md`
+- Mixed / sketch depth: `env-gen-packs.md` (v1 local + thin prompt + start one-shot; env still sketch), `graph.md` (sketch)
