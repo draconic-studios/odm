@@ -51,9 +51,10 @@ odm agent pack list
 odm agent pack list --json
 odm agent pack rm demo</code></pre>
         <ul>
-          <li><strong>Source:</strong> local directory. Relative paths under Workspace root (no escape). Name = directory basename.</li>
+          <li><strong>Source:</strong> local directory. Relative paths resolve under Workspace root (must not escape) <strong>or absolute</strong> paths. Name = directory basename.</li>
           <li><strong><code>--home</code>:</strong> required agent-native root (may be outside Workspace). Materializes at <code>&lt;home&gt;/&lt;name&gt;/</code>.</li>
-          <li><strong>install</strong> — recursive copy; <strong>link</strong> — symlink to absolute source.</li>
+          <li><strong>install</strong> — recursive copy; <strong>link</strong> — symlink to absolute resolved source.</li>
+          <li><strong><code>--force</code>:</strong> replace existing <code>&lt;home&gt;/&lt;name&gt;/</code> on install or link. Without force, dest exists → exit <code>3</code>.</li>
           <li>Registry: <code>.odm/agent-packs.json</code>.</li>
           <li>No remote/marketplace; no pack manifest required in v1.</li>
         </ul>

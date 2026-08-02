@@ -44,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Website copy honesty** — residual drift: `context` not federated; pack sources absolute or workspace-relative + `--force`; exit `3` vs `run` action passthrough; `find --limit` + FTS whole-token; features/guides distinguish top-level find/context from progen façade; quickstart dogfood script; index status chip.
 - **Status `is_git` / dirty own-repo only** — entity observation (and `rm --delete` dirty gate) use `Git::is_repo_root` (path has its own `.git`) so path-only Projects/Progens nested under a git Workspace or monorepo no longer inherit ancestor dirtiness or false `is_git`.
 - **`pin apply` detached HEAD UX** — human lines include `detached HEAD`; footer `applied (detached HEAD)`; JSON results include `"detached": true` (`status` stays `"applied"`). Docs note `in_sync` is SHA match, not “on a branch.”
 - **`odm find` docs** — clarify FTS5 whole-token match (not substring/prefix; CamelCase is one token).

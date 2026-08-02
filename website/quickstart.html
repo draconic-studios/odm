@@ -131,8 +131,10 @@ odm agent prompt &lt;note-id&gt;   # thin context package for agents
         </div>
 
         <h2 id="dogfood">Offline dogfood (core-desk)</h2>
-        <p>The repo ships an offline Workspace fixture you can exercise without remote remotes:</p>
+        <p>The repo ships an offline Workspace fixture. Prefer the full-tour script (fail-fast through sync, find, packs, generate, …):</p>
         <pre><code>cargo build -p odm
+./examples/core-desk/scripts/dogfood.sh
+# or step manually:
 cd examples/core-desk
 odm --root . sync
 odm progen reindex

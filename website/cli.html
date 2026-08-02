@@ -87,26 +87,30 @@ worktree list|add|rm|prune|prune --all</code></pre>
         <pre><code>list | add | rm | info
 get | body | ls | tree | backlinks | reindex | doctor</code></pre>
 
-        <h3><code>odm find</code> · <code>odm context</code></h3>
-        <p>Federated search; in-store context neighborhood.</p>
+        <h3><code>odm find [query] [--limit &lt;n&gt;]</code></h3>
+        <p>Federated FTS across scoped Progens (default = all). <code>--limit</code> max hits <strong>per store</strong> (default 200). Match is whole FTS5 tokens (not substring/prefix); multi-word → AND.</p>
+
+        <h3><code>odm context &lt;id&gt;</code></h3>
+        <p>Single-root in-store one-hop neighborhood only — not federated. Disambiguate with <code>--progen</code> / <code>name:id</code>.</p>
 
         <h3><code>odm run [action]</code></h3>
-        <p>List or execute Actions. Exit code passthrough when run.</p>
+        <p>List or execute Actions. When executed, process exit code is the <strong>action’s</strong> exit code; pre-exec failures use ODM codes.</p>
 
         <h3><code>odm generate [name --dest …]</code></h3>
         <p>List or materialize local templates. Supports <code>--dry-run</code>, <code>--force</code>.</p>
 
         <h3><code>odm agent pack|prompt</code></h3>
-        <p>Local packs; thin context package for agents. <code>agent start</code> sketch.</p>
+        <p>Local packs (<code>install</code>/<code>link</code>/<code>list</code>/<code>rm</code>; source relative or absolute; <code>--force</code> overwrites dest); thin context package for agents. <code>agent start</code> sketch.</p>
 
         <h2>Exit codes</h2>
         <ul>
-          <li><code>0</code> success</li>
+          <li><code>0</code> success (including find with zero hits)</li>
           <li><code>1</code> usage / unknown / bad flags</li>
           <li><code>2</code> Workspace/config</li>
-          <li><code>3</code> operation failed</li>
+          <li><code>3</code> operation failed (git/pin/store and other ODM failures)</li>
           <li><code>4</code> not found</li>
         </ul>
+        <p><code>odm run</code> passthrough: executed Actions return the action’s exit code, not always <code>3</code>.</p>
 
         <div class="callout">
           <p>Always prefer <code>--json</code> for agents and automation. Human output may change; JSON shapes are the contract.</p>

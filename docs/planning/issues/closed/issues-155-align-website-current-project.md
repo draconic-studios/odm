@@ -2,7 +2,7 @@
 id: issues-155
 title: "Align website with current project truth"
 description: "Audit and correct website/ pages so claims, install, CLI, guides, and concepts match the shipped product."
-status: reviewing
+status: closed
 issue-type: observation
 severity: medium
 tags:
@@ -17,7 +17,7 @@ tags:
 
 ## Description
 
-The static site under [`website/`](../../../website/) should match current product truth: status, install path, quickstart, CLI surface, concepts/features, and guides. Audit every public page against CLI help, `CHANGELOG.md`, root/README, `docs/reference/*`, and examples; fix stale, wrong, or aspirational claims written as if shipped.
+The static site under [`website/`](../../../../website/) should match current product truth: status, install path, quickstart, CLI surface, concepts/features, and guides. Audit every public page against CLI help, `CHANGELOG.md`, root/README, `docs/reference/*`, and examples; fix stale, wrong, or aspirational claims written as if shipped.
 
 Related: [[issues-154-update-readme-correct-info]] (README honesty). Prior website delivery: [[issues-109-project-website-github-pages-map]] (closed).
 
@@ -74,14 +74,14 @@ Public pages under the project website largely match v0.1.0 (install primary pat
 - Existing website Playwright suite (smoke after edits)
 
 **Acceptance criteria:**
-- [ ] No page claims `context` is federated; federation attributed to `find` only
-- [ ] Agents guide documents absolute **or** workspace-relative pack sources
-- [ ] Workspace (and CLI if present) exit-code text does not claim action failures always exit `3`; `run` passthrough noted
-- [ ] CLI (or progen guide) documents `find --limit` and FTS whole-token match semantics
-- [ ] Features/guides do not list find/context as progen façade subcommands
-- [ ] Pack `--force` mentioned where install/link overwrite is discussed
-- [ ] No new aspirational-as-shipped commands
-- [ ] Internal link crawl / existing Playwright e2e still green (adjust tests only if assertions pin old wrong copy)
+- [x] No page claims `context` is federated; federation attributed to `find` only
+- [x] Agents guide documents absolute **or** workspace-relative pack sources
+- [x] Workspace (and CLI if present) exit-code text does not claim action failures always exit `3`; `run` passthrough noted
+- [x] CLI (or progen guide) documents `find --limit` and FTS whole-token match semantics
+- [x] Features/guides do not list find/context as progen façade subcommands
+- [x] Pack `--force` mentioned where install/link overwrite is discussed
+- [x] No new aspirational-as-shipped commands
+- [x] Internal link crawl / existing Playwright e2e still green (adjust tests only if assertions pin old wrong copy)
 
 **Out of scope:**
 - Root README polish ([[issues-154-update-readme-correct-info]])
@@ -102,3 +102,7 @@ Filed from request to keep the website aligned and correct with the current proj
 - **Redundancy check:** closed #109–#118 / #136 delivered site + prior honesty; residual wrong lines remain (not fully implemented)
 - **Prior rejection:** no matching `.out-of-scope/` entry
 - **Verify:** audited public HTML vs `odm 0.1.0` help/README/CHANGELOG/reference — mostly accurate; top defects listed in Agent Brief
+
+### 2026-08-02 closed
+
+Residual website copy drift fixed across guides/CLI/features/quickstart/index. Playwright e2e 33/33 green.

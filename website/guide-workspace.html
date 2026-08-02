@@ -85,9 +85,10 @@ odm init --no-git     # skip git init</code></pre>
           <li><code>0</code> success (including find with zero hits)</li>
           <li><code>1</code> usage / unknown command / bad flags / unknown name</li>
           <li><code>2</code> Workspace/config error</li>
-          <li><code>3</code> operation failed (git/pin/store; or action passthrough context)</li>
+          <li><code>3</code> operation failed (git/pin/store and other ODM operation failures)</li>
           <li><code>4</code> not found (e.g. missing slot, missing pack source)</li>
         </ul>
+        <p><code>odm run</code>: once an Action is found and executed, the process exit code is the <strong>action’s</strong> exit code (passthrough). Pre-exec failures still use ODM codes above.</p>
 
         <h2>Edit config safely</h2>
         <p>Prefer CLI mutators when they exist (<code>project add</code>, <code>progen add</code>, …). You may also edit YAML directly — then run <code>odm doctor</code> and <code>odm status</code>.</p>

@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Progen memory — ODM Guides</title>
-  <meta name="description" content="Orchestrate Progen docs/memory stores: reindex, find, context, federation." />
+  <meta name="description" content="Orchestrate Progen docs/memory stores: reindex, federated find, single-root context, façade verbs." />
   <link rel="stylesheet" href="assets/style.css" />
 </head>
 <body>
@@ -66,8 +66,9 @@ odm context notes:&lt;id&gt;
 odm context &lt;id&gt; --progen notes</code></pre>
         <ul>
           <li><strong>find</strong> — federated FTS across scoped Progens; default = all configured. <code>--limit</code> is max hits <strong>per store</strong> (default 200).</li>
-          <li><strong>context</strong> — in-store one-hop neighborhood only (no cross-store graph walk).</li>
-          <li>Zero hits → exit 0, empty list.</li>
+          <li><strong>FTS match</strong> — whole <strong>FTS5 tokens</strong>, not substring/prefix. Multi-word → AND of terms. CamelCase is one token (e.g. <code>TodoWelcome</code> does not match <code>TodoWelcomeToken</code>).</li>
+          <li><strong>context</strong> — single-root in-store one-hop neighborhood only (no federation, no cross-store graph walk). Disambiguate with <code>--progen</code> / <code>name:id</code> when multiple stores.</li>
+          <li>Zero hits on find → exit 0, empty list.</li>
         </ul>
 
         <h2>Groups (scope aliases)</h2>
@@ -92,7 +93,7 @@ odm progen ls
 odm progen tree
 odm progen backlinks …
 </code></pre>
-        <p>When multiple Progens are configured, pass <code>--progen</code> for single-root reads. Federated query lives at top-level <code>find</code> / <code>context</code>.</p>
+        <p>These façade verbs are single-root (pass <code>--progen</code> when multiple stores). Top-level <code>odm find</code> federates FTS; top-level <code>odm context</code> is single-root neighborhood — neither is an <code>odm progen</code> subcommand.</p>
 
         <div class="callout warn">
           <p>Many upstream-style verbs (task/issue/plan/watch/…) are <strong>reserved/deferred</strong> — not in the CLI today. See <a href="features.html">Features</a>.</p>
