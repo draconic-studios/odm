@@ -2,7 +2,7 @@
 id: issues-161
 title: "Agent start lib (cwd + exec)"
 description: "Library API: resolve Project/wt cwd and one-shot exec argv for odm agent start; unit tests with true/false."
-status: reviewing
+status: closed
 issue-type: feature-request
 severity: medium
 tags:
@@ -76,13 +76,13 @@ None
 
 **Acceptance criteria:**
 
-- [ ] Public start API callable without CLI
-- [ ] Cwd binds to project primary and wt slot correctly
-- [ ] Direct exec; exit code passthrough
-- [ ] Inherit + capture stdio modes
-- [ ] Unit tests cover happy + error paths
-- [ ] `cargo test` green
-- [ ] No CLI/docs/dogfood changes
+- [x] Public start API callable without CLI
+- [x] Cwd binds to project primary and wt slot correctly
+- [x] Direct exec; exit code passthrough
+- [x] Inherit + capture stdio modes
+- [x] Unit tests cover happy + error paths
+- [x] `cargo test` green
+- [x] No CLI/docs/dogfood changes
 
 **Out of scope:**
 
@@ -91,8 +91,13 @@ None
 - Runtime matrix / agent discovery
 - serve/MCP/init
 
+## Answer
+
+Shipped `odm_actions::start_agent` + `StartOptions` / `StartResult` in `crates/odm-actions/src/start.rs`. Reuses `resolve_cwd` / `CwdTarget` / `StdioMode`; project required; direct `Command::new(program)` exec; inherit/capture; exit passthrough. 10 unit tests green. No CLI wiring.
+
 ## Comments
 
 Minted from [[issues-158-agent-start-map]] 2026-08-02.
 
 - On close: tag [[issues-162-agent-start-cli]] with `ready-for-agent` (it is blocked only by this ticket).
+- 2026-08-02: Implemented and closed.

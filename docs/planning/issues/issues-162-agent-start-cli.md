@@ -10,6 +10,7 @@ tags:
   - issue
   - wayfinder
   - wayfinder-task
+  - ready-for-agent
 ---
 
 # CLI odm agent start
@@ -36,7 +37,7 @@ See Agent Brief.
 
 ## Blocked by
 
-- [[issues-161-agent-start-lib]]
+None (unblocked — [[issues-161-agent-start-lib]] closed)
 
 ## Agent Brief
 
@@ -95,5 +96,5 @@ odm --project <name> agent start <program> [args…]
 
 Minted from [[issues-158-agent-start-map]] 2026-08-02.
 
-- Add tag `ready-for-agent` when [[issues-161-agent-start-lib]] is closed (blocked until then).
-- On close: tag [[issues-163-agent-start-docs-dogfood]] with `ready-for-agent` once 161 is also closed.
+- 2026-08-02: Unblocked — [[issues-161-agent-start-lib]] closed; tagged `ready-for-agent`.
+- On close: tag [[issues-163-agent-start-docs-dogfood]] with `ready-for-agent`.

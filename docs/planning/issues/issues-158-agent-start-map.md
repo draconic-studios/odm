@@ -47,9 +47,9 @@ Deliver **`odm agent start`** only — the remaining agent honesty stub after pa
   - **Exit codes:** pre-exec ODM errors use locked spine (usage `1`, workspace `2`, operation `3` spawn fail, not_found `4` missing path/slot). After spawn → **passthrough** child code (may be outside 0–4). Migrate `agent_start_not_implemented` matrix case when CLI lands.
   - **Lib home:** prefer `odm-actions` reuse of `CwdTarget` / `resolve_cwd` / `StdioMode` (no new crate). Direct exec, not `sh -c`.
 - **Children minted:**
-  - [[issues-161-agent-start-lib]] — lib API + unit tests
-  - [[issues-162-agent-start-cli]] — CLI + integration / stub test migration (blocked by 161)
-  - [[issues-163-agent-start-docs-dogfood]] — docs/README/website/dogfood/CHANGELOG + close this map (blocked by 161+162)
+  - [[issues-161-agent-start-lib]] — **closed**: `start_agent` + `StartOptions`/`StartResult` in `odm-actions` (direct exec, project/wt cwd, inherit/capture)
+  - [[issues-162-agent-start-cli]] — CLI + integration / stub test migration (ready-for-agent)
+  - [[issues-163-agent-start-docs-dogfood]] — docs/README/website/dogfood/CHANGELOG + close this map (blocked by 162)
 
 ## Fog / open questions
 
