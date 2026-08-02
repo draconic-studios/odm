@@ -11,7 +11,6 @@ tags:
   - wayfinder-map
   - product
   - agent
-  - ready-for-agent
 ---
 
 # Agent start delivery map
@@ -28,19 +27,34 @@ Deliver **`odm agent start`** only — the remaining agent honesty stub after pa
   - Grill exit behavior, project/`--wt` binding, relation to `agent prompt` / packs, JSON/human output, and not-implemented → real exit codes before implement tickets.
   - Preserve locked `--json` / exit contracts elsewhere unless a child explicitly migrates a type.
   - TDD for code tickets; YAGNI on runtime matrix bloat.
-- **Suggested order:** grill/scope → mint small implement tickets (core → CLI → docs/dogfood honesty) → execute lowest-id first → Answer this map.
+- **Suggested order:** [[issues-161-agent-start-lib]] → [[issues-162-agent-start-cli]] → [[issues-163-agent-start-docs-dogfood]] → Answer this map.
 
 ## Decisions so far
 
 - Chosen as the single product surface for the post-drain wave (parent AFK defaults).
-- Children not yet minted — first agent job is grill/scope then file implement tickets.
+- **v1 semantics (grilled 2026-08-02):**
+  - **One-shot direct exec** of user-supplied argv (`Command::new(program)` + args) with cwd bound to a Project Primary or `--wt` slot. Not a long-running ODM session, daemon, MCP, or `serve`.
+  - **No runtime matrix** — no default agent binary, no detection of claude/cursor/etc. Caller always passes program + args.
+  - **`--project` required** (start is project-scoped). Optional global `--wt <slot>` (existing path binding; missing slot → exit `4`; no auto-create).
+  - **Packs independent** — start does not read `.odm/agent-packs.json`, install packs, or set pack env. Operator uses `agent pack` separately into agent homes.
+  - **Prompt independent** — start does not compose or call `agent prompt` / `context`. External piping/composition only.
+  - **CLI shape:**
+    ```text
+    odm --project <name> [--wt <slot>] [--json] agent start -- <program> [args…]
+    ```
+  - **Human:** inherit child stdio; process exit code = child exit (same spirit as `odm run`).
+  - **`--json`:** capture streams; print `{ "cwd", "program", "args", "exitCode", "stdout", "stderr" }` then exit with child code. Pre-exec failures keep the standard error envelope + spine (`1`/`2`/`3`/`4`).
+  - **Exit codes:** pre-exec ODM errors use locked spine (usage `1`, workspace `2`, operation `3` spawn fail, not_found `4` missing path/slot). After spawn → **passthrough** child code (may be outside 0–4). Migrate `agent_start_not_implemented` matrix case when CLI lands.
+  - **Lib home:** prefer `odm-actions` reuse of `CwdTarget` / `resolve_cwd` / `StdioMode` (no new crate). Direct exec, not `sh -c`.
+- **Children minted:**
+  - [[issues-161-agent-start-lib]] — lib API + unit tests
+  - [[issues-162-agent-start-cli]] — CLI + integration / stub test migration (blocked by 161)
+  - [[issues-163-agent-start-docs-dogfood]] — docs/README/website/dogfood/CHANGELOG + close this map (blocked by 161+162)
 
 ## Fog / open questions
 
-- Exact start semantics (one-shot shell-out vs longer session; cwd = project vs wt slot; how packs are applied).
-- CLI flags beyond sketch `[--project] [--wt]`.
-- Whether start composes `agent prompt` output or is independent.
-- Exit codes and `--json` shape for success/failure (must not casually churn locked matrix).
+- _(cleared for v1)_ Runtime brand matrix, pack auto-apply, prompt-on-start, session lifecycle, config-declared default agent — **explicitly deferred**, not blocking implement children.
+- Windows argv/PATH quirks: rely on `std::process::Command`; no special junction policy in v1 beyond honest spawn errors.
 
 ## Out of scope
 
@@ -48,6 +62,7 @@ Deliver **`odm agent start`** only — the remaining agent honesty stub after pa
 - Other deferred worktree product (config slots, pin↔slot, branch templates, auto-prune on doctor)
 - Graph, env injection productization
 - Release cut / version bump
+- Default agent binary / runtime detection matrix
 
 ## Blocked by
 
@@ -82,11 +97,11 @@ None
 
 **Acceptance criteria (minting session):**
 
-- [ ] Fog reduced enough to file implement tickets (or explicit research child if blocked)
-- [ ] Implement (or grill/research) children filed with correct ids and briefs
-- [ ] Product scope remains **`agent start` only**
-- [ ] Index frontier updated
-- [ ] This map remains open; no full product implementation in mint-only pass
+- [x] Fog reduced enough to file implement tickets (or explicit research child if blocked)
+- [x] Implement (or grill/research) children filed with correct ids and briefs
+- [x] Product scope remains **`agent start` only**
+- [x] Index frontier updated
+- [x] This map remains open; no full product implementation in mint-only pass
 
 **Acceptance criteria (map close, later):**
 
@@ -104,3 +119,5 @@ None
 ## Comments
 
 Minted from [[issues-156-post-drain-next-wave-map]] 2026-08-02.
+
+- 2026-08-02: Grilled/scoped v1; minted [[issues-161-agent-start-lib]], [[issues-162-agent-start-cli]], [[issues-163-agent-start-docs-dogfood]]. Map stays open; `ready-for-agent` dropped (children hold the frontier).
