@@ -2,7 +2,7 @@
 id: issues-163
 title: "Docs + dogfood honesty for agent start"
 description: "Promote agent start from sketch in reference docs/README/website; update core-desk/todo dogfood; CHANGELOG; close map 158."
-status: open
+status: reviewing
 issue-type: feature-request
 severity: medium
 tags:
@@ -10,7 +10,6 @@ tags:
   - issue
   - wayfinder
   - wayfinder-task
-  - ready-for-agent
 ---
 
 # Docs + dogfood honesty for agent start
