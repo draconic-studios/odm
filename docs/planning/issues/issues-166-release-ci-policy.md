@@ -2,7 +2,7 @@
 id: issues-166
 title: "CI policy: allow release publish workflow"
 description: "Extend AGENTS.md (optional ADR) so GitHub Actions may run a release publish workflow plus Pages; still forbid product CI test matrix."
-status: open
+status: reviewing
 issue-type: feature-request
 severity: high
 tags:
@@ -12,7 +12,6 @@ tags:
   - wayfinder-task
   - ci
   - release
-  - ready-for-agent
 ---
 
 # CI policy: allow release publish workflow
