@@ -7,7 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Crate versions remain **0.1.0** — this section is the rolling post-0.1 log until a human cuts a tagged release (no silent version bump).
+## [0.1.1] - 2026-08-02
+
+First multi-platform binary release (tag `v0.1.1`). Do **not** retag `v0.1.0`.
+
+### Ship
+
+- **GitHub Release assets** — four host triples as `odm-0.1.1-<triple>.tar.gz`:
+  - `aarch64-apple-darwin`
+  - `x86_64-apple-darwin`
+  - `x86_64-unknown-linux-gnu`
+  - `aarch64-unknown-linux-gnu`
+- **Integrity** — `SHA256SUMS` (or per-asset `.sha256`) published with the release; install path verifies before install
+- **curl install** — `scripts/install.sh` (raw on `main`): OS/arch → triple → download from GitHub Releases → default `~/.local/bin` (override `ODM_INSTALL_DIR`) → checksum + `odm --version`
+- **Windows / musl / signing** — not in this cut
 
 ### Added
 
@@ -99,7 +112,7 @@ First public spine release: core multi-git Workspace, Progen integration, and Ac
   - Shell-out model; cwd via task dir / `--project` / `--wt`; exit-code passthrough
 - **CLI**
   - Globals: `--root`, `--json`, `--project`, `--wt`, `--progen`, `--progen-group`
-  - Sketch stubs at release: `generate`, `agent`, `project worktree` (exit 1 not-implemented) — see [Unreleased] for post-0.1 lands (generate, worktree slots, agent packs/prompt/start, doctor/status observation, …)
+  - Sketch stubs at release: `generate`, `agent`, `project worktree` (exit 1 not-implemented) — see [0.1.1] for post-0.1 lands (generate, worktree slots, agent packs/prompt/start, doctor/status observation, …)
 - **Dogfood**
   - `examples/core-desk` — offline Workspace exercising core, path-only Progen, groups, and shell Actions
 - **Ship**

@@ -337,7 +337,7 @@ dependencies = [
 
 [[package]]
 name = "odm"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "assert_cmd",
  "clap",
@@ -353,7 +353,7 @@ dependencies = [
 
 [[package]]
 name = "odm-actions"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "odm-core",
  "tempfile",
@@ -361,7 +361,7 @@ dependencies = [
 
 [[package]]
 name = "odm-core"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "odm-git",
  "serde",
@@ -373,7 +373,7 @@ dependencies = [
 
 [[package]]
 name = "odm-git"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "tempfile",
  "thiserror",
@@ -381,7 +381,7 @@ dependencies = [
 
 [[package]]
 name = "odm-progen"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "odm-core",
  "odm-git",

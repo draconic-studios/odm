@@ -2,7 +2,7 @@
 id: issues-170
 title: "First cut v0.1.1 (prepare; human-gated publish)"
 description: "Bump crate version to 0.1.1, prepare CHANGELOG notes for first multi-platform binary release. Tag and gh release publish are ready-for-human."
-status: reviewing
+status: open
 issue-type: feature-request
 severity: high
 tags:
@@ -11,7 +11,7 @@ tags:
   - wayfinder
   - wayfinder-task
   - release
-  - ready-for-agent
+  - ready-for-human
 ---
 
 # First cut v0.1.1 (prepare; human-gated publish)
@@ -83,11 +83,11 @@ After workflow + install path are ready:
 
 **Acceptance criteria:**
 
-- [ ] Workspace/crate version is `0.1.1`
-- [ ] CHANGELOG has a `0.1.1` section prepared for multi-platform release + install
-- [ ] No `v0.1.0` retag
-- [ ] Agent session does **not** push release tag or publish without explicit human gate
-- [ ] Publish checklist left clear for human (below or Comments)
+- [x] Workspace/crate version is `0.1.1`
+- [x] CHANGELOG has a `0.1.1` section prepared for multi-platform release + install
+- [x] No `v0.1.0` retag
+- [x] Agent session does **not** push release tag or publish without explicit human gate
+- [x] Publish checklist left clear for human (below or Comments)
 - [ ] Human publish (later): tag + Release assets verified — then close
 
 **Out of scope:**
@@ -111,3 +111,12 @@ After workflow + install path are ready:
 Minted from [[issues-165-multiplatform-github-releases-curl-install]] 2026-08-02.
 
 > Publish steps are `ready-for-human`. Agent prepares tree only.
+
+### 2026-08-02 agent prep (issues-170)
+
+Agent slice complete; issue left **open** with `ready-for-human` (full close only after human publish).
+
+- Bumped all five crates to `0.1.1` + `Cargo.lock`
+- Cut Unreleased → `## [0.1.1] - 2026-08-02` with Ship notes (four triples, SHA256, curl/`install.sh`, `~/.local/bin`); empty Unreleased retained
+- No tag, no tag push, no `gh release`, no retag of `v0.1.0`
+- Did not touch issues-166/167/168/169 or implement workflow/`install.sh`
