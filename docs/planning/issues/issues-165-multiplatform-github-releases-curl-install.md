@@ -64,7 +64,8 @@ Fog locked without further maintainer interview:
   - `aarch64-unknown-linux-gnu`
   - **Not v1:** musl (revisit if static/glibc pain appears); **Windows** deferred (honest non-goal)
 - **CI triggers:** tag `v*` **and** `workflow_dispatch` (manual / pre-release). Still **no** product CI test matrix on PRs.
-- **AGENTS.md policy:** extend the Actions exception from “Pages only” to “Pages + **release publish** workflow” — release-only, no test matrix.
+- **AGENTS.md policy:** extend the Actions exception from “Pages only” to “Pages + **release publish** workflow” — release-only, no test matrix. Done via [[issues-166-release-ci-policy]] → `AGENTS.md` + `docs/adr/0001-github-actions-pages-and-release-publish.md`.
+
 - **Install default path:** `~/.local/bin` (create if missing); no root required. Override via env (e.g. `ODM_INSTALL_DIR`) acceptable.
 - **`install.sh` hosting:** canonical in-repo `scripts/install.sh` on `main` (raw.githubusercontent.com URL in docs); optional copy/sync onto Pages later is nice-to-have, not blocking. Script downloads assets from **GitHub Releases** (latest or `ODM_VERSION=`).
 - **First cut version:** prepare **`v0.1.1`** (bump crate + CHANGELOG section from Unreleased) — human-gated tag/publish. Do not retag `v0.1.0`. Rolling Unreleased decision (157) is overridden **only** when cutting this binary release.

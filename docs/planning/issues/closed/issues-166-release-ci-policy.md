@@ -2,7 +2,7 @@
 id: issues-166
 title: "CI policy: allow release publish workflow"
 description: "Extend AGENTS.md (optional ADR) so GitHub Actions may run a release publish workflow plus Pages; still forbid product CI test matrix."
-status: reviewing
+status: closed
 issue-type: feature-request
 severity: high
 tags:
@@ -62,10 +62,10 @@ None
 
 **Acceptance criteria:**
 
-- [ ] `AGENTS.md` allows release publish workflow in addition to Pages
-- [ ] `AGENTS.md` still forbids product CI test matrix
-- [ ] Optional ADR matches policy if filed
-- [ ] No workflow YAML / install script / version cut in this ticket
+- [x] `AGENTS.md` allows release publish workflow in addition to Pages
+- [x] `AGENTS.md` still forbids product CI test matrix
+- [x] Optional ADR matches policy if filed
+- [x] No workflow YAML / install script / version cut in this ticket
 
 **Out of scope:**
 
@@ -73,6 +73,11 @@ None
 - Product test matrix on PRs
 - Windows / musl / signing policy changes
 
+## Answer
+
+`AGENTS.md` Actions exception is now Pages + **release publish** (tag `v*` / `workflow_dispatch` asset upload); product CI test matrix still forbidden. Durable record: `docs/adr/0001-github-actions-pages-and-release-publish.md`. No workflow YAML.
+
 ## Comments
 
 Minted from [[issues-165-multiplatform-github-releases-curl-install]] 2026-08-02.
+

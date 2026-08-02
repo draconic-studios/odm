@@ -12,6 +12,7 @@ tags:
   - wayfinder-task
   - ci
   - release
+  - ready-for-agent
 ---
 
 # Multi-target release workflow (four triples)
@@ -36,7 +37,7 @@ See Agent Brief.
 
 ## Blocked by
 
-- [[issues-166-release-ci-policy]] — policy must allow release publish workflow first
+- ~~[[issues-166-release-ci-policy]]~~ — closed; policy allows release publish + Pages
 
 ## Agent Brief
 
