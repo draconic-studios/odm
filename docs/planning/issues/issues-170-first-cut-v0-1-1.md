@@ -2,7 +2,7 @@
 id: issues-170
 title: "First cut v0.1.1 (prepare; human-gated publish)"
 description: "Bump crate version to 0.1.1, prepare CHANGELOG notes for first multi-platform binary release. Tag and gh release publish are ready-for-human."
-status: open
+status: reviewing
 issue-type: feature-request
 severity: high
 tags:
