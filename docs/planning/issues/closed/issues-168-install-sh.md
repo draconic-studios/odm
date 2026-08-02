@@ -2,7 +2,7 @@
 id: issues-168
 title: "install.sh one-liner (curl|sh)"
 description: "Canonical scripts/install.sh: OS/arch→triple, download from GitHub Releases, install to ~/.local/bin or ODM_INSTALL_DIR, verify SHA256 + odm --version."
-status: open
+status: closed
 issue-type: feature-request
 severity: high
 tags:
@@ -12,7 +12,6 @@ tags:
   - wayfinder-task
   - install
   - release
-  - ready-for-agent
 ---
 
 # install.sh one-liner (curl|sh)
@@ -78,14 +77,14 @@ None for authoring the script. Runtime success needs release assets from [[issue
 
 **Acceptance criteria:**
 
-- [ ] `scripts/install.sh` exists and is executable in intent (mode + shebang)
-- [ ] OS/arch maps to the four triples only
-- [ ] Default install dir `~/.local/bin`; `ODM_INSTALL_DIR` honored
-- [ ] Downloads from GitHub Releases (latest or `ODM_VERSION`)
-- [ ] SHA256 verified before install
-- [ ] Post-install `odm --version` check
-- [ ] Clear failure on Windows / unsupported / missing assets
-- [ ] No docs/website/version-cut in this ticket
+- [x] `scripts/install.sh` exists and is executable in intent (mode + shebang)
+- [x] OS/arch maps to the four triples only
+- [x] Default install dir `~/.local/bin`; `ODM_INSTALL_DIR` honored
+- [x] Downloads from GitHub Releases (latest or `ODM_VERSION`)
+- [x] SHA256 verified before install
+- [x] Post-install `odm --version` check
+- [x] Clear failure on Windows / unsupported / missing assets
+- [x] No docs/website/version-cut in this ticket
 
 **Out of scope:**
 
@@ -98,3 +97,9 @@ None for authoring the script. Runtime success needs release assets from [[issue
 ## Comments
 
 Minted from [[issues-165-multiplatform-github-releases-curl-install]] 2026-08-02.
+
+### 2026-08-02 close
+
+- Landed `scripts/install.sh` (POSIX sh): four-triple map, `ODM_VERSION` / latest, `ODM_INSTALL_DIR` / `~/.local/bin`, SHA256SUMS or `.sha256`, `odm --version`.
+- Verified: `sh -n`; Windows/unsupported-arch fail; missing asset / checksum mismatch / no-sum fail; mock HTTP e2e install + PATH note.
+- Runtime success still needs release assets ([[issues-167-multi-target-release-workflow]] / [[issues-170-first-cut-v0-1-1]]).
