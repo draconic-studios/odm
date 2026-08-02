@@ -77,6 +77,7 @@ Fog locked without further maintainer interview:
   - [[issues-168-install-sh]] — OS/arch→triple; Releases download; `~/.local/bin` / `ODM_INSTALL_DIR`; checksum + `odm --version`
   - [[issues-169-install-docs-website]] — curl primary; asset links; source secondary; Windows/signing honesty
   - [[issues-170-first-cut-v0-1-1]] — version/CHANGELOG prepare; tag/publish **human-gated**
+- [[issues-169-install-docs-website]] — closed: curl primary docs/site/README; source secondary; honest pre-asset wording
 
 ## Fog / open questions
 

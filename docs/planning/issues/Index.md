@@ -12,7 +12,6 @@ See `docs/agents/issue-tracker.md`.
 
 - [[issues-167-multi-target-release-workflow]] — `ready-for-agent` (four-triple release publish workflow)
 - [[issues-168-install-sh]] — `ready-for-agent` (curl|sh install script)
-- [[issues-169-install-docs-website]] — `ready-for-agent` (curl primary docs/site)
 - [[issues-170-first-cut-v0-1-1]] — `ready-for-agent` (version/CHANGELOG prepare; publish human-gated)
 
 ## Closed maps (delivery spine)

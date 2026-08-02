@@ -8,9 +8,69 @@ Visitor-facing install guide (same steps): project site [`install.html`](https:/
 
 - **Runtime**: `git` on `PATH`
 - **Actions** (`odm run`): Unix shell
-- **Build from source**: Rust 1.70+
+- **curl|sh install**: `curl`, `tar`, and a POSIX-ish shell (macOS / Linux)
+- **Build from source** (contributors): Rust 1.70+
 
-## Build from source (primary)
+## Quick install (primary)
+
+One-liner installs a prebuilt binary from [GitHub Releases](https://github.com/hembrow-innovations/odm/releases) via the canonical script on `main`:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/hembrow-innovations/odm/main/scripts/install.sh | sh
+```
+
+Default install directory: `~/.local/bin` (ensure it is on your `PATH`). The script verifies the download with **SHA256** sums shipped on the release (no cosign/minisign in v1).
+
+### Options
+
+- **`ODM_VERSION=<tag>`**: install a specific release (e.g. `v0.1.1`) instead of **latest**
+- **`ODM_INSTALL_DIR=<dir>`**: install directory (default `~/.local/bin`)
+
+```bash
+ODM_VERSION=v0.1.1 curl -fsSL https://raw.githubusercontent.com/hembrow-innovations/odm/main/scripts/install.sh | sh
+ODM_INSTALL_DIR=/usr/local/bin curl -fsSL https://raw.githubusercontent.com/hembrow-innovations/odm/main/scripts/install.sh | sh
+```
+
+### Supported host triples
+
+Release assets target these four triples only:
+
+- `aarch64-apple-darwin`
+- `x86_64-apple-darwin`
+- `x86_64-unknown-linux-gnu`
+- `aarch64-unknown-linux-gnu`
+
+Unsupported OS/arch (including **Windows**) fails clearly — Windows is not a primary channel in v1.
+
+### Script and assets
+
+- **Script path:** `scripts/install.sh` on `main` (raw URL above). Until that script lands on `main`, the URL 404s — use [Releases](https://github.com/hembrow-innovations/odm/releases) direct download or build from source below.
+- **Assets:** multi-platform tarballs + SHA256 on the latest release when published (first cut planned as `v0.1.1`). If Releases has no matching assets yet, prefer build from source or wait for the release page to list them.
+
+## GitHub Releases (direct download)
+
+Browse [github.com/hembrow-innovations/odm/releases](https://github.com/hembrow-innovations/odm/releases) and download `odm-<version>-<triple>.tar.gz` for your host (plus checksums). Prefer the **latest** release when assets are present.
+
+```bash
+tar xzf odm-<version>-<triple>.tar.gz
+# archive contains: odm, README-release.txt
+mkdir -p ~/.local/bin
+mv odm ~/.local/bin/   # or another directory on PATH
+odm --version
+```
+
+Integrity: when using the install script, SHA256 is verified automatically. For manual download, check against the release `SHA256SUMS` (or per-asset `.sha256`) if present.
+
+## Verify
+
+```bash
+odm --version
+odm init --help
+```
+
+If the shell cannot find `odm`, add the install directory to `PATH` and open a new shell.
+
+## Build from source (contributors)
 
 ```bash
 git clone https://github.com/hembrow-innovations/odm.git
@@ -34,32 +94,9 @@ Optional:
 - **`ODM_TARGET=<triple>`** — cross/build for a specific triple (`cargo build --target`)
 - **`ODM_RELEASE_PUBLISH=1`** — after build, run `gh release create` (requires authenticated `gh`)
 
-## GitHub Releases (when published)
-
-No published release assets are required to install today — use build from source above.
-
-When a release **is** published at https://github.com/hembrow-innovations/odm/releases:
-
-1. Download `odm-<version>-<target>.tar.gz` for your host triple (e.g. `aarch64-apple-darwin`, `x86_64-unknown-linux-musl`).
-2. Extract and place `odm` on your `PATH`:
-
-```bash
-tar xzf odm-<version>-<target>.tar.gz
-# archive contains: odm, README-release.txt
-sudo mv odm /usr/local/bin/   # or another directory on PATH
-odm --version
-```
-
-## Verify
-
-```bash
-odm --version
-odm init --help
-```
-
 ## Non-goals (this release)
 
 - Homebrew formula
 - crates.io publish of the binary crate
-- Signed/notarized macOS binaries
+- Signed/notarized macOS binaries (binaries are **unsigned**)
 - Windows as a primary supported channel

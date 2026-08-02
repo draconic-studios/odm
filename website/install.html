@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Install — ODM</title>
-  <meta name="description" content="Install the odm binary: build from source (primary); GitHub Releases when published." />
+  <meta name="description" content="Install the odm binary: curl|sh from GitHub Releases (primary); build from source for contributors." />
   <link rel="stylesheet" href="assets/style.css" />
 </head>
 <body>
@@ -51,9 +51,10 @@
           <strong>On this page</strong>
           <ul>
             <li><a href="#requirements">Requirements</a></li>
-            <li><a href="#source">Build from source (primary)</a></li>
-            <li><a href="#releases">GitHub Releases (when published)</a></li>
+            <li><a href="#curl">Quick install (primary)</a></li>
+            <li><a href="#releases">GitHub Releases (direct download)</a></li>
             <li><a href="#verify">Verify</a></li>
+            <li><a href="#source">Build from source (contributors)</a></li>
             <li><a href="#non-goals">Not in this release</a></li>
           </ul>
         </nav>
@@ -62,10 +63,63 @@
         <ul>
           <li><strong>Runtime:</strong> <code>git</code> on <code>PATH</code></li>
           <li><strong>Actions</strong> (<code>odm run</code>): Unix shell</li>
-          <li><strong>Build from source:</strong> Rust 1.70+</li>
+          <li><strong>curl|sh install:</strong> <code>curl</code>, <code>tar</code>, POSIX-ish shell (macOS / Linux)</li>
+          <li><strong>Build from source</strong> (contributors): Rust 1.70+</li>
         </ul>
 
-        <h2 id="source">Build from source (primary)</h2>
+        <h2 id="curl">Quick install (primary)</h2>
+        <p>One-liner installs a prebuilt binary from
+        <a href="https://github.com/hembrow-innovations/odm/releases">GitHub Releases</a>
+        via the canonical script on <code>main</code>:</p>
+        <pre><code>curl -fsSL https://raw.githubusercontent.com/hembrow-innovations/odm/main/scripts/install.sh | sh</code></pre>
+        <ul>
+          <li><strong>Default dir:</strong> <code>~/.local/bin</code> (ensure it is on your <code>PATH</code>)</li>
+          <li><strong>Integrity:</strong> SHA256 verified by <code>install.sh</code> (no cosign/minisign in v1)</li>
+          <li><strong><code>ODM_VERSION=&lt;tag&gt;</code></strong> — pin a release instead of latest</li>
+          <li><strong><code>ODM_INSTALL_DIR=&lt;dir&gt;</code></strong> — override install directory</li>
+        </ul>
+        <pre><code>ODM_VERSION=v0.1.1 curl -fsSL \
+  https://raw.githubusercontent.com/hembrow-innovations/odm/main/scripts/install.sh | sh</code></pre>
+        <pre><code>ODM_INSTALL_DIR=/usr/local/bin curl -fsSL \
+  https://raw.githubusercontent.com/hembrow-innovations/odm/main/scripts/install.sh | sh</code></pre>
+        <h3>Supported host triples</h3>
+        <ul>
+          <li><code>aarch64-apple-darwin</code></li>
+          <li><code>x86_64-apple-darwin</code></li>
+          <li><code>x86_64-unknown-linux-gnu</code></li>
+          <li><code>aarch64-unknown-linux-gnu</code></li>
+        </ul>
+        <p>Unsupported OS/arch (including <strong>Windows</strong>) fails clearly — Windows is not a primary channel in v1.</p>
+        <div class="callout">
+          <p><strong>Script:</strong> <code>scripts/install.sh</code> on <code>main</code> (raw URL above).
+          <strong>Assets:</strong> four-platform tarballs + SHA256 on the
+          <a href="https://github.com/hembrow-innovations/odm/releases">latest release when published</a>
+          (first multi-platform cut planned as <code>v0.1.1</code>). If the script or assets are not on <code>main</code>/Releases yet, use direct download when listed, or <a href="#source">build from source</a>.</p>
+        </div>
+
+        <h2 id="releases">GitHub Releases (direct download)</h2>
+        <ol>
+          <li>Open <a href="https://github.com/hembrow-innovations/odm/releases">github.com/hembrow-innovations/odm/releases</a></li>
+          <li>Download <code>odm-&lt;version&gt;-&lt;triple&gt;.tar.gz</code> for your host triple (prefer <strong>latest</strong> when assets are present).</li>
+          <li>Extract and place <code>odm</code> on your <code>PATH</code> (default recommendation: <code>~/.local/bin</code>):</li>
+        </ol>
+        <pre><code>tar xzf odm-&lt;version&gt;-&lt;triple&gt;.tar.gz
+# archive contains: odm, README-release.txt
+mkdir -p ~/.local/bin
+mv odm ~/.local/bin/
+odm --version</code></pre>
+        <p>For manual downloads, check SHA256 against the release sums file when present. The install script does this automatically.</p>
+
+        <h2 id="verify">Verify</h2>
+        <pre><code>odm --version
+odm init --help</code></pre>
+        <p>If the shell cannot find <code>odm</code>, the binary is not on <code>PATH</code> yet — add the install directory and open a new shell.</p>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="quickstart.html">Next: Quickstart</a>
+          <a class="btn btn-ghost" href="https://github.com/hembrow-innovations/odm/releases">Open Releases</a>
+        </div>
+
+        <h2 id="source">Build from source (contributors)</h2>
         <pre><code>git clone https://github.com/hembrow-innovations/odm.git
 cd odm
 cargo build -p odm --release
@@ -82,34 +136,11 @@ cargo install --path crates/odm
           <li><strong><code>ODM_RELEASE_PUBLISH=1</code></strong> — after build, run <code>gh release create</code> (authenticated <code>gh</code>)</li>
         </ul>
 
-        <h2 id="releases">GitHub Releases (when published)</h2>
-        <p>No published release assets are required to install today — use build from source above.</p>
-        <p>When a release <strong>is</strong> published:</p>
-        <ol>
-          <li>Open <a href="https://github.com/hembrow-innovations/odm/releases">github.com/hembrow-innovations/odm/releases</a></li>
-          <li>Download <code>odm-&lt;version&gt;-&lt;target&gt;.tar.gz</code> for your host triple
-            (e.g. <code>aarch64-apple-darwin</code>, <code>x86_64-unknown-linux-musl</code>).</li>
-          <li>Extract and place <code>odm</code> on your <code>PATH</code>:</li>
-        </ol>
-        <pre><code>tar xzf odm-&lt;version&gt;-&lt;target&gt;.tar.gz
-# archive contains: odm, README-release.txt
-sudo mv odm /usr/local/bin/   # or another directory on PATH
-odm --version</code></pre>
-
-        <h2 id="verify">Verify</h2>
-        <pre><code>odm --version
-odm init --help</code></pre>
-        <p>If the shell cannot find <code>odm</code>, the binary is not on <code>PATH</code> yet — move it (or symlink) and open a new shell.</p>
-        <div class="cta-row">
-          <a class="btn btn-primary" href="quickstart.html">Next: Quickstart</a>
-          <a class="btn btn-ghost" href="https://github.com/hembrow-innovations/odm/releases">Open Releases</a>
-        </div>
-
         <h2 id="non-goals">Not in this release</h2>
         <ul>
           <li>Homebrew formula</li>
           <li>crates.io publish of the binary crate</li>
-          <li>Signed/notarized macOS binaries</li>
+          <li>Signed/notarized macOS binaries (binaries are <strong>unsigned</strong>)</li>
           <li>Windows as a primary supported channel</li>
         </ul>
 

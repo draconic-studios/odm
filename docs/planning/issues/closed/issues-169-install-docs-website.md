@@ -2,7 +2,7 @@
 id: issues-169
 title: "Install docs + website (curl primary)"
 description: "Make curl|sh the primary install path in install.md, README, and website; link release assets; source secondary; honest Windows/signing. E2e if HTML changes."
-status: open
+status: closed
 issue-type: feature-request
 severity: high
 tags:
@@ -73,12 +73,12 @@ None hard. Prefer coordinating with [[issues-168-install-sh]] (script URL) and a
 
 **Acceptance criteria:**
 
-- [ ] install.md + README: curl primary, source secondary
-- [ ] Website install (+ CTAs) match; asset links or honest pre-release wording
-- [ ] Windows / unsigned binary honesty present
-- [ ] Four triples / `~/.local/bin` / SHA256 reflected where install is documented
-- [ ] Website e2e green if HTML changed
-- [ ] No tag/publish in this ticket
+- [x] install.md + README: curl primary, source secondary
+- [x] Website install (+ CTAs) match; asset links or honest pre-release wording
+- [x] Windows / unsigned binary honesty present
+- [x] Four triples / `~/.local/bin` / SHA256 reflected where install is documented
+- [x] Website e2e green if HTML changed
+- [x] No tag/publish in this ticket
 
 **Out of scope:**
 
@@ -90,3 +90,7 @@ None hard. Prefer coordinating with [[issues-168-install-sh]] (script URL) and a
 ## Comments
 
 Minted from [[issues-165-multiplatform-github-releases-curl-install]] 2026-08-02.
+
+## Answer
+
+Flipped install honesty to curl|sh primary across `docs/reference/install.md`, README Install, `website/install.html`, and index start-here CTA. Documents canonical `scripts/install.sh` raw URL, four triples, `~/.local/bin`, `ODM_VERSION` / `ODM_INSTALL_DIR`, SHA256 via install.sh; source secondary; Windows/unsigned honesty; Releases page for latest when published. Website Playwright smoke + a11y green. No install.sh/workflow/tag in this ticket.

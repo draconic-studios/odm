@@ -8,9 +8,21 @@ Poly-repo workspace OS for humans and AI agents: one config, one CLI, and orches
 
 ## Install
 
-### Build from source (primary)
+Requirements: **git** on `PATH`. Actions (`odm run`) need a Unix shell. Prebuilt install needs `curl` + `tar` (macOS / Linux).
 
-Requirements: **Rust 1.70+**, **git** on `PATH`. Actions (`odm run`) need a Unix shell.
+### Quick install (primary)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/hembrow-innovations/odm/main/scripts/install.sh | sh
+```
+
+Installs to `~/.local/bin` by default (put it on your `PATH`). The script pulls from [GitHub Releases](https://github.com/hembrow-innovations/odm/releases), verifies **SHA256**, and supports `ODM_VERSION=` / `ODM_INSTALL_DIR=`. Four host triples: `aarch64-apple-darwin`, `x86_64-apple-darwin`, `x86_64-unknown-linux-gnu`, `aarch64-unknown-linux-gnu`.
+
+Direct tarball download: same [Releases](https://github.com/hembrow-innovations/odm/releases) page (latest when assets are published). Windows is not a primary channel; macOS binaries are **unsigned** (no Homebrew / notarization in v1).
+
+See [docs/reference/install.md](docs/reference/install.md) for options, honesty notes, and troubleshooting.
+
+### Build from source (contributors)
 
 ```bash
 git clone https://github.com/hembrow-innovations/odm.git
@@ -23,19 +35,7 @@ cargo install --path crates/odm
 odm --version
 ```
 
-See [docs/reference/install.md](docs/reference/install.md) for details.
-
-### GitHub Releases (when published)
-
-When a release is published, download the platform tarball from [GitHub Releases](https://github.com/hembrow-innovations/odm/releases), extract `odm` onto your `PATH`, and verify with `odm --version`. Until then, build from source above.
-
-Local packaging (tarball under `dist/`, optional `gh release create`):
-
-```bash
-./scripts/release-build.sh
-```
-
-Local test coverage (optional; not CI): `./scripts/coverage.sh` (needs `cargo-llvm-cov`; writes under `target/coverage/`).
+Local packaging: `./scripts/release-build.sh`. Local coverage (optional): `./scripts/coverage.sh` (needs `cargo-llvm-cov`).
 
 ## Quickstart
 
