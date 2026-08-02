@@ -2,7 +2,7 @@
 id: issues-161
 title: "Agent start lib (cwd + exec)"
 description: "Library API: resolve Project/wt cwd and one-shot exec argv for odm agent start; unit tests with true/false."
-status: open
+status: reviewing
 issue-type: feature-request
 severity: medium
 tags:
@@ -10,7 +10,6 @@ tags:
   - issue
   - wayfinder
   - wayfinder-task
-  - ready-for-agent
 ---
 
 # Agent start lib (cwd + exec)
