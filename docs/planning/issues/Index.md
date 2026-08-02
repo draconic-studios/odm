@@ -6,11 +6,12 @@ See `docs/agents/issue-tracker.md`.
 
 ## Maps
 
-- [[issues-156-post-drain-next-wave-map]] — Post-drain next wave (release · product · QA · architecture)
+- [[issues-165-multiplatform-github-releases-curl-install]] — Multi-platform Releases + curl/website install
 
 ## Frontier (open, unblocked)
 
-- [[issues-156-post-drain-next-wave-map]] — open umbrella (all children 157–160 closed; Answer/close map next)
+- [[issues-164-update-docs-and-website]] — `ready-for-agent` (residual docs/site honesty pass)
+- [[issues-165-multiplatform-github-releases-curl-install]] — `ready-for-agent` (mint children from locked defaults)
 
 ## Blocked
 
@@ -41,5 +42,6 @@ _(none)_
 - [[issues-120-test-coverage-map]] — Behavior-seam test suite + local coverage tooling
 - [[issues-121-full-capability-demo-map]] — core-desk full ODM capability demo + verification
 - [[issues-148-thermo-nuclear-structure-map]] — Thermo-nuclear structure deepen (inventory, CLI spine, membership split, fsutil, typed paths)
+- [[issues-156-post-drain-next-wave-map]] — Post-drain next wave (rolling Unreleased; agent start v1; QA clean; no deepen tickets)
 - [[issues-158-agent-start-map]] — Agent start delivery (`odm agent start` v1 one-shot)
 - [[issues-160-post-drain-architecture-deepen-map]] — Post-drain architecture deepen (scan; no children this wave)

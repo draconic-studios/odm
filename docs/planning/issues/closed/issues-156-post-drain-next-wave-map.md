@@ -2,7 +2,7 @@
 id: issues-156
 title: "Post-drain next wave map"
 description: "After empty frontier (154/155 closed): release hygiene, pick next product surface, dogfood/QA gap filing, then architecture deepen."
-status: reviewing
+status: closed
 issue-type: feature-request
 severity: medium
 tags:
@@ -101,10 +101,10 @@ None
 
 **Acceptance criteria:**
 
-- [ ] `## Answer` present with one-paragraph wave outcome + child wikilinks
-- [ ] Issue `status: closed` and file under `docs/planning/issues/closed/`
-- [ ] Index no longer lists this map as live frontier; Closed maps includes it
-- [ ] No product code, Cargo version edit, git tag, or publish in the close-out session
+- [x] `## Answer` present with one-paragraph wave outcome + child wikilinks
+- [x] Issue `status: closed` and file under `docs/planning/issues/closed/`
+- [x] Index no longer lists this map as live frontier; Closed maps includes it
+- [x] No product code, Cargo version edit, git tag, or publish in the close-out session
 
 **Out of scope:**
 
@@ -116,6 +116,10 @@ None
 
 1. ~~Triage / mint children / execute wave~~ done.
 2. Agent: Answer + close + Index (this brief).
+
+## Answer
+
+Post-drain wave complete under AFK defaults: kept rolling **0.1.0 + Unreleased** (no tag/publish/version bump) via [[issues-157-release-hygiene-rolling-unreleased]]; shipped product surface **`odm agent start` v1 one-shot** via [[issues-158-agent-start-map]] (delivery children 161–163); dogfood + full_tour clean with no new gaps via [[issues-159-post-drain-dogfood-qa-gaps]]; architecture scan found no high-leverage deepen tickets this wave via [[issues-160-post-drain-architecture-deepen-map]]. Live frontier after close: residual docs/site honesty ([[issues-164-update-docs-and-website]]) and multi-platform releases ([[issues-165-multiplatform-github-releases-curl-install]]).
 
 ## Comments
 
