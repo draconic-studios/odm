@@ -2,7 +2,7 @@
 id: issues-159
 title: "Post-drain dogfood / QA gap filing"
 description: "Run core-desk dogfood + full_tour gate; file real product/docs bugs as ready-for-agent issues; close with no new gaps if clean. Agent-only."
-status: open
+status: closed
 issue-type: observation
 severity: low
 tags:
@@ -59,10 +59,10 @@ None — parent AFK defaults recorded; dogfood does not wait on release cut or p
 
 **Acceptance criteria:**
 
-- [ ] Tour + gate executed; results logged under Comments
-- [ ] New issues filed with `ready-for-agent` + Agent Brief, or explicit “no new gaps”
-- [ ] No product implementation in this ticket itself
-- [ ] This issue closed with Answer
+- [x] Tour + gate executed; results logged under Comments
+- [x] New issues filed with `ready-for-agent` + Agent Brief, or explicit “no new gaps”
+- [x] No product implementation in this ticket itself
+- [x] This issue closed with Answer
 
 **Out of scope:**
 
@@ -74,3 +74,14 @@ None — parent AFK defaults recorded; dogfood does not wait on release cut or p
 ## Comments
 
 Minted from [[issues-156-post-drain-next-wave-map]] 2026-08-02.
+
+- 2026-08-02: Ran full dogfood + tour gate after claim.
+  - `cargo build -p odm` then `ODM=target/debug/odm examples/core-desk/scripts/dogfood.sh` → `dogfood: OK`
+  - `cargo test -p odm --test core_desk_full_tour` → 1 passed
+  - Expected honesty smoke: `agent start` exit 1 (`not implemented: agent start`) — already covered by [[issues-158-agent-start-map]] / 161–163; not a new gap
+  - Doctor warns on fresh temp desk (`odm_layout` missing cache/log/progen; `gitignore_drift`) but still `doctor: ok` — same as [[issues-147-demo-gap-followups]]; not unexpected failures
+  - New issues filed: none
+
+## Answer
+
+no new gaps.
