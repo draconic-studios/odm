@@ -10,12 +10,14 @@ See `docs/agents/issue-tracker.md`.
 
 ## Frontier (open, unblocked)
 
-- [[issues-164-update-docs-and-website]] — `ready-for-agent` (residual docs/site honesty pass)
-- [[issues-165-multiplatform-github-releases-curl-install]] — `ready-for-agent` (mint children from locked defaults)
+- [[issues-166-release-ci-policy]] — `ready-for-agent` (AGENTS.md: release publish + Pages; no product CI test matrix)
+- [[issues-168-install-sh]] — `ready-for-agent` (curl|sh install script)
+- [[issues-169-install-docs-website]] — `ready-for-agent` (curl primary docs/site)
+- [[issues-170-first-cut-v0-1-1]] — `ready-for-agent` (version/CHANGELOG prepare; publish human-gated)
 
 ## Blocked
 
-_(none)_
+- [[issues-167-multi-target-release-workflow]] — blocked by [[issues-166-release-ci-policy]]
 
 ## Closed maps (delivery spine)
 
