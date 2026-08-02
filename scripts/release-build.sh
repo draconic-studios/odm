@@ -4,9 +4,14 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-VERSION="$(sed -n 's/^version = "\([^"]*\)"/\1/p' crates/odm/Cargo.toml | head -1)"
+if [[ -n "${ODM_VERSION:-}" ]]; then
+  VERSION="${ODM_VERSION#v}"
+  VERSION="${VERSION#V}"
+else
+  VERSION="$(sed -n 's/^version = "\([^"]*\)"/\1/p' crates/odm/Cargo.toml | head -1)"
+fi
 if [[ -z "${VERSION}" ]]; then
-  echo "error: could not parse version from crates/odm/Cargo.toml" >&2
+  echo "error: could not parse version (set ODM_VERSION or crates/odm/Cargo.toml)" >&2
   exit 1
 fi
 
@@ -72,14 +77,25 @@ if [[ -f LICENSE ]]; then
 fi
 
 ARCHIVE="dist/odm-${VERSION}-${TARGET}.tar.gz"
+# Archive root must contain `odm` (and optional README/LICENSE) — match install.sh extract.
 tar czf "$ARCHIVE" -C "$STAGE" .
 echo "Wrote ${ARCHIVE}"
 
+if command -v sha256sum >/dev/null 2>&1; then
+  (cd dist && sha256sum "odm-${VERSION}-${TARGET}.tar.gz" >"odm-${VERSION}-${TARGET}.tar.gz.sha256")
+elif command -v shasum >/dev/null 2>&1; then
+  (cd dist && shasum -a 256 "odm-${VERSION}-${TARGET}.tar.gz" >"odm-${VERSION}-${TARGET}.tar.gz.sha256")
+fi
+if [[ -f "dist/odm-${VERSION}-${TARGET}.tar.gz.sha256" ]]; then
+  echo "Wrote dist/odm-${VERSION}-${TARGET}.tar.gz.sha256"
+fi
+
 echo
 echo "Next steps (manual publish):"
-echo "  gh release create v${VERSION} dist/odm-${VERSION}-*.tar.gz --title \"v${VERSION}\" --notes-file CHANGELOG.md"
+echo "  gh release create v${VERSION} dist/odm-${VERSION}-*.tar.gz dist/SHA256SUMS --title \"v${VERSION}\" --notes-file CHANGELOG.md"
 echo "  # or attach specific archives after building each target"
 echo
+echo "CI: .github/workflows/release.yml builds four triples and uploads SHA256SUMS on tag v*."
 
 if [[ "${ODM_RELEASE_PUBLISH:-}" == "1" ]]; then
   if ! command -v gh >/dev/null 2>&1; then
@@ -87,7 +103,11 @@ if [[ "${ODM_RELEASE_PUBLISH:-}" == "1" ]]; then
     exit 1
   fi
   echo "Publishing GitHub release v${VERSION}..."
-  gh release create "v${VERSION}" "$ARCHIVE" \
+  publish_assets=("$ARCHIVE")
+  if [[ -f "dist/odm-${VERSION}-${TARGET}.tar.gz.sha256" ]]; then
+    publish_assets+=("dist/odm-${VERSION}-${TARGET}.tar.gz.sha256")
+  fi
+  gh release create "v${VERSION}" "${publish_assets[@]}" \
     --title "v${VERSION}" \
     --notes-file CHANGELOG.md
 fi

@@ -2,7 +2,7 @@
 id: issues-167
 title: "Multi-target release workflow (four triples)"
 description: "GitHub Actions on tag v* + workflow_dispatch: build four host triples, tarball + SHA256, upload to GitHub Releases. No PR test matrix."
-status: open
+status: closed
 issue-type: feature-request
 severity: high
 tags:
@@ -12,7 +12,6 @@ tags:
   - wayfinder-task
   - ci
   - release
-  - ready-for-agent
 ---
 
 # Multi-target release workflow (four triples)
@@ -75,12 +74,19 @@ See Agent Brief.
 
 **Acceptance criteria:**
 
-- [ ] Workflow triggers on `v*` tags and `workflow_dispatch` only (no PR test matrix)
-- [ ] Four triples produce `odm-<version>-<triple>.tar.gz`
-- [ ] SHA256 sums ship with the release assets
-- [ ] Assets upload to GitHub Releases on tag publish path
-- [ ] Policy still respected: no product CI test matrix
-- [ ] `AGENTS.md` / policy child already allows this workflow
+- [x] Workflow triggers on `v*` tags and `workflow_dispatch` only (no PR test matrix)
+- [x] Four triples produce `odm-<version>-<triple>.tar.gz`
+- [x] SHA256 sums ship with the release assets
+- [x] Assets upload to GitHub Releases on tag publish path
+- [x] Policy still respected: no product CI test matrix
+- [x] `AGENTS.md` / policy child already allows this workflow
+
+## Resolution
+
+- **Workflow:** `.github/workflows/release.yml` — tag `v*` + `workflow_dispatch` (dry-run default; `publish` + `tag` to upload)
+- **Triples:** native `macos-14` (aarch64 + cross x86_64), `ubuntu-latest` (x86_64), `ubuntu-24.04-arm` (aarch64)
+- **Packaging:** `scripts/release-build.sh` (`ODM_TARGET`, `ODM_VERSION`); release-wide `SHA256SUMS`
+- **Out of scope left to humans/other tickets:** tag push, install.sh, docs/website, version cut
 
 **Out of scope:**
 

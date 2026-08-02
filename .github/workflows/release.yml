@@ -1,0 +1,193 @@
+# Release publish only — tag v* + workflow_dispatch.
+# No PR / push test matrix (see AGENTS.md + docs/adr/0001-...).
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Upload assets to a GitHub Release (requires tag)"
+        type: boolean
+        default: false
+      tag:
+        description: "Release tag when publish=true (e.g. v0.1.1). Ignored on tag push."
+        type: string
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  meta:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+      tag: ${{ steps.meta.outputs.tag }}
+      should_publish: ${{ steps.meta.outputs.should_publish }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: meta
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          INPUT_PUBLISH: ${{ inputs.publish }}
+          INPUT_TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          cargo_ver="$(sed -n 's/^version = "\([^"]*\)"/\1/p' crates/odm/Cargo.toml | head -1)"
+          if [[ -z "${cargo_ver}" ]]; then
+            echo "error: could not parse version from crates/odm/Cargo.toml" >&2
+            exit 1
+          fi
+
+          should_publish=false
+          tag=""
+          version="${cargo_ver}"
+
+          if [[ "${EVENT_NAME}" == "push" ]]; then
+            tag="${REF_NAME}"
+            version="${tag#v}"
+            version="${version#V}"
+            should_publish=true
+            if [[ "${version}" != "${cargo_ver}" ]]; then
+              echo "error: tag ${tag} version (${version}) != crates/odm/Cargo.toml (${cargo_ver})" >&2
+              exit 1
+            fi
+          else
+            # workflow_dispatch: build always; publish only with explicit flag + tag
+            if [[ "${INPUT_PUBLISH}" == "true" ]]; then
+              if [[ -z "${INPUT_TAG}" ]]; then
+                echo "error: publish=true requires inputs.tag (e.g. v0.1.1)" >&2
+                exit 1
+              fi
+              tag="${INPUT_TAG}"
+              version="${tag#v}"
+              version="${version#V}"
+              should_publish=true
+              if [[ "${version}" != "${cargo_ver}" ]]; then
+                echo "error: tag ${tag} version (${version}) != crates/odm/Cargo.toml (${cargo_ver})" >&2
+                exit 1
+              fi
+            fi
+          fi
+
+          echo "version=${version}" >>"$GITHUB_OUTPUT"
+          echo "tag=${tag}" >>"$GITHUB_OUTPUT"
+          echo "should_publish=${should_publish}" >>"$GITHUB_OUTPUT"
+          echo "Resolved version=${version} tag=${tag:-"(none)"} should_publish=${should_publish}"
+
+  build:
+    needs: meta
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Prefer native runners; apple x86_64 cross-compiles from Apple Silicon.
+          - target: aarch64-apple-darwin
+            os: macos-14
+          - target: x86_64-apple-darwin
+            os: macos-14
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-24.04-arm
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Build and package
+        env:
+          ODM_TARGET: ${{ matrix.target }}
+          ODM_VERSION: ${{ needs.meta.outputs.version }}
+        run: ./scripts/release-build.sh
+
+      - name: Upload dist artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: odm-${{ needs.meta.outputs.version }}-${{ matrix.target }}
+          path: dist/odm-${{ needs.meta.outputs.version }}-${{ matrix.target }}.tar.gz
+          if-no-files-found: error
+          retention-days: 14
+
+  publish:
+    needs: [meta, build]
+    if: needs.meta.outputs.should_publish == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          pattern: odm-${{ needs.meta.outputs.version }}-*
+          merge-multiple: true
+
+      - name: Verify assets and write SHA256SUMS
+        env:
+          VERSION: ${{ needs.meta.outputs.version }}
+        run: |
+          set -euo pipefail
+          cd dist
+          expected=(
+            "odm-${VERSION}-aarch64-apple-darwin.tar.gz"
+            "odm-${VERSION}-x86_64-apple-darwin.tar.gz"
+            "odm-${VERSION}-x86_64-unknown-linux-gnu.tar.gz"
+            "odm-${VERSION}-aarch64-unknown-linux-gnu.tar.gz"
+          )
+          for f in "${expected[@]}"; do
+            if [[ ! -f "$f" ]]; then
+              echo "error: missing release asset: $f" >&2
+              ls -la >&2 || true
+              exit 1
+            fi
+          done
+          # GNU coreutils format: "<hash>  <filename>" (install.sh accepts this)
+          sha256sum "${expected[@]}" | tee SHA256SUMS
+          ls -la
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.meta.outputs.tag }}
+          VERSION: ${{ needs.meta.outputs.version }}
+        run: |
+          set -euo pipefail
+          assets=(
+            "dist/odm-${VERSION}-aarch64-apple-darwin.tar.gz"
+            "dist/odm-${VERSION}-x86_64-apple-darwin.tar.gz"
+            "dist/odm-${VERSION}-x86_64-unknown-linux-gnu.tar.gz"
+            "dist/odm-${VERSION}-aarch64-unknown-linux-gnu.tar.gz"
+            "dist/SHA256SUMS"
+          )
+          notes_args=()
+          if [[ -f CHANGELOG.md ]]; then
+            notes_args=(--notes-file CHANGELOG.md)
+          else
+            notes_args=(--generate-notes)
+          fi
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release ${TAG} exists; uploading/clobbering assets..."
+            gh release upload "$TAG" "${assets[@]}" --clobber
+          else
+            echo "Creating release ${TAG}..."
+            gh release create "$TAG" "${assets[@]}" \
+              --title "$TAG" \
+              "${notes_args[@]}"
+          fi
