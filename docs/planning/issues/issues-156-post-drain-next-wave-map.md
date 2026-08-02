@@ -46,6 +46,7 @@ Frontier was empty after [[issues-154-update-readme-correct-info]] and [[issues-
   - [[issues-159-post-drain-dogfood-qa-gaps]] — dogfood / QA gap filing (agent-only)
   - [[issues-160-post-drain-architecture-deepen-map]] — targeted architecture deepen
 - Blocking: none of the four are blocked (release decision recorded here; QA does not wait on product; architecture product-agnostic).
+- [[issues-157-release-hygiene-rolling-unreleased]] **closed** — inventory OK; rolling Unreleased on 0.1.0 confirmed; CHANGELOG one-line rolling note + 0.1.0 stub pointer; no tag/publish/version bump.
 
 ### AFK defaults (triage)
 

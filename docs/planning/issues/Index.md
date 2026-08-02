@@ -12,8 +12,7 @@ See `docs/agents/issue-tracker.md`.
 
 ## Frontier (open, unblocked)
 
-- [[issues-156-post-drain-next-wave-map]] — open umbrella (children minted; stays open until 157–160 done)
-- [[issues-157-release-hygiene-rolling-unreleased]] — ready-for-agent (rolling Unreleased on 0.1.0; honesty-only)
+- [[issues-156-post-drain-next-wave-map]] — open umbrella (children minted; stays open until 158–160 done)
 - [[issues-158-agent-start-map]] — ready-for-agent (grill/scope then mint implement children)
 - [[issues-159-post-drain-dogfood-qa-gaps]] — ready-for-agent (dogfood + full_tour; file gaps)
 - [[issues-160-post-drain-architecture-deepen-map]] — ready-for-agent (scan; mint deepen children or close clean)

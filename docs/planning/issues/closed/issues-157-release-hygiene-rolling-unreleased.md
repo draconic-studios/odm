@@ -2,7 +2,7 @@
 id: issues-157
 title: "Release hygiene: rolling Unreleased on 0.1.0"
 description: "Inventory crate version vs CHANGELOG vs README/website status; record rolling Unreleased on 0.1.0; fix honesty drift only — no tag, publish, or version bump."
-status: reviewing
+status: closed
 issue-type: observation
 severity: medium
 tags:
@@ -70,11 +70,11 @@ None — release decision already recorded on [[issues-156-post-drain-next-wave-
 
 **Acceptance criteria:**
 
-- [ ] Inventory logged under Comments (version / CHANGELOG / README / website)
-- [ ] Rolling Unreleased on 0.1.0 decision explicit in Comments or Answer
-- [ ] Any honesty drift fixed; no new false “shipped” claims
-- [ ] No `Cargo.toml` version edit, no `git tag`, no publish
-- [ ] Issue closed with Answer; parent map Decisions can note gist
+- [x] Inventory logged under Comments (version / CHANGELOG / README / website)
+- [x] Rolling Unreleased on 0.1.0 decision explicit in Comments or Answer
+- [x] Any honesty drift fixed; no new false “shipped” claims
+- [x] No `Cargo.toml` version edit, no `git tag`, no publish
+- [x] Issue closed with Answer; parent map Decisions can note gist
 
 **Out of scope:**
 
@@ -86,3 +86,25 @@ None — release decision already recorded on [[issues-156-post-drain-next-wave-
 ## Comments
 
 Minted from [[issues-156-post-drain-next-wave-map]] 2026-08-02.
+
+### Inventory 2026-08-02
+
+- **Crate versions:** all workspace members `0.1.0` (`odm`, `odm-core`, `odm-git`, `odm-progen`, `odm-actions`) — unchanged; no `Cargo.toml` edits this ticket.
+- **CHANGELOG:** top section is large `[Unreleased]` (post-0.1 lands); only versioned section is `[0.1.0] - 2026-08-01` spine. No intermediate cut.
+- **README status:** `v0.1.0 spine … plus post-0.1.0` worktrees/generate/packs/`agent prompt`; `agent start` sketch. Matches crates + Unreleased story.
+- **Website:** `index.html` status chip same spine + post-0.1 worktrees/generate/packs/thin prompt; `features.html` shipped vs sketch (`agent start` sketch). Install leads with build-from-source; Releases = when published. No claim of a cut post-0.1 tag.
+- **Reference deferred lists:** `cli.md` / `env-gen-packs.md` / `phased-delivery.md` still mark `agent start` sketch and post-0.1 lands honestly — no contradiction with rolling Unreleased.
+- **Git:** no product version tag required; no publish. (Existing `legacy-go-archive` tag is unrelated.)
+
+### Honesty fix (minimal)
+
+- `CHANGELOG.md` `[Unreleased]`: one-line note that crates remain **0.1.0** and the section is the rolling post-0.1 log until a human cuts a tag.
+- `CHANGELOG.md` `[0.1.0]` stub pointer: broaden “see Unreleased” beyond generate+worktree only (packs/prompt/observation also landed; `agent start` still sketch).
+
+No README/website copy changes — already aligned.
+
+## Answer
+
+**Decision:** stay **rolling Unreleased on crate version 0.1.0** this wave — no crate bump, no git tag, no crates.io/npm publish.
+
+Inventory found no contradictory shipped-vs-sketch claims on README/website/reference; only CHANGELOG needed a short rolling-policy note and a clearer 0.1.0→Unreleased pointer. Truth surfaces: crates `0.1.0`, CHANGELOG `[Unreleased]` + `[0.1.0]`, README status, website status chip + features shipped/sketch.

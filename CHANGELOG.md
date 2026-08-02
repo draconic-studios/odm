@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Crate versions remain **0.1.0** — this section is the rolling post-0.1 log until a human cuts a tagged release (no silent version bump).
+
 ### Added
 
 - **Workspace inventory sample** — one injectable sample API for per-project worktree slots/orphans and agent packs (`observe_project_worktrees` / `observe_agent_packs`); status, doctor (single list per project), project info, and prune name-sets consume it; `PackEntry::is_missing()` is the shared missing rule; prune rows are name+path only (no fake dirty).
@@ -95,7 +97,7 @@ First public spine release: core multi-git Workspace, Progen integration, and Ac
   - Shell-out model; cwd via task dir / `--project` / `--wt`; exit-code passthrough
 - **CLI**
   - Globals: `--root`, `--json`, `--project`, `--wt`, `--progen`, `--progen-group`
-  - Sketch stubs at release: `generate`, `agent`, `project worktree` (exit 1 not-implemented) — see [Unreleased] for generate + worktree landing after 0.1.0
+  - Sketch stubs at release: `generate`, `agent`, `project worktree` (exit 1 not-implemented) — see [Unreleased] for post-0.1 lands (generate, worktree slots, agent packs/prompt, doctor/status observation, …); `agent start` still sketch
 - **Dogfood**
   - `examples/core-desk` — offline Workspace exercising core, path-only Progen, groups, and shell Actions
 - **Ship**
