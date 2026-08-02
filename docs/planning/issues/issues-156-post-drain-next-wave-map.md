@@ -49,6 +49,7 @@ Frontier was empty after [[issues-154-update-readme-correct-info]] and [[issues-
 - [[issues-157-release-hygiene-rolling-unreleased]] **closed** — inventory OK; rolling Unreleased on 0.1.0 confirmed; CHANGELOG one-line rolling note + 0.1.0 stub pointer; no tag/publish/version bump.
 - [[issues-159-post-drain-dogfood-qa-gaps]] **closed** — dogfood OK + full_tour 1 passed; expected `agent start` exit 1; no new gaps.
 - [[issues-158-agent-start-map]] **closed** — v1 one-shot `odm agent start` shipped (lib + CLI + docs/dogfood); start depth (runtime matrix / pack auto-apply / session) remains deferred.
+- [[issues-160-post-drain-architecture-deepen-map]] **closed** — scan only; no deepen tickets this wave (all product modules ≤730 LOC; thin-bin Present/Ctx intact).
 
 ### AFK defaults (triage)
 

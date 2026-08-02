@@ -2,7 +2,7 @@
 id: issues-160
 title: "Post-drain architecture deepen map"
 description: "Targeted deepen after post-drain wave: high-leverage file-size, seams, duplication only — no drive-by refactors; preserve locked JSON/exit contracts."
-status: open
+status: closed
 issue-type: feature-request
 severity: medium
 tags:
@@ -11,7 +11,6 @@ tags:
   - wayfinder-map
   - architecture
   - deepen
-  - ready-for-agent
 ---
 
 # Post-drain architecture deepen map
@@ -33,12 +32,18 @@ Clear **high-leverage** structural debt only (modules over file-size target, dup
 ## Decisions so far
 
 - Shape mirrors [[issues-148-thermo-nuclear-structure-map]] but **not** a full redesign pass.
-- Children not yet minted — first agent job is scan then file (or close clean).
+- **Scan 2026-08-02 (minting session):** no high-leverage deepen children minted.
+  - **LOC (product `crates/**/*.rs`, excl. `*_tests.rs` / integration tests):** all modules ≤730 LOC. Top: `odm-core/config.rs` 730, `odm-progen/index.rs` 700, `odm-core/agent_pack.rs` 650, `odm-core/doctor_worktree.rs` 649, `odm/commands/project.rs` 648, `doctor.rs`/`generate.rs` 612. None near target 1000 or hard 1250.
+  - **`examples/todo/.../run.rs` 1424** — example app, out of scope for ODM deepen.
+  - **Thin-bin / Present-Ctx:** `main.rs` 205 LOC — open Ctx once, family dispatch, `finish`/`finish_run`/`finish_start` only. No dual print ritual or success `json!` monoculture in main. `finish_run`/`finish_start` remain intentional child-process special cases (issues-150).
+  - **Prior 149–153 still hold:** `inventory`, `fsutil::copy_tree`, `PathResolveError`, membership ~308 LOC, Present/Ctx spine.
+  - **Duplicated seams / shotgun surgery:** no evidence of high-leverage dual homes or repeated glue worth a child this wave. Near-threshold modules (600–730) would be speculative churn, not clear leverage.
+  - **Contracts:** no JSON/exit migration proposed or performed.
 
 ## Fog / open questions
 
-- Which modules exceed ≤1000 after 149–153 lands (re-measure; do not assume old review still accurate).
-- Whether any thin-bin / dual-present paths regressed after [[issues-150-cli-present-ctx-spine]].
+- _(cleared by scan)_ Which modules exceed ≤1000 after 149–153 — none.
+- _(cleared by scan)_ Thin-bin / dual-present regression after 150 — none observed.
 
 ## Out of scope
 
@@ -82,17 +87,17 @@ None — product-agnostic; may parallel product map.
 
 **Acceptance criteria (minting / scan session):**
 
-- [ ] Scan notes under Decisions or Comments (what was measured)
-- [ ] Zero or more deepen children filed with briefs — no product verbs
-- [ ] Index frontier updated
-- [ ] No JSON/exit contract churn without an explicit child
-- [ ] Map remains open if children exist; or closed with Answer if none
+- [x] Scan notes under Decisions or Comments (what was measured)
+- [x] Zero or more deepen children filed with briefs — no product verbs
+- [x] Index frontier updated
+- [x] No JSON/exit contract churn without an explicit child
+- [x] Map remains open if children exist; or closed with Answer if none
 
 **Acceptance criteria (map close, later):**
 
-- [ ] All deepen children closed or explicitly deferred with reason
-- [ ] `cargo test` + clippy `-D warnings` green after last child
-- [ ] `## Answer` written; map moved to `closed/`
+- [x] All deepen children closed or explicitly deferred with reason
+- [x] `cargo test` + clippy `-D warnings` green after last child _(N/A — no code children; no product change)_
+- [x] `## Answer` written; map moved to `closed/`
 
 **Out of scope:**
 
@@ -101,6 +106,13 @@ None — product-agnostic; may parallel product map.
 - Dogfood gap implementation (file via [[issues-159-post-drain-dogfood-qa-gaps]] only)
 - New crates, coverage CI, website
 
+## Answer
+
+**No deepen tickets this wave** (2026-08-02).
+
+Evidence-only scan after 149–153: no product module over ≤1000 LOC (max ~730), thin-bin Present/Ctx intact (`main` ~205), prior deepen seams still single-home, no high-leverage duplication or Present-Ctx regression. Closing map without children rather than minting speculative splits.
+
 ## Comments
 
 Minted from [[issues-156-post-drain-next-wave-map]] 2026-08-02.
+Claimed + scanned + Answered 2026-08-02 (AFK minting session).
