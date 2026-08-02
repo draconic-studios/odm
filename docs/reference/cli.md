@@ -54,7 +54,7 @@ odm run
 odm generate …          # v1 local template
 odm agent pack …        # v1 local install/link/list/rm
 odm agent prompt …      # v1 thin (context work-package)
-odm agent start         # sketch
+odm agent start …       # v1 one-shot exec
 ```
 
 ---
@@ -289,7 +289,7 @@ odm agent pack rm <name>
 - **`rm`:** drop registry entry and best-effort delete destination (install tree or link symlink). Missing dest still succeeds (stale-registry cleanup). Unknown name → exit `4`. Human: `removed <name> -> <path>`. `--json`: single entry object (same fields as list items, including `missing`) for the removed pack.
 - **install/link/rm `--json`:** single entry object (same fields as list items, including `missing`), not wrapped.
 - Human success: `installed <name> -> <path>` / `linked <name> -> <path>` / `removed <name> -> <path>`.
-- Deferred: pack manifest, marketplace, config-declared packs (`env-gen-packs.md`); status pack inventory and pack list/entry `missing` observation landed (`agent_packs` / `agent pack list`; doctor `pack_missing` warn separate — see doctor); `agent start` runtime.
+- Deferred: pack manifest, marketplace, config-declared packs (`env-gen-packs.md`); status pack inventory and pack list/entry `missing` observation landed (`agent_packs` / `agent pack list`; doctor `pack_missing` warn separate — see doctor). Runtime matrix / pack auto-apply on start deferred (`agent start` v1 is independent).
 
 ### `odm agent prompt` — **v1 thin** (context work-package)
 
@@ -304,21 +304,29 @@ odm agent prompt <progen-name>:<id> …
 - Unknown id → exit `4`. Success → exit `0`.
 - Details / deferred depth: `env-gen-packs.md`.
 
-### `odm agent start` — **sketch**
+### `odm agent start` — **v1** (one-shot exec)
 
 ```text
-odm agent start [--project] [--wt] …
+odm --project <name> [--wt <slot>] [--json] agent start -- <program> [args…]
+odm --project <name> agent start <program> [args…]
 ```
 
-- Still **not implemented** (exit `1`).
-- Intent: shell-out to an agent runtime against a Project Primary or `--wt` slot — `worktrees.md`, `env-gen-packs.md`. Not MCP/`serve`.
+- **One-shot direct exec** of caller-supplied argv (`Command::new(program)` + args) with cwd bound to a Project Primary or `--wt` slot. Not a long-running ODM session, daemon, MCP, or `serve`.
+- **`--project` required** (missing → usage exit `1`). Optional global `--wt <slot>` (existing path binding; missing slot → exit `4`; no auto-create).
+- **argv:** at least one token (program); remainder are args. Empty program → usage `1`.
+- **Independent of packs and prompt** — does not read `.odm/agent-packs.json`, install packs, set pack env, or compose/call `agent prompt` / `context`.
+- **No runtime matrix** — no default agent binary; no detection of claude/cursor/etc. Caller always passes program + args.
+- **Human:** inherit child stdio; process exit code = child exit (same spirit as `odm run`).
+- **`--json`:** capture streams; print `{ "cwd", "program", "args", "exitCode", "stdout", "stderr" }` then exit with child code. Pre-exec failures keep the standard error envelope + spine (`1`/`2`/`3`/`4`).
+- **Exit codes:** pre-exec ODM errors use locked spine (usage `1`, workspace `2`, operation `3` spawn fail, not_found `4` missing path/slot). After spawn → **passthrough** child code (may be outside 0–4).
+- **Deferred:** runtime brand matrix, pack auto-apply, prompt-on-start, session lifecycle, config-declared default agent, env injection — `env-gen-packs.md`.
 
 ---
 
 ## Full vs sketch matrix
 
-- **Full**: global flags (including `--wt` path binding); `init` (headless; `--interactive` not implemented); `sync`; `pin apply|status`; `status`; `doctor` (includes pack_missing warn); `project list|add|rm|info|git|worktree` (v1); `progen` lifecycle + **partial** store façade (implemented verbs above); `find`; `context`; `run`; `generate` (v1 local template + `--dry-run`); `agent pack` (v1 local install/link/list/rm); `agent prompt` (v1 thin context work-package).
-- **Sketch / deferred**: `init --interactive`; reserved progen store verbs; `agent start`; deferred worktree features (config slots, pin↔slot, auto-prune on doctor, branch templates, global `--wt` depth — `worktrees.md`; doctor orphan/dirty **warn**, explicit `worktree prune` / `prune --all`, registered slot `dirty` on list/status/info, and status/info `worktree_orphans` observation landed); generate remote/templating (`--dry-run` landed); pack marketplace/manifest/config declarations (`env-gen-packs.md`; status `agent_packs` inventory, pack list/entry `missing`, and doctor `pack_missing` warn landed).
+- **Full**: global flags (including `--wt` path binding); `init` (headless; `--interactive` not implemented); `sync`; `pin apply|status`; `status`; `doctor` (includes pack_missing warn); `project list|add|rm|info|git|worktree` (v1); `progen` lifecycle + **partial** store façade (implemented verbs above); `find`; `context`; `run`; `generate` (v1 local template + `--dry-run`); `agent pack` (v1 local install/link/list/rm); `agent prompt` (v1 thin context work-package); `agent start` (v1 one-shot exec).
+- **Sketch / deferred**: `init --interactive`; reserved progen store verbs; deferred worktree features (config slots, pin↔slot, auto-prune on doctor, branch templates, global `--wt` depth — `worktrees.md`; doctor orphan/dirty **warn**, explicit `worktree prune` / `prune --all`, registered slot `dirty` on list/status/info, and status/info `worktree_orphans` observation landed); generate remote/templating (`--dry-run` landed); pack marketplace/manifest/config declarations (`env-gen-packs.md`; status `agent_packs` inventory, pack list/entry `missing`, and doctor `pack_missing` warn landed); agent start depth beyond one-shot (runtime matrix, pack auto-apply, prompt compose, session lifecycle, serve/MCP).
 
 - **Absent**: `serve`, MCP, top-level action verbs, `ops` namespace, path-valued scope flags.
 

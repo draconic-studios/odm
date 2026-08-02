@@ -138,7 +138,7 @@ odm-git                # multi-git lifecycle (shells git)
 odm-progen             # federation/scope + façade over progen crates
 odm-actions            # load/run Action bundles
 # no odm-agent crate yet — agent_pack v1 local lives in odm-core;
-# agent prompt is thin CLI over progen context; agent start remains stub
+# agent prompt is thin CLI over progen context; agent start lives in odm-actions
 # progen upstream crates (path or vendored) — store / index / query
 # no odm-serve in v1
 ```
@@ -149,7 +149,7 @@ Rules:
 
 - **Depend inward** — `odm` → feature crates → `odm-core`. Progen crates never depend on ODM.
 - **One product binary** — crates are boundaries, not multiple distributeables.
-- **Thin modules until crate earned** — `generate` (v1 local template) and `agent_pack` (v1 local install/link/list) live in `odm-core`; `agent prompt` is a thin CLI alias of context (no separate crate); `agent start` remains a stub until depth demands a crate.
+- **Thin modules until crate earned** — `generate` (v1 local template) and `agent_pack` (v1 local install/link/list) live in `odm-core`; `agent prompt` is a thin CLI alias of context (no separate crate); `agent start` is one-shot exec in `odm-actions` (no dedicated agent crate).
 - **Non-goal** — deep Serve/MCP (`odm serve`) is out of the v1 design package.
 
 ## Related

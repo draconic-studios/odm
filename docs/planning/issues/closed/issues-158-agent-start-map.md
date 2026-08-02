@@ -2,7 +2,7 @@
 id: issues-158
 title: "Agent start delivery map"
 description: "Specify and deliver odm agent start only — grill/scope first, then implement children. Packs + prompt already landed; start is the remaining honesty stub."
-status: open
+status: closed
 issue-type: feature-request
 severity: medium
 tags:
@@ -49,7 +49,7 @@ Deliver **`odm agent start`** only — the remaining agent honesty stub after pa
 - **Children minted:**
   - [[issues-161-agent-start-lib]] — **closed**: `start_agent` + `StartOptions`/`StartResult` in `odm-actions` (direct exec, project/wt cwd, inherit/capture)
   - [[issues-162-agent-start-cli]] — **closed**: CLI `odm agent start` over start lib (inherit/`--json`, exit passthrough)
-  - [[issues-163-agent-start-docs-dogfood]] — docs/README/website/dogfood/CHANGELOG + close this map (ready-for-agent)
+  - [[issues-163-agent-start-docs-dogfood]] — **closed**: docs/README/website/dogfood/CHANGELOG honesty + this map Answer
 
 ## Fog / open questions
 
@@ -105,10 +105,10 @@ None
 
 **Acceptance criteria (map close, later):**
 
-- [ ] `odm agent start` delivered per Decisions
-- [ ] Docs/README/website honesty no longer call start pure sketch if shipped
-- [ ] Tests + dogfood updated; `cargo test` / clippy green
-- [ ] `## Answer` written; map closed to `closed/`
+- [x] `odm agent start` delivered per Decisions
+- [x] Docs/README/website honesty no longer call start pure sketch if shipped
+- [x] Tests + dogfood updated; `cargo test` / clippy green
+- [x] `## Answer` written; map closed to `closed/`
 
 **Out of scope:**
 
@@ -116,8 +116,13 @@ None
 - Release tag/publish
 - Architecture deepen (see [[issues-160-post-drain-architecture-deepen-map]])
 
+## Answer
+
+Destination met. v1 one-shot `odm agent start` shipped via [[issues-161-agent-start-lib]] (`start_agent` in odm-actions) and [[issues-162-agent-start-cli]] (CLI inherit/`--json`, exit passthrough). Honesty + dogfood flipped in [[issues-163-agent-start-docs-dogfood]]. Deferred remain: runtime matrix, pack auto-apply, prompt-on-start, session lifecycle, serve/MCP.
+
 ## Comments
 
 Minted from [[issues-156-post-drain-next-wave-map]] 2026-08-02.
 
 - 2026-08-02: Grilled/scoped v1; minted [[issues-161-agent-start-lib]], [[issues-162-agent-start-cli]], [[issues-163-agent-start-docs-dogfood]]. Map stays open; `ready-for-agent` dropped (children hold the frontier).
+- 2026-08-02: Children 161–163 closed; Answer written; map closed.

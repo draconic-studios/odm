@@ -454,9 +454,11 @@ out="$(expect_exit 0 "status missing pack" odm --json status)"
 out="$(expect_exit 0 "pack rm after missing" odm agent pack rm todo-desk)"
 
 # ---------------------------------------------------------------------------
-phase "11 agent start sketch"
+phase "11 agent start (one-shot)"
 # ---------------------------------------------------------------------------
-expect_exit 1 "agent start not implemented" odm agent start
+expect_exit 0 "agent start true" odm --project tip-top agent start -- true
+expect_exit 1 "agent start false passthrough" odm --project tip-top agent start -- false
+expect_exit 1 "agent start missing project" odm agent start -- true
 
 # ---------------------------------------------------------------------------
 phase "12 json error envelope"

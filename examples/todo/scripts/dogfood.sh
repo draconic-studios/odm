@@ -251,8 +251,9 @@ out="$(odm agent pack list)"
 assert_match "$out" 'todo-desk' "pack list after link"
 odm agent pack rm todo-desk
 
-phase "agent start honesty (exit 1)"
-expect_exit 1 odm agent start
+phase "agent start (one-shot)"
+expect_exit 0 odm --project tip-top agent start -- true
+expect_exit 1 odm --project tip-top agent start -- false
 
 phase "final cleanliness (no dirty remotes)"
 for p in tip-top cheat-key portfolio rss-td-game; do

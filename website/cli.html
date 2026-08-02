@@ -54,7 +54,7 @@ odm run
 odm generate …          # v1 local template
 odm agent pack …        # v1 local install/link/list/rm
 odm agent prompt …      # v1 thin (context work-package)
-odm agent start         # sketch (not implemented)</code></pre>
+odm agent start …       # v1 one-shot exec</code></pre>
 
         <h2>Global flags</h2>
         <ul>
@@ -99,8 +99,8 @@ get | body | ls | tree | backlinks | reindex | doctor</code></pre>
         <h3><code>odm generate [name --dest …]</code></h3>
         <p>List or materialize local templates. Supports <code>--dry-run</code>, <code>--force</code>.</p>
 
-        <h3><code>odm agent pack|prompt</code></h3>
-        <p>Local packs (<code>install</code>/<code>link</code>/<code>list</code>/<code>rm</code>; source relative or absolute; <code>--force</code> overwrites dest); thin context package for agents. <code>agent start</code> sketch.</p>
+        <h3><code>odm agent pack|prompt|start</code></h3>
+        <p>Local packs (<code>install</code>/<code>link</code>/<code>list</code>/<code>rm</code>; source relative or absolute; <code>--force</code> overwrites dest); thin context package for agents; <code>agent start</code> one-shot exec of caller argv in a Project/<code>--wt</code> cwd (exit passthrough; no runtime matrix).</p>
 
         <h2>Exit codes</h2>
         <ul>

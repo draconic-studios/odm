@@ -77,11 +77,15 @@
             <h3>Agent prompt (thin)</h3>
             <p><code>odm agent prompt</code> — context work-package (same neighborhood as <code>context</code>).</p>
           </div>
+          <div class="card">
+            <h3>Agent start (one-shot)</h3>
+            <p><code>odm agent start</code> — exec caller argv in a Project/<code>--wt</code> cwd; child exit passthrough; no runtime matrix.</p>
+          </div>
         </div>
 
         <h2>Sketch / deferred <span class="badge badge-sketch">not shipped</span></h2>
         <ul>
-          <li><code>odm agent start</code> — shell-out to an agent runtime (exit 1 today)</li>
+          <li>Agent start depth — runtime brand matrix, pack auto-apply, prompt-on-start, session lifecycle</li>
           <li><code>odm init --interactive</code> — flag reserved, not implemented</li>
           <li>Generate remote templates, <code>template.toml</code> / prompts / vars</li>
           <li>Pack marketplace, pack manifest, config-declared packs</li>

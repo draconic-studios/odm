@@ -154,12 +154,13 @@ test.describe("concepts", () => {
 });
 
 test.describe("features", () => {
-  test("shipped vs sketch; agent start deferred", async ({ page }) => {
+  test("shipped vs sketch; agent start shipped", async ({ page }) => {
     await page.goto("/features.html");
     await expect(page.getByRole("heading", { name: /^Shipped/ })).toBeVisible();
     await expect(page.getByRole("heading", { name: /Sketch|deferred/i })).toBeVisible();
     await expect(page.getByText("not shipped").first()).toBeVisible();
-    await expect(page.locator("main")).toContainText("odm agent start");
+    await expect(page.locator("main")).toContainText("Agent start (one-shot)");
+    await expect(page.locator("main")).toContainText("runtime brand matrix");
   });
 });
 

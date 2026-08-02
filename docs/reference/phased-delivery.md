@@ -29,7 +29,8 @@ Post-0.1.0 **landed outside the original Ship spine** (not required before v0.1.
 - **Generate local template v1** — `odm generate` list + materialize from local bundles, including `--dry-run` no-write preview (`env-gen-packs.md`; remote/`template.toml` depth deferred)
 
 - **Agent pack local v1** — `odm agent pack` install/link/list/rm with list/entry `missing` observation (`env-gen-packs.md` / `cli.md`; marketplace/manifest deferred)
-- **Agent `prompt` v1 thin** — context work-package (`env-gen-packs.md`; `agent start` still sketch)
+- **Agent `prompt` v1 thin** — context work-package (`env-gen-packs.md`)
+- **Agent `start` v1** — one-shot exec of caller argv in Project/`--wt` cwd (`env-gen-packs.md` / `cli.md`; runtime matrix / pack auto-apply / session deferred)
 - **Doctor worktree orphan warn** — configured-project slot dirs that are not registered git worktrees (`worktrees.md`; not fixable)
 - **Doctor worktree dirty-slot warn** — registered dirty slots `worktree_dirty:<project>:<slot>` (`worktrees.md`; not fixable)
 - **Doctor pack missing-path warn** — registry packs whose path is absent on disk `pack_missing:<name>` (`env-gen-packs.md` / `cli.md`; not fixable; `--fix` does not edit registry)
@@ -43,7 +44,7 @@ Still deferred / sketch (not Ship gates unless pulled in deliberately):
 
 - Graph/tags, env productization
 - Generate remote and full `template.toml` depth
-- Agent `start` (prompt is v1 thin — see Phase spine landed)
+- Agent start depth beyond one-shot (runtime matrix, pack auto-apply, prompt-on-start, session lifecycle — start v1 landed; see Phase spine)
 - Worktree deferred items (config slots, pin↔slot, auto-prune on doctor, branch templates, global `--wt` depth — `worktrees.md`; per-project prune, prune `--all`, doctor orphan/dirty warns, registered slot dirty on list/status/info, and status/info `worktree_orphans` observation landed)
 
 ### 1. Design package
@@ -121,7 +122,7 @@ Full acceptance checklist: planning issue vertical-slice-order-and-core-acceptan
 
 - HashiCorp go-plugin / npm plugin installers (dropped with Go)
 - Generator/`template.toml` full depth (local generate v1 landed later; remote/templating still deferred — `env-gen-packs.md`)
-- Agent-pack and worktree productization (both landed as local/v1 later; `agent prompt` v1 thin landed; `agent start` and worktree deferred items still open — `env-gen-packs.md`, `worktrees.md`)
+- Agent-pack and worktree productization (both landed as local/v1 later; `agent prompt` v1 thin and `agent start` v1 one-shot landed; worktree deferred items and start depth still open — `env-gen-packs.md`, `worktrees.md`)
 
 ### 5. Ship
 

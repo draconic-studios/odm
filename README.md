@@ -4,7 +4,7 @@ Poly-repo workspace OS for humans and AI agents: one config, one CLI, and orches
 
 **Website:** [hembrow-innovations.github.io/odm](https://hembrow-innovations.github.io/odm/) (source: [`website/`](website/) on `main`; Pages via GitHub Actions)
 
-**Status:** v0.1.0 spine (multi-git, Progen, Actions) plus post-0.1.0 **worktree slots** (add/list/rm/prune; doctor orphan/dirty warns) and local **`odm generate`**. Agent pack install/link/list/rm is local v1 (`odm status` `agent_packs` inventory; doctor `pack_missing` warn); **`odm agent prompt`** is v1 thin (context work-package); `agent start` remains sketch.
+**Status:** v0.1.0 spine (multi-git, Progen, Actions) plus post-0.1.0 **worktree slots** (add/list/rm/prune; doctor orphan/dirty warns) and local **`odm generate`**. Agent pack install/link/list/rm is local v1 (`odm status` `agent_packs` inventory; doctor `pack_missing` warn); **`odm agent prompt`** is v1 thin (context work-package); **`odm agent start`** is v1 one-shot exec (runtime matrix / pack auto-apply / serve deferred).
 
 ## Install
 

@@ -7,15 +7,12 @@ See `docs/agents/issue-tracker.md`.
 ## Maps
 
 - [[issues-156-post-drain-next-wave-map]] — Post-drain next wave (release · product · QA · architecture)
-- [[issues-158-agent-start-map]] — Agent start delivery (`odm agent start` only)
 - [[issues-160-post-drain-architecture-deepen-map]] — Post-drain architecture deepen (targeted)
 
 ## Frontier (open, unblocked)
 
-- [[issues-156-post-drain-next-wave-map]] — open umbrella (stays open until 158 + 160 done; 157/159 closed)
-- [[issues-158-agent-start-map]] — open map (v1 Decisions locked; 161–162 closed; 163 remains)
+- [[issues-156-post-drain-next-wave-map]] — open umbrella (stays open until 160 done; 157/158/159 closed)
 - [[issues-160-post-drain-architecture-deepen-map]] — ready-for-agent (scan; mint deepen children or close clean)
-- [[issues-163-agent-start-docs-dogfood]] — ready-for-agent (docs/dogfood honesty; unblocked)
 
 ## Blocked
 
@@ -46,3 +43,4 @@ _(none)_
 - [[issues-120-test-coverage-map]] — Behavior-seam test suite + local coverage tooling
 - [[issues-121-full-capability-demo-map]] — core-desk full ODM capability demo + verification
 - [[issues-148-thermo-nuclear-structure-map]] — Thermo-nuclear structure deepen (inventory, CLI spine, membership split, fsutil, typed paths)
+- [[issues-158-agent-start-map]] — Agent start delivery (`odm agent start` v1 one-shot)

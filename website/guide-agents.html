@@ -79,9 +79,11 @@ odm agent prompt &lt;id&gt; --progen notes --json</code></pre>
           <li>Point the agent at <code>worktrees/&lt;project&gt;/&lt;slot&gt;/</code> (or use <code>--wt</code> for ODM git/run).</li>
           <li>Use <code>find</code> / <code>agent prompt</code> for memory context.</li>
         </ol>
-        <div class="callout warn">
-          <p><code>odm agent start</code> is still <strong>sketch</strong> (not implemented). You start the agent runtime yourself today.</p>
-        </div>
+        <h2>Start (one-shot)</h2>
+        <pre><code>odm --project alpha agent start -- true
+odm --project alpha --wt feat agent start -- claude
+odm --project alpha --json agent start -- echo hi</code></pre>
+        <p>One-shot direct exec of caller argv with cwd bound to the Project Primary or <code>--wt</code> slot. Human mode inherits stdio and exits with the child code; <code>--json</code> captures streams. Independent of packs and prompt — no runtime detection matrix, pack auto-apply, or session lifecycle (those remain deferred).</p>
 
         <footer class="site-foot">
           <p><a href="cli.html">CLI reference →</a> · <a href="guide-worktrees.html">Worktree slots</a></p>

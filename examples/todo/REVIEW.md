@@ -131,7 +131,9 @@ Review of ODM against `examples/todo`: a real-network poly-repo desk using publi
 
 ### `agent start`
 
-- Sketch: exit 1 `not implemented: agent start`.
+- v1 one-shot: `odm --project <name> [--wt <slot>] agent start -- <program> [args…]`.
+- Cwd = Project Primary or worktree slot; human inherit; exit = child exit (`true` → 0, `false` → non-zero).
+- Independent of packs/prompt; no runtime matrix.
 
 ---
 

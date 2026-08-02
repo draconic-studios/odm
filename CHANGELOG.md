@@ -11,10 +11,11 @@ Crate versions remain **0.1.0** — this section is the rolling post-0.1 log unt
 
 ### Added
 
+- **`odm agent start`** — v1 one-shot exec: `odm --project <name> [--wt <slot>] [--json] agent start -- <program> [args…]`; cwd binds to Project Primary or worktree slot; human inherit + child exit passthrough; `--json` `{ cwd, program, args, exitCode, stdout, stderr }`; independent of packs/prompt; no runtime matrix (deferred).
 - **Workspace inventory sample** — one injectable sample API for per-project worktree slots/orphans and agent packs (`observe_project_worktrees` / `observe_agent_packs`); status, doctor (single list per project), project info, and prune name-sets consume it; `PackEntry::is_missing()` is the shared missing rule; prune rows are name+path only (no fake dirty).
 
 - **CLI exit-code matrix** — table-driven bin tests locking exit codes 1–4 (+ action passthrough) and JSON `{ok:false,error:{code,message}}` across primary failure modes (`crates/odm/tests/cli_exit_code_matrix.rs`).
-- **core-desk `scripts/dogfood.sh`** — fail-fast offline full tour of shipped `odm` commands against a temp copy of `examples/core-desk` (sync → pin → status → doctor → project git → worktree → progen façade → find groups → context/prompt → run → generate → packs → `agent start` exit 1); README quick start points at the script.
+- **core-desk `scripts/dogfood.sh`** — fail-fast offline full tour of shipped `odm` commands against a temp copy of `examples/core-desk` (sync → pin → status → doctor → project git → worktree → progen façade → find groups → context/prompt → run → generate → packs → `agent start` with `true`); README quick start points at the script.
 - **`core_desk_full_tour` integration gate** — one composition test on temp `examples/core-desk` covering sync/reindex, find + `--progen-group`, context/agent prompt, store façade, `project git`, worktree + `run --project/--wt`, pack link/list, and `generate --force` (`crates/odm/tests/core_desk_full_tour.rs`).
 - **CLI pin/sync/rm integration tests** — `crates/odm/tests/cli_pin_sync_rm.rs`: pin apply dirty→3 / `--force`, pin status JSON fields, named sync + unknown exit `1`, project/progen `rm` keep-vs-`--delete` and dirty `--force`.
 - **odm-core error/io unit matrix** — table-driven tests for `exit_code` 1–4, `code()`/`detail()`, and `atomic_write` create/replace plus failure hygiene (untorn final, temp cleanup).
@@ -29,8 +30,8 @@ Crate versions remain **0.1.0** — this section is the rolling post-0.1 log unt
 - **`odm generate --dry-run`** — no-write preview: same validation as a real run; reports file count that would be copied; human `would generate …`; JSON includes `dry_run: true` (real runs emit `dry_run: false`).
 
 - **`odm project worktree`** — Worktree slot add/list/rm and `--wt` path binding (no longer a not-implemented stub).
-- **`odm agent pack`** — v1 local install/link/list/rm into an agent home (`--home`); Workspace registry `.odm/agent-packs.json`; `rm` drops registry entry and best-effort deletes dest (missing dest still OK; unknown name → exit `4`); `agent start` remains a not-implemented stub.
-- **`odm agent prompt`** — v1 thin context work-package: packages one note’s Progen neighborhood to stdout (same path/JSON as `odm context`); `agent start` still stubbed.
+- **`odm agent pack`** — v1 local install/link/list/rm into an agent home (`--home`); Workspace registry `.odm/agent-packs.json`; `rm` drops registry entry and best-effort deletes dest (missing dest still OK; unknown name → exit `4`).
+- **`odm agent prompt`** — v1 thin context work-package: packages one note’s Progen neighborhood to stdout (same path/JSON as `odm context`).
 - **`odm doctor` worktree orphan warn** — Warn checks `worktree_orphan:<project>:<slot>` for configured-project dirs under `worktrees/` that are not registered git worktrees (`fixable: false`; `--fix` does not delete).
 - **`odm doctor` worktree dirty-slot warn** — Warn checks `worktree_dirty:<project>:<slot>` for registered worktree slots with a dirty working tree (`fixable: false`; `--fix` does not clean or stash).
 - **`odm doctor` pack missing-path warn** — Warn checks `pack_missing:<name>` when a registered agent pack path has no path/symlink on disk (`fixable: false`; `--fix` does not edit registry or delete pack paths).
@@ -75,7 +76,7 @@ Crate versions remain **0.1.0** — this section is the rolling post-0.1 log unt
 - `examples/core-desk` includes a sample Generator (`hello` → `templates/hello`) and a tiny demo agent pack (`agent-packs/demo`).
 - `examples/core-desk` assets expand: second Progen `ops` + `all-docs` group, vault note ids (`readme` / `ops-note`), project-scoped `in-alpha` actions, gitignore for dogfood debris.
 - `examples/core-desk` README + `core_desk_pack_list_missing_gate` dogfood pack list `missing` (install → dest delete → rm).
-- Reference docs: `generate`, `agent pack`, and `agent prompt` documented as landed v1 (local / thin); remote/marketplace and `agent start` still deferred in `env-gen-packs.md`.
+- Reference docs: `generate`, `agent pack`, `agent prompt`, and `agent start` documented as landed v1 (local / thin / one-shot); remote/marketplace and start depth (runtime matrix, pack auto-apply, session) still deferred in `env-gen-packs.md`.
 
 ## [0.1.0] - 2026-08-01
 
@@ -97,7 +98,7 @@ First public spine release: core multi-git Workspace, Progen integration, and Ac
   - Shell-out model; cwd via task dir / `--project` / `--wt`; exit-code passthrough
 - **CLI**
   - Globals: `--root`, `--json`, `--project`, `--wt`, `--progen`, `--progen-group`
-  - Sketch stubs at release: `generate`, `agent`, `project worktree` (exit 1 not-implemented) — see [Unreleased] for post-0.1 lands (generate, worktree slots, agent packs/prompt, doctor/status observation, …); `agent start` still sketch
+  - Sketch stubs at release: `generate`, `agent`, `project worktree` (exit 1 not-implemented) — see [Unreleased] for post-0.1 lands (generate, worktree slots, agent packs/prompt/start, doctor/status observation, …)
 - **Dogfood**
   - `examples/core-desk` — offline Workspace exercising core, path-only Progen, groups, and shell Actions
 - **Ship**

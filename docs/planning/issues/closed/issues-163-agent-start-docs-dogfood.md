@@ -2,7 +2,7 @@
 id: issues-163
 title: "Docs + dogfood honesty for agent start"
 description: "Promote agent start from sketch in reference docs/README/website; update core-desk/todo dogfood; CHANGELOG; close map 158."
-status: reviewing
+status: closed
 issue-type: feature-request
 severity: medium
 tags:
@@ -69,13 +69,13 @@ None (unblocked — [[issues-161-agent-start-lib]] and [[issues-162-agent-start-
 
 **Acceptance criteria:**
 
-- [ ] Reference docs describe start v1 behavior; not pure sketch
-- [ ] Deferred list still names runtime matrix / marketplace / serve / pack-auto / prompt-compose
-- [ ] Dogfood no longer requires start exit 1; proves start exit 0 with `true`
-- [ ] CHANGELOG + README/website honesty
-- [ ] Map 158 Answer + closed to `closed/`
-- [ ] Index updated
-- [ ] `cargo test` green
+- [x] Reference docs describe start v1 behavior; not pure sketch
+- [x] Deferred list still names runtime matrix / marketplace / serve / pack-auto / prompt-compose
+- [x] Dogfood no longer requires start exit 1; proves start exit 0 with `true`
+- [x] CHANGELOG + README/website honesty
+- [x] Map 158 Answer + closed to `closed/`
+- [x] Index updated
+- [x] `cargo test` green
 
 **Out of scope:**
 
@@ -83,9 +83,14 @@ None (unblocked — [[issues-161-agent-start-lib]] and [[issues-162-agent-start-
 - Release tag/publish
 - Remote generate, marketplace, serve/MCP, interactive init
 
+## Answer
+
+Promoted `odm agent start` to v1 one-shot across `cli.md`, `env-gen-packs.md`, architecture/phased-delivery/worktrees, README, CHANGELOG, and website (features/cli/guide-agents/index). Dogfood/probe/REVIEW flip to `odm --project … agent start -- true` (exit 0) + `false` passthrough. Closed parent map [[issues-158-agent-start-map]].
+
 ## Comments
 
 Minted from [[issues-158-agent-start-map]] 2026-08-02.
 
 - Add tag `ready-for-agent` when [[issues-161-agent-start-lib]] and [[issues-162-agent-start-cli]] are closed (blocked until then).
 - 2026-08-02: Unblocked — [[issues-162-agent-start-cli]] closed; tagged `ready-for-agent`.
+- 2026-08-02: Docs/dogfood honesty landed; closed with map 158.

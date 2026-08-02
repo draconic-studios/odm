@@ -46,7 +46,7 @@ The script copies core-desk to a temp dir (does not modify this tree), runs the 
 
 ## Full tour
 
-**Full tour:** `scripts/dogfood.sh` — sync → pin → status → doctor → project git → worktree → progen façade → find groups → context/prompt → run → generate → packs → `agent start` exit 1 honesty. No network; relative fixtures only.
+**Full tour:** `scripts/dogfood.sh` — sync → pin → status → doctor → project git → worktree → progen façade → find groups → context/prompt → run → generate → packs → `agent start -- true`. No network; relative fixtures only.
 
 ## Fixtures
 

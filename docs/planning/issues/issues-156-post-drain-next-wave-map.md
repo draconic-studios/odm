@@ -48,11 +48,12 @@ Frontier was empty after [[issues-154-update-readme-correct-info]] and [[issues-
 - Blocking: none of the four are blocked (release decision recorded here; QA does not wait on product; architecture product-agnostic).
 - [[issues-157-release-hygiene-rolling-unreleased]] **closed** — inventory OK; rolling Unreleased on 0.1.0 confirmed; CHANGELOG one-line rolling note + 0.1.0 stub pointer; no tag/publish/version bump.
 - [[issues-159-post-drain-dogfood-qa-gaps]] **closed** — dogfood OK + full_tour 1 passed; expected `agent start` exit 1; no new gaps.
+- [[issues-158-agent-start-map]] **closed** — v1 one-shot `odm agent start` shipped (lib + CLI + docs/dogfood); start depth (runtime matrix / pack auto-apply / session) remains deferred.
 
 ### AFK defaults (triage)
 
 - **Release:** stay rolling **0.1.0 + Unreleased** this wave — no crate version bump, no git tag, no publish.
-- **Product surface:** **`agent start`** (packs + prompt landed; start is the remaining honesty stub). Other deferred surfaces stay out of this wave.
+- **Product surface:** **`agent start`** (delivered as v1 one-shot; children 161–163 closed). Other deferred surfaces stay out of this wave.
 - **QA:** agent-only dogfood + full-tour gate (no human `/qa` required to close the QA child).
 - **Architecture:** targeted deepen only (file-size / seams / duplication); not a full product redesign pass. Preserve locked `--json` and exit contracts.
 

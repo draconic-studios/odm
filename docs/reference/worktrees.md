@@ -62,5 +62,5 @@ Landed (not deferred): registered slot dirty on list/status/info; status/info `w
 - Architecture layout: `architecture.md`
 - CLI matrix: `cli.md`
 - Multi-git Primary: `multi-git.md`
-- Agent packs (v1 local) + prompt (v1 thin) + start (sketch): `env-gen-packs.md`
+- Agent packs (v1 local) + prompt (v1 thin) + start (v1 one-shot): `env-gen-packs.md`
 - Phased delivery: `phased-delivery.md`

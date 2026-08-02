@@ -1,6 +1,6 @@
 # Env, generators, and agent packs
 
-**Mixed depth** — generators and agent packs have **v1 local** CLI; `agent prompt` is **v1 thin** (context work-package); env and `agent start` remain sketch. Not a Ship gate for deferred items. Domain terms: root `CONTEXT.md`. Config pointers: `config.md`. CLI: `cli.md`. Worktrees: `worktrees.md`.
+**Mixed depth** — generators and agent packs have **v1 local** CLI; `agent prompt` is **v1 thin** (context work-package); `agent start` is **v1** one-shot exec; env remains sketch. Not a Ship gate for deferred items. Domain terms: root `CONTEXT.md`. Config pointers: `config.md`. CLI: `cli.md`. Worktrees: `worktrees.md`.
 
 ## Env
 
@@ -105,16 +105,19 @@ odm agent prompt <progen-name>:<id> …
 - Primary home is `odm agent prompt`, not a duplicate full surface under `odm progen`.
 - CLI details: `cli.md`.
 
-### `odm agent start` — **sketch** (still reserved)
+### `odm agent start` — **v1** (one-shot exec, landed)
 
 ```text
-odm agent start [--project …] [--wt …] …
+odm --project <name> [--wt <slot>] [--json] agent start -- <program> [args…]
 ```
 
-- Launch an agent **runtime** against a Project Primary or `--wt` slot via **shell-out**. Not implemented (exit `1`).
-- No runtime matrix in the design package.
+- One-shot **direct exec** of caller-supplied argv with cwd bound to a Project Primary or `--wt` slot. Not a session/daemon/MCP/`serve`.
+- **`--project` required**; optional `--wt` (missing slot → exit `4`). No default agent binary; no runtime detection matrix.
+- **Independent of packs and prompt** — does not install packs, set pack env, or compose context/prompt.
+- **Human:** inherit stdio; exit = child exit. **`--json`:** `{ "cwd", "program", "args", "exitCode", "stdout", "stderr" }` then child exit. Pre-exec failures use the standard spine (`1`/`2`/`3`/`4`).
+- CLI details: `cli.md`.
 
-**Deferred:** full start flags, runtime detection, session lifecycle; deeper prompt flag parity beyond context packaging.
+**Deferred:** runtime brand matrix, pack auto-apply on start, prompt-on-start, session lifecycle, config-declared default agent; env injection productization; deeper prompt flag parity beyond context packaging.
 
 ---
 

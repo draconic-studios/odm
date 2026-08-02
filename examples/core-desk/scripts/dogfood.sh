@@ -208,8 +208,9 @@ out="$(odm agent pack list)"
 assert_match "$out" 'demo' "pack list after link"
 odm agent pack rm demo
 
-phase "agent start honesty (exit 1)"
-expect_exit 1 odm agent start
+phase "agent start (one-shot)"
+expect_exit 0 odm --project alpha agent start -- true
+expect_exit 1 odm --project alpha agent start -- false
 
 phase "done"
 echo "dogfood: OK (temp workspace cleaned on exit)"
