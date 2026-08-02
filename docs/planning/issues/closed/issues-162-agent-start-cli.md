@@ -2,7 +2,7 @@
 id: issues-162
 title: "CLI odm agent start"
 description: "Wire odm agent start --project/--wt + argv over start lib; human inherit + --json; exit passthrough; integration tests."
-status: reviewing
+status: closed
 issue-type: feature-request
 severity: medium
 tags:
@@ -76,14 +76,14 @@ odm --project <name> agent start <program> [args…]
 
 **Acceptance criteria:**
 
-- [ ] `odm --project <p> agent start -- true` exit 0 in a temp workspace with that project on disk
-- [ ] Child non-zero exit passthrough
-- [ ] Missing `--project` → exit 1
-- [ ] Missing wt slot → exit 4
-- [ ] `--json` valid object with cwd/program/args/exitCode
-- [ ] No remaining `not_implemented("agent start")` success path
-- [ ] Exit matrix + stub tests updated; `cargo test` green
-- [ ] No pack/prompt/runtime-matrix scope creep
+- [x] `odm --project <p> agent start -- true` exit 0 in a temp workspace with that project on disk
+- [x] Child non-zero exit passthrough
+- [x] Missing `--project` → exit 1
+- [x] Missing wt slot → exit 4
+- [x] `--json` valid object with cwd/program/args/exitCode
+- [x] No remaining `not_implemented("agent start")` success path
+- [x] Exit matrix + stub tests updated; `cargo test` green
+- [x] No pack/prompt/runtime-matrix scope creep
 
 **Out of scope:**
 
@@ -91,9 +91,14 @@ odm --project <name> agent start <program> [args…]
 - Changing pack or prompt behavior
 - Default agent binary / config-declared runtimes
 
+## Answer
+
+Shipped thin CLI adapter: `commands/agent_start.rs` (`start_cmd` / `finish_start` / `AgentStartDto`) over `odm_actions::start_agent`. Global `--project` required; optional `--wt`; trailing program argv; human inherit + `--json` capture with `{ cwd, program, args, exitCode, stdout, stderr }`; child exit passthrough. Removed `not_implemented("agent start")`. Integration tests in `cli_agent_start.rs`; matrix + pack/progen stub expects migrated.
+
 ## Comments
 
 Minted from [[issues-158-agent-start-map]] 2026-08-02.
 
 - 2026-08-02: Unblocked — [[issues-161-agent-start-lib]] closed; tagged `ready-for-agent`.
 - On close: tag [[issues-163-agent-start-docs-dogfood]] with `ready-for-agent`.
+- 2026-08-02: Implemented and closed.

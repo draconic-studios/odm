@@ -10,6 +10,7 @@ tags:
   - issue
   - wayfinder
   - wayfinder-task
+  - ready-for-agent
 ---
 
 # Docs + dogfood honesty for agent start
@@ -39,8 +40,7 @@ See Agent Brief.
 
 ## Blocked by
 
-- [[issues-161-agent-start-lib]]
-- [[issues-162-agent-start-cli]]
+None (unblocked — [[issues-161-agent-start-lib]] and [[issues-162-agent-start-cli]] closed)
 
 ## Agent Brief
 
@@ -89,3 +89,4 @@ See Agent Brief.
 Minted from [[issues-158-agent-start-map]] 2026-08-02.
 
 - Add tag `ready-for-agent` when [[issues-161-agent-start-lib]] and [[issues-162-agent-start-cli]] are closed (blocked until then).
+- 2026-08-02: Unblocked — [[issues-162-agent-start-cli]] closed; tagged `ready-for-agent`.

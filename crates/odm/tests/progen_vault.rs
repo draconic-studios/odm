@@ -135,7 +135,7 @@ fn progen_add_find_context_flow() {
 }
 
 #[test]
-fn generate_lists_empty_and_agent_stubs_exit_1() {
+fn generate_lists_empty_and_agent_start_requires_project() {
     let dir = tempdir().unwrap();
     let root = dir.path().join("ws");
     fs::create_dir_all(&root).unwrap();
@@ -169,14 +169,14 @@ fn generate_lists_empty_and_agent_stubs_exit_1() {
         .success()
         .stdout(predicate::str::contains("(no agent packs)"));
 
-    // agent start remains stubbed
+    // agent start requires --project (not a stub)
     odm()
         .current_dir(&root)
-        .args(["agent", "start"])
+        .args(["agent", "start", "true"])
         .assert()
         .failure()
         .code(1)
-        .stderr(predicate::str::contains("not implemented"));
+        .stderr(predicate::str::contains("project is required"));
 }
 
 #[test]
@@ -243,14 +243,14 @@ fn agent_prompt_is_thin_context_alias() {
         .failure()
         .code(4);
 
-    // agent start still stubbed
+    // agent start requires --project (not a stub)
     odm()
         .current_dir(&root)
-        .args(["agent", "start"])
+        .args(["agent", "start", "true"])
         .assert()
         .failure()
         .code(1)
-        .stderr(predicate::str::contains("not implemented"));
+        .stderr(predicate::str::contains("project is required"));
 }
 
 #[test]

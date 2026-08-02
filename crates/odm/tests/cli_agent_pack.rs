@@ -351,16 +351,16 @@ fn pack_link_then_rm() {
 }
 
 #[test]
-fn agent_start_still_stub() {
+fn agent_start_requires_project() {
     let (_dir, root) = setup_pack_ws();
     let root_s = root.to_str().unwrap();
 
     odm()
-        .args(["--root", root_s, "agent", "start"])
+        .args(["--root", root_s, "agent", "start", "true"])
         .assert()
         .failure()
         .code(1)
-        .stderr(predicate::str::contains("not implemented"));
+        .stderr(predicate::str::contains("project is required"));
 }
 
 #[test]

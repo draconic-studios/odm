@@ -258,11 +258,11 @@ fn setup_unknown_note() -> (TempDir, Vec<String>) {
     (dir, with_root(&root, &["context", "nope-missing-id"]))
 }
 
-fn setup_agent_start() -> (TempDir, Vec<String>) {
+fn setup_agent_start_missing_project() -> (TempDir, Vec<String>) {
     let dir = tempdir().unwrap();
     let root = dir.path().join("ws");
     init_ws(&root);
-    (dir, with_root(&root, &["agent", "start"]))
+    (dir, with_root(&root, &["agent", "start", "true"]))
 }
 
 fn setup_missing_wt() -> (TempDir, Vec<String>) {
@@ -352,10 +352,10 @@ const CASES: &[Case] = &[
         build: setup_unknown_note,
     },
     Case {
-        name: "agent_start_not_implemented",
+        name: "agent_start_missing_project",
         exit: 1,
         json: JsonExpect::ErrorEnvelope("usage"),
-        build: setup_agent_start,
+        build: setup_agent_start_missing_project,
     },
     Case {
         name: "missing_wt_slot_on_run",

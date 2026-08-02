@@ -48,8 +48,8 @@ Deliver **`odm agent start`** only — the remaining agent honesty stub after pa
   - **Lib home:** prefer `odm-actions` reuse of `CwdTarget` / `resolve_cwd` / `StdioMode` (no new crate). Direct exec, not `sh -c`.
 - **Children minted:**
   - [[issues-161-agent-start-lib]] — **closed**: `start_agent` + `StartOptions`/`StartResult` in `odm-actions` (direct exec, project/wt cwd, inherit/capture)
-  - [[issues-162-agent-start-cli]] — CLI + integration / stub test migration (ready-for-agent)
-  - [[issues-163-agent-start-docs-dogfood]] — docs/README/website/dogfood/CHANGELOG + close this map (blocked by 162)
+  - [[issues-162-agent-start-cli]] — **closed**: CLI `odm agent start` over start lib (inherit/`--json`, exit passthrough)
+  - [[issues-163-agent-start-docs-dogfood]] — docs/README/website/dogfood/CHANGELOG + close this map (ready-for-agent)
 
 ## Fog / open questions
 

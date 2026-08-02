@@ -320,10 +320,11 @@ pub enum AgentCmd {
         #[command(subcommand)]
         cmd: PackCmd,
     },
-    /// Start an agent session (not implemented).
+    /// One-shot exec a program in a Project (or --wt slot) cwd.
     Start {
+        /// Program and args (`odm agent start -- <program> [args…]`).
         #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
-        rest: Vec<String>,
+        program_args: Vec<String>,
     },
     /// Package note context as an agent work-package (thin alias of `context`).
     Prompt {
