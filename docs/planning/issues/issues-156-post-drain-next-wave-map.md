@@ -2,7 +2,7 @@
 id: issues-156
 title: "Post-drain next wave map"
 description: "After empty frontier (154/155 closed): release hygiene, pick next product surface, dogfood/QA gap filing, then architecture deepen."
-status: reviewing
+status: open
 issue-type: feature-request
 severity: medium
 tags:
@@ -13,7 +13,6 @@ tags:
   - product
   - qa
   - architecture
-  - ready-for-agent
 ---
 
 # Post-drain next wave map
@@ -40,7 +39,13 @@ Frontier was empty after [[issues-154-update-readme-correct-info]] and [[issues-
 ## Decisions so far
 
 - Filed as umbrella map after afk-loop drain of 154/155 (verified PASS).
-- Triage 2026-08-02: `ready-for-agent` with AFK defaults (see Agent Brief). Children not yet allocated — minting is the agent job.
+- Triage 2026-08-02: `ready-for-agent` with AFK defaults (see Agent Brief).
+- **Children minted 2026-08-02:**
+  - [[issues-157-release-hygiene-rolling-unreleased]] — release hygiene (rolling Unreleased on 0.1.0; honesty-only)
+  - [[issues-158-agent-start-map]] — product map (`agent start` only)
+  - [[issues-159-post-drain-dogfood-qa-gaps]] — dogfood / QA gap filing (agent-only)
+  - [[issues-160-post-drain-architecture-deepen-map]] — targeted architecture deepen
+- Blocking: none of the four are blocked (release decision recorded here; QA does not wait on product; architecture product-agnostic).
 
 ### AFK defaults (triage)
 
@@ -100,15 +105,15 @@ None
 
 **Acceptance criteria:**
 
-- [ ] This issue tagged `ready-for-agent` (not `needs-triage`); AFK defaults recorded under Decisions
-- [ ] Four child issues filed with correct ids, wikilinks, and wayfinder tags
-- [ ] Product child is scoped to **`agent start` only**
-- [ ] Release child forbids tag/publish/version bump; allows honesty-only fixes
-- [ ] QA child mirrors 147 run-and-file pattern; agent-only
-- [ ] Architecture child is deepen-map shaped; no product verbs
-- [ ] Index frontier lists the new open children
-- [ ] This map Comments/Decisions list the four children; map remains open
-- [ ] No product implementation, version bump, or git tag in the minting session
+- [x] This issue tagged `ready-for-agent` (not `needs-triage`); AFK defaults recorded under Decisions
+- [x] Four child issues filed with correct ids, wikilinks, and wayfinder tags
+- [x] Product child is scoped to **`agent start` only**
+- [x] Release child forbids tag/publish/version bump; allows honesty-only fixes
+- [x] QA child mirrors 147 run-and-file pattern; agent-only
+- [x] Architecture child is deepen-map shaped; no product verbs
+- [x] Index frontier lists the new open children
+- [x] This map Comments/Decisions list the four children; map remains open
+- [x] No product implementation, version bump, or git tag in the minting session
 
 **Out of scope:**
 
@@ -139,3 +144,7 @@ User asked to create one issue covering four post-drain next moves: release hygi
 - Redundancy: planning umbrella only; patterns [[issues-147-demo-gap-followups]], [[issues-148-thermo-nuclear-structure-map]] closed — not duplicates
 - Prior rejection: `.out-of-scope/` empty
 - Maintainer: skip grill; AFK defaults for release/product/QA/architecture fog; Agent Brief attached
+
+### 2026-08-02 children minted
+
+AFK minting session: claimed briefly, filed 157–160, refreshed Index frontier, left this map `open` (dropped `ready-for-agent` — mint job done; children hold the frontier). No product code, version bump, or git tag.
