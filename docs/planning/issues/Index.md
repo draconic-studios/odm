@@ -6,14 +6,15 @@ See `docs/agents/issue-tracker.md`.
 
 ## Maps
 
-- [[issues-165-multiplatform-github-releases-curl-install]] — Multi-platform Releases + curl/website install
+_(none)_
 
 ## Frontier (open, unblocked)
 
-- [[issues-170-first-cut-v0-1-1]] — `ready-for-human` (version/CHANGELOG prepare done elsewhere; tag/publish human-gated)
+_(none)_
 
 ## Closed maps (delivery spine)
 
+- [[issues-165-multiplatform-github-releases-curl-install]] — Multi-platform Releases + curl/website install (v0.1.1)
 - [[issues-1-odm-design-docs-map]] — Design package (phase 1)
 - [[issues-14-implement-core-map]] — Implement core (phase 2)
 - [[issues-25-progen-integration-map]] — Progen integration (phase 3)

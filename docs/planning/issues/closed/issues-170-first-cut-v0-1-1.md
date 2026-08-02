@@ -2,7 +2,7 @@
 id: issues-170
 title: "First cut v0.1.1 (prepare; human-gated publish)"
 description: "Bump crate version to 0.1.1, prepare CHANGELOG notes for first multi-platform binary release. Tag and gh release publish are ready-for-human."
-status: open
+status: closed
 issue-type: feature-request
 severity: high
 tags:
@@ -11,7 +11,6 @@ tags:
   - wayfinder
   - wayfinder-task
   - release
-  - ready-for-human
 ---
 
 # First cut v0.1.1 (prepare; human-gated publish)
@@ -88,7 +87,7 @@ After workflow + install path are ready:
 - [x] No `v0.1.0` retag
 - [x] Agent session does **not** push release tag or publish without explicit human gate
 - [x] Publish checklist left clear for human (below or Comments)
-- [ ] Human publish (later): tag + Release assets verified — then close
+- [x] Human publish: tag v0.1.1 + Release assets verified — closed
 
 **Out of scope:**
 
@@ -99,12 +98,12 @@ After workflow + install path are ready:
 
 ## Human publish checklist
 
-- [ ] Policy + release workflow merged
-- [ ] install.sh + docs at least usable
-- [ ] Version/CHANGELOG commit on main
-- [ ] `git tag v0.1.1 && git push origin v0.1.1`
-- [ ] Actions release job green; four tarballs + SHA256 on Release
-- [ ] `curl … | sh` smoke + `odm --version`
+- [x] Policy + release workflow merged
+- [x] install.sh + docs at least usable
+- [x] Version/CHANGELOG commit on main
+- [x] `git tag v0.1.1 && git push origin v0.1.1`
+- [x] Actions release job green; four tarballs + SHA256 on Release
+- [x] `curl … | sh` smoke + `odm --version`
 
 ## Comments
 
@@ -120,3 +119,11 @@ Agent slice complete; issue left **open** with `ready-for-human` (full close onl
 - Cut Unreleased → `## [0.1.1] - 2026-08-02` with Ship notes (four triples, SHA256, curl/`install.sh`, `~/.local/bin`); empty Unreleased retained
 - No tag, no tag push, no `gh release`, no retag of `v0.1.0`
 - Did not touch issues-166/167/168/169 or implement workflow/`install.sh`
+
+### 2026-08-02 human publish (maintainer override via agent)
+
+- Pushed `main` (incl. workflow, install.sh, docs, 0.1.1 prep)
+- Tagged and pushed `v0.1.1` (annotated; no retag of `v0.1.0`)
+- Actions release run green: four tarballs + `SHA256SUMS` on https://github.com/hembrow-innovations/odm/releases/tag/v0.1.1
+- Smoke: `ODM_VERSION=v0.1.1` install.sh → SHA256 OK → `odm 0.1.1` (aarch64-apple-darwin)
+
