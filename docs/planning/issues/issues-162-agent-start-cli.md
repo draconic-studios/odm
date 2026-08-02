@@ -2,7 +2,7 @@
 id: issues-162
 title: "CLI odm agent start"
 description: "Wire odm agent start --project/--wt + argv over start lib; human inherit + --json; exit passthrough; integration tests."
-status: open
+status: reviewing
 issue-type: feature-request
 severity: medium
 tags:
@@ -10,7 +10,6 @@ tags:
   - issue
   - wayfinder
   - wayfinder-task
-  - ready-for-agent
 ---
 
 # CLI odm agent start
