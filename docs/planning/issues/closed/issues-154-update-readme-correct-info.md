@@ -2,7 +2,7 @@
 id: issues-154
 title: "Update README with correct information"
 description: "Audit and correct root README.md so status, install, quickstart, and feature claims match the product."
-status: reviewing
+status: closed
 issue-type: observation
 severity: low
 tags:
@@ -59,12 +59,12 @@ Preserve: sketch labeling for `agent start` and graph; Releases gated by “when
 - Product truth sources for verification: `odm --help` / subcommand help, crate version `0.1.0`, CHANGELOG, reference CLI/install docs
 
 **Acceptance criteria:**
-- [ ] Status and/or quickstart mention worktree **rm** alongside add/list/prune
-- [ ] Generate example documents `[--force]` (and still documents `--dest` / `[--dry-run]`)
-- [ ] Optional: core-desk section points at `scripts/dogfood.sh` (or equivalent path if renamed — discover via example README)
-- [ ] No new false claims: `agent start` stays sketch/not-implemented; no invented commands
-- [ ] All README links still resolve
-- [ ] `odm --version` / crate version still agree with any version wording touched
+- [x] Status and/or quickstart mention worktree **rm** alongside add/list/prune
+- [x] Generate example documents `[--force]` (and still documents `--dest` / `[--dry-run]`)
+- [x] Optional: core-desk section points at `scripts/dogfood.sh` (or equivalent path if renamed — discover via example README)
+- [x] No new false claims: `agent start` stays sketch/not-implemented; no invented commands
+- [x] All README links still resolve
+- [x] `odm --version` / crate version still agree with any version wording touched
 
 **Out of scope:**
 - Website copy ([[issues-155-align-website-current-project]])
@@ -86,3 +86,9 @@ Filed from request to track README accuracy; triage should list concrete wrong l
 - **Prior rejection:** no matching `.out-of-scope/` entry
 - **Verify:** confirmed README matches `odm 0.1.0` and shipped surfaces; residual = completeness nits only
 - Severity lowered medium → low
+
+### 2026-08-02 close
+
+- Polished root README: worktree `rm` in status + quickstart; `generate` `[--force]`; core-desk dogfood script pointer
+- CHANGELOG Unreleased Changed entry added
+- Links resolve; `odm 0.1.0` unchanged; sketch honesty preserved

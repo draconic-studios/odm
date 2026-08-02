@@ -4,7 +4,7 @@ Poly-repo workspace OS for humans and AI agents: one config, one CLI, and orches
 
 **Website:** [hembrow-innovations.github.io/odm](https://hembrow-innovations.github.io/odm/) (source: [`website/`](website/) on `main`; Pages via GitHub Actions)
 
-**Status:** v0.1.0 spine (multi-git, Progen, Actions) plus post-0.1.0 **worktree slots** (add/list/prune; doctor orphan/dirty warns) and local **`odm generate`**. Agent pack install/link/list/rm is local v1 (`odm status` `agent_packs` inventory; doctor `pack_missing` warn); **`odm agent prompt`** is v1 thin (context work-package); `agent start` remains sketch.
+**Status:** v0.1.0 spine (multi-git, Progen, Actions) plus post-0.1.0 **worktree slots** (add/list/rm/prune; doctor orphan/dirty warns) and local **`odm generate`**. Agent pack install/link/list/rm is local v1 (`odm status` `agent_packs` inventory; doctor `pack_missing` warn); **`odm agent prompt`** is v1 thin (context work-package); `agent start` remains sketch.
 
 ## Install
 
@@ -65,9 +65,10 @@ Generators (local template) and worktree slots:
 
 ```bash
 odm generate                              # list Generators
-odm generate <name> --dest <rel-path> [--dry-run]  # materialize local template (or preview)
+odm generate <name> --dest <rel-path> [--dry-run] [--force]  # materialize local template (or preview)
 odm project worktree list <project>
 odm project worktree add <project> <slot> [--branch <b>]
+odm project worktree rm <project> <slot>
 odm project worktree prune <project> [--force]
 odm project worktree prune --all [--force]
 ```
@@ -78,6 +79,7 @@ Dogfood Workspace (offline fixtures):
 
 ```bash
 cargo build -p odm
+# full tour: ODM=target/debug/odm examples/core-desk/scripts/dogfood.sh
 cd examples/core-desk
 # see examples/core-desk/README.md
 odm --root . sync
