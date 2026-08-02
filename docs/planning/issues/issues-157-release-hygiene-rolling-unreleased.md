@@ -2,7 +2,7 @@
 id: issues-157
 title: "Release hygiene: rolling Unreleased on 0.1.0"
 description: "Inventory crate version vs CHANGELOG vs README/website status; record rolling Unreleased on 0.1.0; fix honesty drift only — no tag, publish, or version bump."
-status: open
+status: reviewing
 issue-type: observation
 severity: medium
 tags:
