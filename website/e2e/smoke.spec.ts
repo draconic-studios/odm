@@ -13,7 +13,6 @@ const PAGES = [
   "guide-progen",
   "guide-worktrees",
   "guide-actions",
-  "guide-agents",
   "cli",
   "config",
 ] as const;
@@ -157,13 +156,12 @@ test.describe("concepts", () => {
 });
 
 test.describe("features", () => {
-  test("shipped vs sketch; agent start shipped", async ({ page }) => {
+  test("shipped vs sketch", async ({ page }) => {
     await page.goto("/features.html");
     await expect(page.getByRole("heading", { name: /^Shipped/ })).toBeVisible();
     await expect(page.getByRole("heading", { name: /Sketch|deferred/i })).toBeVisible();
     await expect(page.getByText("not shipped").first()).toBeVisible();
-    await expect(page.locator("main")).toContainText("Agent start (one-shot)");
-    await expect(page.locator("main")).toContainText("runtime brand matrix");
+    await expect(page.locator("main")).toContainText("Generators (local)");
   });
 });
 
@@ -174,7 +172,6 @@ test.describe("guides", () => {
     { href: "guide-progen.html", h1: /Progen/i },
     { href: "guide-worktrees.html", h1: /Worktree/i },
     { href: "guide-actions.html", h1: /Actions/i },
-    { href: "guide-agents.html", h1: /Agent packs/i },
   ];
 
   test("hub loads and guide links resolve", async ({ page }) => {
@@ -205,7 +202,7 @@ test.describe("cli and config", () => {
   });
 
   test("css ok on deep page", async ({ page }) => {
-    await page.goto("/guide-agents.html");
+    await page.goto("/guide-actions.html");
     await expectCssOk(page);
   });
 });

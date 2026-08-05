@@ -27,7 +27,6 @@
         <a href="guide-progen.html">Progen memory</a>
         <a href="guide-worktrees.html" aria-current="page">Worktree slots</a>
         <a href="guide-actions.html">Actions &amp; generate</a>
-        <a href="guide-agents.html">Agent packs</a>
         <div class="group">Reference</div>
         <a href="cli.html">CLI</a>
         <a href="config.html">Config shape</a>
@@ -70,7 +69,6 @@ odm project worktree prune --all --force</code></pre>
         <h2>Use a slot</h2>
         <pre><code>odm project git alpha --wt feat -- status
 odm run build --project alpha --wt feat
-odm --project alpha --wt feat agent start -- true
 odm status                 # shows slots + orphans
 odm project info alpha</code></pre>
         <p>Missing slot with <code>--wt</code> → exit <code>4</code> (no auto-create). Pin auto-maintain stays Primary-only.</p>

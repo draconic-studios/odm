@@ -27,7 +27,6 @@
         <a href="guide-progen.html">Progen memory</a>
         <a href="guide-worktrees.html">Worktree slots</a>
         <a href="guide-actions.html">Actions &amp; generate</a>
-        <a href="guide-agents.html">Agent packs</a>
         <div class="group">Reference</div>
         <a href="cli.html">CLI</a>
         <a href="config.html" aria-current="page">Config shape</a>
@@ -55,7 +54,7 @@
           <li><code>generators</code> — map bundle name → path to Generator bundle file</li>
         </ul>
         <p>Collections are <strong>maps keyed by name</strong> (not arrays). Keys use <strong>snake_case</strong>. Empty config is valid for bootstrap.</p>
-        <p>No top-level worktree slots, agent packs, or inline action bodies — packs are registry-based; actions/generators live in bundle files.</p>
+        <p>No top-level worktree slots or inline action bodies — actions/generators live in bundle files.</p>
 
         <h2>Example Workspace</h2>
         <pre><code>name: my-desk

@@ -4,7 +4,7 @@ Poly-repo workspace OS for humans and AI agents: one config, one CLI, and orches
 
 **Website:** [hembrow-innovations.github.io/odm](https://hembrow-innovations.github.io/odm/) (source: [`website/`](website/) on `main`; Pages via GitHub Actions)
 
-**Status:** **v0.1.1** — multi-platform GitHub Releases + curl install; spine (multi-git, Progen, Actions) plus **worktree slots** (add/list/rm/prune; doctor orphan/dirty warns) and local **`odm generate`**. Agent pack install/link/list/rm is local v1 (`odm status` `agent_packs` inventory; doctor `pack_missing` warn); **`odm agent prompt`** is v1 thin (context work-package); **`odm agent start`** is v1 one-shot exec (runtime matrix / pack auto-apply / serve deferred).
+**Status:** **v0.1.1** — multi-platform GitHub Releases + curl install; spine (multi-git, Progen, Actions) plus **worktree slots** (add/list/rm/prune; doctor orphan/dirty warns) and local **`odm generate`**.
 
 ## Install
 
@@ -59,7 +59,7 @@ odm run            # list actions
 odm run <name>
 ```
 
-`odm status` and `odm project info` report registered worktree slots and orphan slot dirs; `odm status` also lists registered agent packs.
+`odm status` and `odm project info` report registered worktree slots and orphan slot dirs.
 
 Generators (local template) and worktree slots:
 
@@ -73,7 +73,7 @@ odm project worktree prune <project> [--force]
 odm project worktree prune --all [--force]
 ```
 
-See [docs/reference/cli.md](docs/reference/cli.md) for full surfaces (including `agent pack`), [examples/core-desk/README.md](examples/core-desk/README.md) for offline dogfood, and [examples/todo/README.md](examples/todo/README.md) for real-GitHub dogfood + [REVIEW.md](examples/todo/REVIEW.md).
+See [docs/reference/cli.md](docs/reference/cli.md) for full surfaces, [examples/core-desk/README.md](examples/core-desk/README.md) for offline dogfood, and [examples/todo/README.md](examples/todo/README.md) for real-GitHub dogfood + [REVIEW.md](examples/todo/REVIEW.md).
 
 Dogfood Workspace (offline fixtures):
 
@@ -109,7 +109,7 @@ ODM=target/debug/odm examples/todo/scripts/dogfood.sh
 - **Multi-git**: [docs/reference/multi-git.md](docs/reference/multi-git.md)
 - **Progen**: [docs/reference/progen.md](docs/reference/progen.md)
 - **Worktrees**: [docs/reference/worktrees.md](docs/reference/worktrees.md)
-- **Env / generate / packs**: [docs/reference/env-gen-packs.md](docs/reference/env-gen-packs.md)
+- **Env / generate**: [docs/reference/env-generators.md](docs/reference/env-generators.md)
 - **Graph** (sketch): [docs/reference/graph.md](docs/reference/graph.md)
 - **Phased delivery**: [docs/reference/phased-delivery.md](docs/reference/phased-delivery.md)
 - **Changelog**: [CHANGELOG.md](CHANGELOG.md)

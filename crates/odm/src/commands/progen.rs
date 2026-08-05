@@ -360,7 +360,7 @@ pub fn doctor_cmd(ctx: &Ctx) -> Result<Ready<ProgenDoctorDto>, OdmError> {
     Ok(Ready::with_exit(dto, human, exit))
 }
 
-/// Shared path for `odm context` and `odm agent prompt`.
+/// `odm context` handler: note neighborhood as a work-package.
 pub fn context_cmd(
     ctx: &Ctx,
     id: &str,
@@ -417,7 +417,6 @@ mod tests {
                 worktree_slots: None,
                 worktree_orphans: None,
             }],
-            agent_packs: vec![],
         };
         let dto = progen_list_from(&ws, &snap);
         let v = serde_json::to_value(&dto).unwrap();

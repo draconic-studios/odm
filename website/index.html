@@ -27,7 +27,6 @@
         <a href="guide-progen.html">Progen memory</a>
         <a href="guide-worktrees.html">Worktree slots</a>
         <a href="guide-actions.html">Actions &amp; generate</a>
-        <a href="guide-agents.html">Agent packs</a>
         <div class="group">Reference</div>
         <a href="cli.html">CLI</a>
         <a href="config.html">Config shape</a>
@@ -52,14 +51,14 @@
             <a class="btn btn-ghost" href="quickstart.html">Quickstart</a>
             <a class="btn btn-ghost" href="https://github.com/hembrow-innovations/odm">View on GitHub</a>
           </div>
-          <p><span class="status">v0.1.1 — binary Releases + curl install · multi-git · Progen · Actions · worktrees · generate · agent packs · thin agent prompt · agent start</span></p>
+          <p><span class="status">v0.1.1 — binary Releases + curl install · multi-git · Progen · Actions · worktrees · generate</span></p>
         </header>
 
         <h2>What is ODM?</h2>
         <p>
           A single binary and a Workspace config that declare how your desk is laid out:
           which git checkouts are <strong>Projects</strong>, which Markdown stores are <strong>Progens</strong>,
-          and how actions, worktree slots, and agent packs attach to that desk.
+          and how actions and worktree slots attach to that desk.
           Humans and agents use the same <code>odm</code> CLI — not a separate “AI product.”
         </p>
         <p class="muted">Honest capability map (shipped vs sketch): <a href="features.html">Features</a>.</p>
@@ -81,7 +80,7 @@
           <li>
             <div>
               <strong><a href="guides.html">Operate day-to-day</a></strong>
-              <span>Guides for pins, Progen search, worktree slots, actions, generate, and agent packs.</span>
+              <span>Guides for pins, Progen search, worktree slots, actions, and generate.</span>
             </div>
           </li>
         </ol>
@@ -98,7 +97,7 @@
           </div>
           <div class="card">
             <h3>Agents share the desk</h3>
-            <p>Worktree slots and agent packs put agent work in known places — not ad-hoc clones.</p>
+            <p>Worktree slots put agent work in known places — not ad-hoc clones.</p>
           </div>
           <div class="card">
             <h3>One binary UX</h3>
@@ -110,7 +109,7 @@
         <ul>
           <li><strong>Git submodules</strong> — plain clones + optional pin file; layout lives in Workspace config.</li>
           <li><strong>One mega-vault</strong> — many Progens, ODM-scoped query; no cross-store wikilinks inside a store.</li>
-          <li><strong>Ad-hoc agent clones</strong> — declared Projects, worktree slots, and agent packs on one desk.</li>
+          <li><strong>Ad-hoc agent clones</strong> — declared Projects and worktree slots on one desk.</li>
         </ul>
 
         <h2>Get productive in minutes</h2>
@@ -119,7 +118,7 @@ odm project add alpha --path projects/alpha --url &lt;git-url&gt;
 odm sync
 odm status
 odm doctor</code></pre>
-        <p class="muted">Then add Progens for docs/memory, Actions for tasks, worktree slots for parallel work, and agent packs for coding agents.</p>
+        <p class="muted">Then add Progens for docs/memory, Actions for tasks, and worktree slots for parallel work.</p>
         <div class="cta-row">
           <a class="btn btn-primary" href="quickstart.html">Full quickstart</a>
           <a class="btn btn-ghost" href="guides.html">Browse guides</a>
@@ -129,12 +128,12 @@ odm doctor</code></pre>
         <p>Humans and agents are <strong>equal primary users</strong> of the same Workspace — not an AI-only tool with a human afterthought.</p>
         <ul>
           <li><strong>Humans</strong> — CLI, Workspace config, sync/pin/status/doctor, actions.</li>
-          <li><strong>Agents</strong> — agent packs, worktree slots, and progen context on that same desk.</li>
+          <li><strong>Agents</strong> — worktree slots and progen context on that same desk.</li>
         </ul>
 
         <h2>Learn the model</h2>
         <div class="grid">
-          <div class="card"><h3><a href="concepts.html">Concepts</a></h3><p>Workspace, Project, Progen, pins, slots, packs — the vocabulary that keeps everyone aligned.</p></div>
+          <div class="card"><h3><a href="concepts.html">Concepts</a></h3><p>Workspace, Project, Progen, pins, slots — the vocabulary that keeps everyone aligned.</p></div>
           <div class="card"><h3><a href="features.html">Features</a></h3><p>What shipped in v0.1 and post-0.1, and what is still sketch.</p></div>
           <div class="card"><h3><a href="cli.html">CLI reference</a></h3><p>Command tree, flags, exit codes, and machine-readable <code>--json</code>.</p></div>
           <div class="card"><h3><a href="config.html">Config shape</a></h3><p>How <code>.odm/odm.config.yaml</code> declares your desk.</p></div>

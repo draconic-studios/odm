@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- **`odm agent` verb** — `agent pack`, `agent prompt`, and `agent start` removed entirely (CLI, library code, tests, docs, website, skills, examples). AI-agent harness integrations are no longer part of the product; `odm context` remains the note-context surface.
+
 ### Fixed
 
 - **Install docs/site honesty** — drop pre-publish hedging; state `v0.1.1` Releases + curl install as live (README status, `install.md`, website install/index).

@@ -17,11 +17,10 @@ examples/todo/
   actions/todo.yaml
   generators/todo.yaml
   templates/note/
-  agent-packs/todo-desk/
   .odm/odm.config.yaml
 ```
 
-Managed checkouts (`projects/*`, `progens/sheets`) and `odm.lock.yaml` are **not** committed — they appear after `odm sync`. Indexes, worktrees, `out/`, and pack registry are gitignored.
+Managed checkouts (`projects/*`, `progens/sheets`) and `odm.lock.yaml` are **not** committed — they appear after `odm sync`. Indexes, worktrees, and `out/` are gitignored.
 
 ## Projects (real remotes)
 
@@ -74,4 +73,4 @@ Post-probe findings: [REVIEW.md](REVIEW.md) (every CLI surface, exit codes, real
 
 ## Rules
 
-See `progens/desk/Rules.md`. Summary: sync/pin/status/doctor/find/run/generate/packs/worktree are fine; **no** commits or pushes inside cloned remotes.
+See `progens/desk/Rules.md`. Summary: sync/pin/status/doctor/find/run/generate/worktree are fine; **no** commits or pushes inside cloned remotes.

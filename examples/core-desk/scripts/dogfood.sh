@@ -93,8 +93,6 @@ cleanup() {
 trap cleanup EXIT
 
 DESK="$TMP/core-desk"
-AGENT_HOME="$TMP/agent-home"
-mkdir -p "$AGENT_HOME"
 cp -R "$CORE_DESK" "$DESK"
 
 git -C "$DESK" init -q
@@ -167,11 +165,9 @@ out="$(odm find token --progen-group all-docs)"
 assert_match "$out" 'welcome' "find --progen-group missing notes hit"
 assert_match "$out" 'ops-note' "find --progen-group missing ops hit"
 
-phase "context / agent prompt"
+phase "context"
 out="$(odm context welcome --progen notes)"
 assert_match "$out" 'welcome' "context"
-out="$(odm agent prompt welcome --progen notes)"
-assert_match "$out" 'welcome' "agent prompt"
 
 phase "run hello / fail / chain / --project"
 out="$(odm run)"
@@ -195,22 +191,6 @@ odm generate hello --dest out/hello
 [[ -f "$DESK/out/hello/hello.txt" ]] || die "generate did not write hello.txt"
 odm generate hello --dest out/hello --force
 [[ -f "$DESK/out/hello/hello.txt" ]] || die "generate --force lost hello.txt"
-
-phase "agent pack install / list / link / rm"
-odm agent pack install agent-packs/demo --home "$AGENT_HOME"
-out="$(odm agent pack list)"
-assert_match "$out" 'demo' "pack list after install"
-odm agent pack rm demo
-out="$(odm agent pack list)"
-assert_no_match "$out" '^demo([[:space:]]|$)' "pack list still has demo after rm"
-odm agent pack link agent-packs/demo --home "$AGENT_HOME"
-out="$(odm agent pack list)"
-assert_match "$out" 'demo' "pack list after link"
-odm agent pack rm demo
-
-phase "agent start (one-shot)"
-expect_exit 0 odm --project alpha agent start -- true
-expect_exit 1 odm --project alpha agent start -- false
 
 phase "done"
 echo "dogfood: OK (temp workspace cleaned on exit)"

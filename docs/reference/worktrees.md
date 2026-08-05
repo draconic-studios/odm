@@ -1,6 +1,6 @@
 # Worktree slots (v1 implemented + deferred)
 
-**v1 implemented** — slot lifecycle (`list` / `add` / `rm` / `prune`) and `--wt` path binding for `project git`, `run`, and `agent start`. Items under **Deferred** remain out of scope. Domain terms: root `CONTEXT.md`. Placement: `architecture.md`. CLI: `cli.md`. Primary checkouts: `multi-git.md`.
+**v1 implemented** — slot lifecycle (`list` / `add` / `rm` / `prune`) and `--wt` path binding for `project git` and `run`. Items under **Deferred** remain out of scope. Domain terms: root `CONTEXT.md`. Placement: `architecture.md`. CLI: `cli.md`. Primary checkouts: `multi-git.md`.
 
 ## Intent
 
@@ -30,7 +30,7 @@ odm project worktree prune --all [--force]
 - **`rm <project> <slot> [--force]`:** `git worktree remove` on the slot; `--force` maps to git force. Best-effort remove of empty `worktrees/<project>/`. `--json`: `{ "project", "slot", "path" }`.
 - **`prune <project> [--force]`:** manual GC for **orphan** slot dirs (same definition as doctor: valid slot-name directory under `worktrees/<project>/` not in the registered worktree set). Default removes **empty** orphans only; non-empty orphans are skipped and the command exits `3` after removing empties (partial OK). `--force` recursively deletes orphan dirs even if non-empty. Never deletes registered worktree paths or Primary. Best-effort remove of empty `worktrees/<project>/`. Human: pruned count/names (and skipped non-empty names when applicable). `--json`: `{ "project", "pruned": [ { "name", "path" } ], "skipped_nonempty": [ { "name", "path" } ] }` (`skipped_nonempty` always present; entries are `{name,path}` only — no `dirty`). No orphans → exit `0`, empty arrays.
 - **`prune --all [--force]`:** same orphan rules for **every** configured Project (sorted name order). Missing primary / non-git projects are skipped (no hard fail). Exit `3` if any non-empty orphan remains without `--force`. Human: qualified `project/slot` names. `--json`: `{ "all": true, "pruned": [ { "project", "name", "path" } ], "skipped_nonempty": [ … ] }` (`skipped_nonempty` always present). Mutually exclusive with positional `<project>`.
-- **`--wt <slot>`** on `project git`, `run` (with `--project`), and `agent start` (with `--project`): resolve working tree to `worktrees/<project>/<slot>/`. Requires Project context. **Does not** auto-create a missing slot (missing → exit `4`). Pin auto-maintain stays **Primary-only**. Global `--wt` + `project git --wt` must agree when both set (differ → usage exit `1`).
+- **`--wt <slot>`** on `project git` and `run` (with `--project`): resolve working tree to `worktrees/<project>/<slot>/`. Requires Project context. **Does not** auto-create a missing slot (missing → exit `4`). Pin auto-maintain stays **Primary-only**. Global `--wt` + `project git --wt` must agree when both set (differ → usage exit `1`).
 
 ## Rules
 
@@ -47,7 +47,7 @@ odm project worktree prune --all [--force]
 - Auto prune on `doctor --fix` (prune stays an explicit command)
 - Pin file interaction with slots (pin stays Primary-oriented unless later decided)
 - Multi-Project or Workspace-level slot **entities** (config/placement beyond per-Project dirs; prune `--all` multi-project orphan GC already landed)
-- Global `--wt` deep behavior beyond path binding on `project git` / `run` / `agent start`
+- Global `--wt` deep behavior beyond path binding on `project git` / `run`
 
 Landed (not deferred): registered slot dirty on list/status/info; status/info `worktree_orphans` observation; doctor orphan/dirty **warn**; explicit `worktree prune` / `prune --all`.
 
@@ -62,5 +62,5 @@ Landed (not deferred): registered slot dirty on list/status/info; status/info `w
 - Architecture layout: `architecture.md`
 - CLI matrix: `cli.md`
 - Multi-git Primary: `multi-git.md`
-- Agent packs (v1 local) + prompt (v1 thin) + start (v1 one-shot): `env-gen-packs.md`
+- Env / generators (mixed depth): `env-generators.md`
 - Phased delivery: `phased-delivery.md`

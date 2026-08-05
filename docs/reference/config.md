@@ -26,7 +26,7 @@ Missing Action or Generator maps means none are defined (not an error). A declar
 
 All entity collections are **maps keyed by name**, not arrays. Keys use **snake_case**. Project and Progen names are unique across both maps and must be path tokens (no `/`, `\`, `.`, or `..`) — same rules as worktree slot names.
 
-No top-level: layout templates, worktree slots, agent packs, env profiles, submodule fields, inline Action/Generator bodies.
+No top-level: layout templates, worktree slots, env profiles, submodule fields, inline Action/Generator bodies.
 
 ## Project entry
 
@@ -153,11 +153,11 @@ generators:
 
 - Layout path templates / macros
 - Inline actions or generators inside Workspace config
-- Worktree slot and Agent pack declarations
+- Worktree slot declarations
 - Env profiles
 - `odm.config.json` / root-level `odm.config.yaml` (legacy Go location)
 - Legacy Go `documentaton` / plugin / submodule fields
-- Full generator template package format and Nx shell integration details (`env-gen-packs.md`; local generate v1 landed, remote/templating still deferred)
+- Full generator template package format and Nx shell integration details (`env-generators.md`; local generate v1 landed, remote/templating still deferred)
 
 ## Relationship to ODM state directory
 

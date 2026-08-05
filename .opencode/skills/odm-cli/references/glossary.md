@@ -38,7 +38,7 @@ _Avoid:_ combo, bundle, profile (for this concept), federation (as the entity na
 
 The Workspace-local `.odm/` tree: config, pin, caches, logs, ODM-side progen
 indexes. Does **not** own Project checkouts, Progen stores, worktree slots
-(`worktrees/`), or agent pack payloads.
+(`worktrees/`), or generator template packages.
 
 _Avoid:_ workspace root (for this path), progen root
 
@@ -54,13 +54,6 @@ separate from Primary. On disk at `worktrees/<project>/<slot>/` (not under
 `.odm/`). Bound to a git branch; the branch itself stays plain git vocabulary.
 
 _Avoid:_ branch (as the ODM entity), sandbox, clone (for this concept)
-
-## Agent pack
-
-A portable bundle of agent-facing assets (skills, prompts, conventions) that
-ODM installs or links into an agent home. Not a Progen and not a Project.
-
-_Avoid:_ plugin (legacy), extension pack (unless later aliased)
 
 ## Workspace config
 

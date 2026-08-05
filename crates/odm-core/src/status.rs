@@ -1,10 +1,9 @@
 use odm_git::Git;
 use serde::Serialize;
 
-use crate::agent_pack::PackMode;
 use crate::config::Workspace;
 use crate::error::OdmError;
-use crate::inventory::{observe_agent_packs, observe_project_worktrees_soft};
+use crate::inventory::observe_project_worktrees_soft;
 use crate::pin::load_pin;
 use crate::worktree::{WorktreeOrphanInfo, WorktreeSlotInfo};
 
@@ -14,19 +13,6 @@ pub struct StatusSnapshot {
     pub root: String,
     pub projects: Vec<EntityStatus>,
     pub progens: Vec<EntityStatus>,
-    /// Registered agent packs from `.odm/agent-packs.json` (empty when absent/unloadable).
-    pub agent_packs: Vec<StatusPackInfo>,
-}
-
-/// One registered agent pack row on status.
-#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
-pub struct StatusPackInfo {
-    pub name: String,
-    pub source: String,
-    pub path: String,
-    pub mode: PackMode,
-    /// `true` when destination has no path/symlink entry (same rule as doctor `pack_missing`).
-    pub missing: bool,
 }
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
@@ -87,29 +73,18 @@ pub fn build_status<R: odm_git::CommandRunner>(
         p.worktree_slots = Some(inv.slots);
         p.worktree_orphans = Some(inv.orphans);
     }
-    snap.agent_packs = observe_agent_packs(ws)
-        .into_iter()
-        .map(|p| StatusPackInfo {
-            name: p.entry.name,
-            source: p.entry.source,
-            path: p.entry.path.display().to_string(),
-            mode: p.entry.mode,
-            missing: p.missing,
-        })
-        .collect();
     Ok(snap)
 }
 
 /// Pure projection: observation → status snapshot.
 ///
-/// `worktree_slots` / `worktree_orphans` stay `None` and `agent_packs` empty here;
+/// `worktree_slots` / `worktree_orphans` stay `None` here;
 /// [`build_status`] fills them from inventory.
 pub fn status_from_observation(obs: &crate::observation::WorkspaceObservation) -> StatusSnapshot {
     StatusSnapshot {
         root: obs.root.clone(),
         projects: obs.projects.iter().map(entity_status_from_obs).collect(),
         progens: obs.progens.iter().map(entity_status_from_obs).collect(),
-        agent_packs: vec![],
     }
 }
 
@@ -164,7 +139,7 @@ pub fn compute_pin_state(
 pub fn format_status_human(snap: &StatusSnapshot) -> String {
     let mut out = String::new();
     out.push_str(&format!("Workspace: {}\n", snap.root));
-    if snap.projects.is_empty() && snap.progens.is_empty() && snap.agent_packs.is_empty() {
+    if snap.projects.is_empty() && snap.progens.is_empty() {
         out.push_str("(no projects or progens)\n");
         return out;
     }
@@ -180,22 +155,7 @@ pub fn format_status_human(snap: &StatusSnapshot) -> String {
             out.push_str(&format_entity_line(e));
         }
     }
-    if !snap.agent_packs.is_empty() {
-        out.push_str("\nAgent packs:\n");
-        for p in &snap.agent_packs {
-            out.push_str(&format_pack_line(p));
-        }
-    }
     out
-}
-
-fn format_pack_line(p: &StatusPackInfo) -> String {
-    let mode = match p.mode {
-        PackMode::Install => "install",
-        PackMode::Link => "link",
-    };
-    let missing = if p.missing { " missing" } else { "" };
-    format!("  {}\t{}{}\n", p.name, mode, missing)
 }
 
 fn format_entity_line(e: &EntityStatus) -> String {

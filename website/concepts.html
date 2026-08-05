@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Concepts — ODM</title>
-  <meta name="description" content="ODM domain vocabulary: Workspace, Project, Progen, pins, worktree slots, agent packs." />
+  <meta name="description" content="ODM domain vocabulary: Workspace, Project, Progen, pins, worktree slots." />
   <link rel="stylesheet" href="assets/style.css" />
 </head>
 <body>
@@ -27,7 +27,6 @@
         <a href="guide-progen.html">Progen memory</a>
         <a href="guide-worktrees.html">Worktree slots</a>
         <a href="guide-actions.html">Actions &amp; generate</a>
-        <a href="guide-agents.html">Agent packs</a>
         <div class="group">Reference</div>
         <a href="cli.html">CLI</a>
         <a href="config.html">Config shape</a>
@@ -68,7 +67,7 @@
 
         <dl class="term">
           <dt>ODM state directory</dt>
-          <dd>The Workspace-local <code>.odm/</code> tree holding ODM config and runtime state only (config, pin, caches, logs, ODM-side progen indexes). Does <strong>not</strong> own Project checkouts, Progen stores, worktree slots, or agent pack payloads.</dd>
+          <dd>The Workspace-local <code>.odm/</code> tree holding ODM config and runtime state only (config, pin, caches, logs, ODM-side progen indexes). Does <strong>not</strong> own Project checkouts, Progen stores, worktree slots, or generator template packages.</dd>
         </dl>
 
         <dl class="term">
@@ -80,11 +79,6 @@
           <dt>Worktree slot</dt>
           <dd>A named, ODM-managed git worktree for parallel or agent work on a Project — separate from the Primary checkout. On disk at <code>worktrees/&lt;project&gt;/&lt;slot&gt;/</code> (not under <code>.odm/</code>). Bound to a git branch.</dd>
           <dd class="avoid">Avoid: calling the slot itself a “branch” or “sandbox”</dd>
-        </dl>
-
-        <dl class="term">
-          <dt>Agent pack</dt>
-          <dd>A portable bundle of agent-facing assets (skills, prompts, conventions) that ODM installs or links for coding agents. Not a Progen and not a Project.</dd>
         </dl>
 
         <dl class="term">

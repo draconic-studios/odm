@@ -1,4 +1,4 @@
-//! Shared filesystem primitives for generate and agent pack.
+//! Shared filesystem primitives for generate.
 
 use std::fs;
 use std::io;
@@ -99,8 +99,6 @@ pub fn count_tree(src: &Path) -> Result<u32, OdmError> {
 pub enum ConflictPolicy {
     /// Remove file↔dir type conflicts before write (generate `--force` in-place).
     ResolveTypeConflicts,
-    /// Assume dest layout is ready; overwrite files; replace existing symlink slots.
-    OverwriteInPlace,
 }
 
 /// Recursively copy `src` directory contents into `dst`. Counts files and symlinks.

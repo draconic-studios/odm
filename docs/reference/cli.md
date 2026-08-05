@@ -5,8 +5,7 @@ Command tree and global flags for the `odm` binary. Domain terms: root `CONTEXT.
 Depth markers:
 
 - **Full** — behavior locked here (enough to implement without reopening).
-- **Sketch** — name reserved + one-liner; depth in `graph.md`, `env-gen-packs.md` (worktree v1 is full; deferred items still in `worktrees.md`).
-
+- **Sketch** — name reserved + one-liner; depth in `graph.md`, `env-generators.md` (worktree v1 is full; deferred items still in `worktrees.md`).
 ## Binary and non-goals
 
 - Single binary: `odm`. Store engine integrated as crates; ODM owns UX.
@@ -23,7 +22,7 @@ Available on commands that need them (parser-global; unknown entity names → ha
 - **`--project <name>`**: Target **Project** by config name (not a path).
 - **`--progen <name>`**: Include/select **Progen** by config name; **repeatable**; union with other scope flags (`progen.md`).
 - **`--progen-group <name>`**: Include members of a **Progen group**; **repeatable**; union (`progen.md`).
-- **`--wt <slot>`**: **Worktree slot** name → tree at `worktrees/<project>/<slot>/`. Requires a Project context (`--project` or a `project` subcommand). Path binding implemented for `project git`, `run`, and `agent start`; missing slot → exit `4` (no auto-create). See `worktrees.md`.
+- **`--wt <slot>`**: **Worktree slot** name → tree at `worktrees/<project>/<slot>/`. Requires a Project context (`--project` or a `project` subcommand). Path binding implemented for `project git` and `run`; missing slot → exit `4` (no auto-create). See `worktrees.md`.
 
 Rules:
 
@@ -52,9 +51,6 @@ odm progen …
 odm find | context
 odm run
 odm generate …          # v1 local template
-odm agent pack …        # v1 local install/link/list/rm
-odm agent prompt …      # v1 thin (context work-package)
-odm agent start …       # v1 one-shot exec
 ```
 
 ---
@@ -110,13 +106,12 @@ odm pin status [name…]
 odm status
 ```
 
-Workspace snapshot: configured Projects/Progens, on-disk presence, git/pin drift summary, dirty hints, **registered** worktree slots and **orphan** slot dirs per Project, and **registered** agent packs. Does not fetch. Entity `is_git` / dirty apply only when the path is its **own** git checkout root (has `.git` at that path) — path-only trees nested under a git Workspace or monorepo do **not** inherit the ancestor repo. `--json` for agents:
+Workspace snapshot: configured Projects/Progens, on-disk presence, git/pin drift summary, dirty hints, and **registered** worktree slots + **orphan** slot dirs per Project. Does not fetch. Entity `is_git` / dirty apply only when the path is its **own** git checkout root (has `.git` at that path) — path-only trees nested under a git Workspace or monorepo do **not** inherit the ancestor repo.
 
 - Each project includes `worktree_slots: [ { "name", "path", "dirty" } ]` (`path` is `worktrees/<project>/<slot>`; `dirty` is `true` / `false` / `null` when the cleanliness probe fails; empty array when none / non-git / list soft-fails). Progens omit `worktree_slots`.
 - Each project also includes `worktree_orphans: [ { "name", "path" } ]` (same orphan definition as doctor/prune; sorted by name; empty array when none / missing dir / soft-fail). Observation only — no `dirty` on orphans. Progens omit `worktree_orphans`.
-- Top-level `agent_packs: [ { "name", "source", "path", "mode", "missing" } ]` from `.odm/agent-packs.json` (always present; empty array when none / missing registry / list soft-fails). `missing` is `true` when the pack path has no path/symlink entry (same rule as doctor `pack_missing`); doctor still owns the warn check.
 
-Human output lists slot names only when non-empty (dirty slots get a ` dirty` suffix, e.g. `feat dirty`) and orphan names when non-empty (`orphans: a, b`). When packs are registered, an **Agent packs:** section lists each pack name, mode (`install` / `link`), and a ` missing` suffix when `missing`. Doctor warn + `worktree prune` remain cleanup — see `worktrees.md`.
+Human output lists slot names only when non-empty (dirty slots get a ` dirty` suffix, e.g. `feat dirty`) and orphan names when non-empty (`orphans: a, b`). Doctor warn + `worktree prune` remain cleanup — see `worktrees.md`.
 
 ---
 
@@ -126,9 +121,9 @@ Human output lists slot names only when non-empty (dirty slots get a ` dirty` su
 odm doctor [--fix]
 ```
 
-**ODM-side** checks only: config load, declared paths, gitignore management drift, pin file consistency basics, worktree slot orphan **warns** (configured Project dirs under `worktrees/<project>/` that are not registered git worktrees; not fixable), dirty registered worktree slot **warns** (`worktree_dirty:<project>:<slot>`; not fixable), and agent pack missing-path **warns** (`pack_missing:<name>` when a registry entry’s path has no path/symlink on disk; not fixable; dangling symlink present is not missing). Not store-content doctor (`odm progen doctor`).
+**ODM-side** checks only: config load, declared paths, gitignore management drift, pin file consistency basics, worktree slot orphan **warns** (configured Project dirs under `worktrees/<project>/` that are not registered git worktrees; not fixable), dirty registered worktree slot **warns** (`worktree_dirty:<project>:<slot>`; not fixable). Not store-content doctor (`odm progen doctor`).
 
-- **`--fix`**: mechanical ODM repairs only (same spirit as upstream progen doctor) — no destructive git rewrites; does not delete orphan worktree dirs, clean/stash dirty slots, or edit/remove agent pack registry entries or destinations.
+- **`--fix`**: mechanical ODM repairs only (same spirit as upstream progen doctor) — no destructive git rewrites; does not delete orphan worktree dirs or clean/stash dirty slots.
 
 ---
 
@@ -195,7 +190,7 @@ odm progen reindex | doctor
 - Writes: exactly one Progen (`--progen` or sole configured).
 - Reads under `odm progen`: single-root (pass `--progen` when multiple configured), except where a command doc explicitly federates.
 - **`serve`**: absent (non-goal).
-- **`prompt`**: primary home is `odm agent prompt` (v1 thin context work-package); not duplicated as a second full surface under `progen` in this doc.
+- **`prompt`**: absent — `odm context` is the only context-packaging surface.
 
 Flag parity with upstream: pass through where it does not fight ODM globals; do not require duplicating every upstream flag table here — implement against progenitor surface + ODM scope rules.
 
@@ -264,69 +259,14 @@ odm generate <name> --dest <rel-path> [--force] [--dry-run]
 - **Url-only** generators (no usable `template`): list shows them; run → exit `1` with message that remote generators are deferred (with or without `--dry-run`). If both `template` and `url` are set, prefer `template`.
 - **`--json` run**: `{ "generator", "dest", "copied", "dry_run" }` (`copied` = files written or that would be written; `dry_run` is `true` for `--dry-run`, `false` for a real run).
 - Human success: real run `generated <name> -> <dest> (<n> files)`; dry-run `would generate <name> -> <dest> (<n> files)`.
-- Deferred: remote fetch/cache, `template.toml` / prompts / vars, Nx/schematics — `env-gen-packs.md` (`--dry-run` landed).
-
-
----
-
-### `odm agent pack` — **v1 local install/link/list/rm**
-
-All AI/agent-facing UX lives under `odm agent` (not a top-level `pack` command). Pack v1 is local filesystem only.
-
-```text
-odm agent pack list
-odm agent pack install <source> --home <path> [--force]
-odm agent pack link <source> --home <path> [--force]
-odm agent pack rm <name>
-```
-
-- **Workspace required** (same discovery as generate).
-- **Source:** local directory path. Relative paths resolve under Workspace root (must not escape). Absolute paths allowed. Pack **name** = directory basename. No remote/marketplace; no pack manifest required in v1.
-- **`--home`:** required agent-native root (may be outside Workspace). Pack materializes at `<home>/<name>/`.
-- **`install`:** recursive copy of source into `<home>/<name>/`. Dest exists without `--force` → exit `3`. With `--force`, replace then copy. Missing source → exit `4`.
-- **`link`:** symlink `<home>/<name>` → absolute resolved source. Same exists/`--force` policy. Platforms without symlink support → clear operation error (no silent copy fallback).
-- **`list`:** registry-backed (`.odm/agent-packs.json`). Human: one name per line sorted; empty → `(no agent packs)`; ` missing` suffix when dest has no path/symlink entry. `--json`: `{ "packs": [ { "name", "source", "path", "mode", "missing" } ] }` (`mode` = `"install"` | `"link"`). `missing` is `true` when the pack path has no path/symlink entry (same rule as status `agent_packs` / doctor `pack_missing`); dangling symlink present is not missing. Doctor still owns the warn check.
-- **`rm`:** drop registry entry and best-effort delete destination (install tree or link symlink). Missing dest still succeeds (stale-registry cleanup). Unknown name → exit `4`. Human: `removed <name> -> <path>`. `--json`: single entry object (same fields as list items, including `missing`) for the removed pack.
-- **install/link/rm `--json`:** single entry object (same fields as list items, including `missing`), not wrapped.
-- Human success: `installed <name> -> <path>` / `linked <name> -> <path>` / `removed <name> -> <path>`.
-- Deferred: pack manifest, marketplace, config-declared packs (`env-gen-packs.md`); status pack inventory and pack list/entry `missing` observation landed (`agent_packs` / `agent pack list`; doctor `pack_missing` warn separate — see doctor). Runtime matrix / pack auto-apply on start deferred (`agent start` v1 is independent).
-
-### `odm agent prompt` — **v1 thin** (context work-package)
-
-```text
-odm agent prompt <id> [--progen <name>] [--json]
-odm agent prompt <progen-name>:<id> …
-```
-
-- Thin alias of `odm context`: same Progen scope rules, same human markdown neighborhood, same `--json` shape (`ContextHit` with `anchor` / `outgoing` / `incoming`).
-- Packages one note’s in-store context to stdout for agents — **not** a second prompt engine, task planner, or graph walk.
-- Disambiguation: require `--progen` (global) when more than one Progen is in play, **or** accept `name:id`. Sole configured Progen → bare `id` OK. At most one `--progen`. Conflicting `name:id` prefix vs `--progen` → usage exit `1`.
-- Unknown id → exit `4`. Success → exit `0`.
-- Details / deferred depth: `env-gen-packs.md`.
-
-### `odm agent start` — **v1** (one-shot exec)
-
-```text
-odm --project <name> [--wt <slot>] [--json] agent start -- <program> [args…]
-odm --project <name> agent start <program> [args…]
-```
-
-- **One-shot direct exec** of caller-supplied argv (`Command::new(program)` + args) with cwd bound to a Project Primary or `--wt` slot. Not a long-running ODM session, daemon, MCP, or `serve`.
-- **`--project` required** (missing → usage exit `1`). Optional global `--wt <slot>` (existing path binding; missing slot → exit `4`; no auto-create).
-- **argv:** at least one token (program); remainder are args. Empty program → usage `1`.
-- **Independent of packs and prompt** — does not read `.odm/agent-packs.json`, install packs, set pack env, or compose/call `agent prompt` / `context`.
-- **No runtime matrix** — no default agent binary; no detection of claude/cursor/etc. Caller always passes program + args.
-- **Human:** inherit child stdio; process exit code = child exit (same spirit as `odm run`).
-- **`--json`:** capture streams; print `{ "cwd", "program", "args", "exitCode", "stdout", "stderr" }` then exit with child code. Pre-exec failures keep the standard error envelope + spine (`1`/`2`/`3`/`4`).
-- **Exit codes:** pre-exec ODM errors use locked spine (usage `1`, workspace `2`, operation `3` spawn fail, not_found `4` missing path/slot). After spawn → **passthrough** child code (may be outside 0–4).
-- **Deferred:** runtime brand matrix, pack auto-apply, prompt-on-start, session lifecycle, config-declared default agent, env injection — `env-gen-packs.md`.
+- Deferred: remote fetch/cache, `template.toml` / prompts / vars, Nx/schematics — `env-generators.md` (`--dry-run` landed).
 
 ---
 
 ## Full vs sketch matrix
 
-- **Full**: global flags (including `--wt` path binding); `init` (headless; `--interactive` not implemented); `sync`; `pin apply|status`; `status`; `doctor` (includes pack_missing warn); `project list|add|rm|info|git|worktree` (v1); `progen` lifecycle + **partial** store façade (implemented verbs above); `find`; `context`; `run`; `generate` (v1 local template + `--dry-run`); `agent pack` (v1 local install/link/list/rm); `agent prompt` (v1 thin context work-package); `agent start` (v1 one-shot exec).
-- **Sketch / deferred**: `init --interactive`; reserved progen store verbs; deferred worktree features (config slots, pin↔slot, auto-prune on doctor, branch templates, global `--wt` depth — `worktrees.md`; doctor orphan/dirty **warn**, explicit `worktree prune` / `prune --all`, registered slot `dirty` on list/status/info, and status/info `worktree_orphans` observation landed); generate remote/templating (`--dry-run` landed); pack marketplace/manifest/config declarations (`env-gen-packs.md`; status `agent_packs` inventory, pack list/entry `missing`, and doctor `pack_missing` warn landed); agent start depth beyond one-shot (runtime matrix, pack auto-apply, prompt compose, session lifecycle, serve/MCP).
+- **Full**: global flags (including `--wt` path binding); `init` (headless; `--interactive` not implemented); `sync`; `pin apply|status`; `status`; `doctor` (includes worktree orphan/dirty warns); `project list|add|rm|info|git|worktree` (v1); `progen` lifecycle + **partial** store façade (implemented verbs above); `find`; `context`; `run`; `generate` (v1 local template + `--dry-run`).
+- **Sketch / deferred**: `init --interactive`; reserved progen store verbs; deferred worktree features (config slots, pin↔slot, auto-prune on doctor, branch templates, global `--wt` depth — `worktrees.md`; doctor orphan/dirty **warn**, explicit `worktree prune` / `prune --all`, registered slot `dirty` on list/status/info, and status/info `worktree_orphans` observation landed); generate remote/templating (`--dry-run` landed); env injection for actions (`env-generators.md`).
 
 - **Absent**: `serve`, MCP, top-level action verbs, `ops` namespace, path-valued scope flags.
 
@@ -338,4 +278,4 @@ odm --project <name> agent start <program> [args…]
 - Federation and scope: `progen.md`
 - Upstream command inventory: `research/progenitor-surface.md`
 - Worktrees (v1 + deferred): `worktrees.md`
-- Mixed / sketch depth: `env-gen-packs.md` (v1 local + thin prompt + start one-shot; env still sketch), `graph.md` (sketch)
+- Mixed / sketch depth: `env-generators.md` (generate v1 landed; env still sketch), `graph.md` (sketch)

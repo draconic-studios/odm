@@ -1,11 +1,9 @@
 //! `odm-core` — Workspace config, pin, discovery, and path policy.
 
-mod agent_pack;
 mod checkout;
 mod config;
 mod discover;
 mod doctor;
-mod doctor_pack;
 mod doctor_worktree;
 mod error;
 mod fsutil;
@@ -24,7 +22,6 @@ mod status;
 mod url_match;
 mod worktree;
 
-pub use agent_pack::{pack_install, pack_link, pack_list, pack_rm, PackEntry, PackMode};
 pub use checkout::{
     all_managed, materialize, resolve_clone_url, resolve_managed, sort_by_depth, sync_managed,
     ManagedEntity, MaterializeOutcome, SyncResult,
@@ -45,8 +42,8 @@ pub use gitignore::{
 };
 pub use init::{init_workspace, InitOptions, InitResult};
 pub use inventory::{
-    observe_agent_packs, observe_project_worktrees, observe_project_worktrees_soft,
-    observe_worktree_registered_names, PackInventoryEntry, ProjectWorktreeInventory,
+    observe_project_worktrees, observe_project_worktrees_soft, observe_worktree_registered_names,
+    ProjectWorktreeInventory,
 };
 pub use membership::{
     membership_add, membership_rm, progen_add, progen_rm, project_add, project_rm,
@@ -56,8 +53,8 @@ pub use observation::{
     observe_entity, observe_workspace, EntityObservation, WorkspaceObservation,
 };
 pub use paths::{
-    abs_checkout, agent_packs_path, config_path, odm_dir, path_buf_to_rel, pin_path,
-    progen_index_dir, resolve_under_root, worktree_slot_path, PathResolveError,
+    abs_checkout, config_path, odm_dir, path_buf_to_rel, pin_path, progen_index_dir,
+    resolve_under_root, worktree_slot_path, PathResolveError,
 };
 pub use pin::{
     is_full_sha, load_pin, parse_pin_yaml, prune_pins, save_pin, PinEntry, PinFile,
@@ -68,7 +65,7 @@ pub use pin_maintain::{
 pub use project_git::project_git;
 pub use status::{
     build_status, compute_pin_state, format_status_human, status_from_observation, EntityStatus,
-    PinState, StatusPackInfo, StatusSnapshot,
+    PinState, StatusSnapshot,
 };
 pub use url_match::{normalize_git_url, urls_match, urls_match_with_root};
 pub use worktree::{

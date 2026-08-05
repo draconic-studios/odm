@@ -27,7 +27,6 @@
         <a href="guide-progen.html">Progen memory</a>
         <a href="guide-worktrees.html">Worktree slots</a>
         <a href="guide-actions.html">Actions &amp; generate</a>
-        <a href="guide-agents.html">Agent packs</a>
         <div class="group">Reference</div>
         <a href="cli.html">CLI</a>
         <a href="config.html">Config shape</a>
@@ -63,10 +62,9 @@ odm init --no-git     # skip git init</code></pre>
   odm.lock.yaml       # tracked when present — pins
   cache/              # ignored
   log/                # ignored
-  progen/&lt;name&gt;/      # ignored — ODM-side indexes
-  agent-packs.json    # pack registry (when used)</code></pre>
+  progen/&lt;name&gt;/      # ignored — ODM-side indexes</code></pre>
         <div class="callout warn">
-          <p><strong>Never under <code>.odm/</code>:</strong> Project checkouts, Progen store content, worktree slot trees, agent pack payloads.
+          <p><strong>Never under <code>.odm/</code>:</strong> Project checkouts, Progen store content, worktree slot trees.
           Those live at config-declared paths or under <code>worktrees/</code>.</p>
         </div>
 
@@ -86,7 +84,7 @@ odm init --no-git     # skip git init</code></pre>
           <li><code>1</code> usage / unknown command / bad flags / unknown name</li>
           <li><code>2</code> Workspace/config error</li>
           <li><code>3</code> operation failed (git/pin/store and other ODM operation failures)</li>
-          <li><code>4</code> not found (e.g. missing slot, missing pack source)</li>
+          <li><code>4</code> not found (e.g. missing slot)</li>
         </ul>
         <p><code>odm run</code>: once an Action is found and executed, the process exit code is the <strong>action’s</strong> exit code (passthrough). Pre-exec failures still use ODM codes above.</p>
 

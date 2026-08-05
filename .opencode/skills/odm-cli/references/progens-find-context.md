@@ -75,7 +75,6 @@ odm find --progen notes --json
 ```bash
 odm context <id> [--progen <name>] [--json]
 odm context <progen-name>:<id> [--json]
-odm agent prompt <id|name:id> …     # thin alias — same shape
 ```
 
 - **In-store only** — no cross-store graph walk.
@@ -90,7 +89,6 @@ odm agent prompt <id|name:id> …     # thin alias — same shape
 ```bash
 odm context welcome --progen notes --json
 odm context notes:welcome --json
-odm agent prompt notes:welcome --json
 ```
 
 ## Agent workflow for knowledge tasks

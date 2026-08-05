@@ -350,7 +350,6 @@ mod tests {
                 worktree_orphans: None,
             }],
             progens: vec![],
-            agent_packs: vec![],
         }
     }
 
@@ -390,7 +389,6 @@ mod tests {
             root: "/tmp/ws".into(),
             projects: vec![],
             progens: vec![],
-            agent_packs: vec![],
         };
         let dto = project_list_from(&ws, &snap);
         assert_eq!(dto.projects.len(), 1);

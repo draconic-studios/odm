@@ -1,8 +1,4 @@
-//! `odm-actions` — resolve cwd + shell-out Action dispatch + agent start exec.
-
-mod start;
-
-pub use start::{start_agent, StartOptions, StartResult};
+//! `odm-actions` — resolve cwd + shell-out Action dispatch.
 
 use std::path::{Path, PathBuf};
 use std::process::Command;

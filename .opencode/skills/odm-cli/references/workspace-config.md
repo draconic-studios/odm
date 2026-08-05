@@ -4,7 +4,6 @@
 
 - **`.odm/odm.config.yaml`** — sole layout truth (YAML only in v1)
 - **`.odm/odm.lock.yaml`** — optional Pin file (fixed basename; not referenced from config)
-- **`.odm/agent-packs.json`** — agent pack registry (install/link destinations)
 - **Action / Generator bundles** — paths declared in config; free basenames anywhere under Workspace root
 
 Missing `actions:` / `generators:` maps means none defined (not an error). A
@@ -77,7 +76,6 @@ generators:
   .odm/
     odm.config.yaml          # tracked
     odm.lock.yaml            # tracked when present
-    agent-packs.json         # registry
     cache/  log/  progen/<name>/   # typically gitignored
   worktrees/<project>/<slot>/      # NOT under .odm/; typically gitignored
   # Project / Progen trees only where config declares them
@@ -100,5 +98,5 @@ pins:
 
 ## What config does not contain
 
-No top-level: layout templates, worktree slot declarations, agent packs, env
+No top-level: layout templates, worktree slot declarations, env
 profiles, submodule fields, inline Action/Generator bodies.

@@ -4,7 +4,7 @@ System shape for ODM v1 design. Domain terms: root `CONTEXT.md`. Product framing
 
 ## ODM state directory (`.odm/`)
 
-Every Workspace has an **ODM state directory** at `<workspace>/.odm/`. It holds **ODM config and runtime state only**. It does **not** own Project checkouts, Progen stores, Worktree slot trees, or agent pack payloads.
+Every Workspace has an **ODM state directory** at `<workspace>/.odm/`. It holds **ODM config and runtime state only**. It does **not** own Project checkouts, Progen stores, Worktree slot trees, or generator template packages.
 
 ### Layout
 
@@ -40,7 +40,6 @@ Every Workspace has an **ODM state directory** at `<workspace>/.odm/`. It holds 
 - Project **Primary checkouts**
 - **Progen** store roots (Markdown / content)
 - **Worktree slot** working trees (use `worktrees/<project>/<slot>/`)
-- **Agent pack** payloads or agent-home clones (link/install to agent-native paths or other Workspace conventions)
 - User application source “for convenience”
 
 The progen engine may keep its own index next to a store by upstream default. `.odm/progen/<name>/` is only for **ODM-owned** workspace-level cache/index material — not the store itself.
@@ -75,20 +74,20 @@ Presence of an empty `.odm/` without `odm.config.yaml` does **not** count as a W
 
 Outside-in flow for a Workspace:
 
-1. **Human or agent** invokes the `odm` binary.
+1. **Human** invokes the `odm` binary.
 2. **CLI** parses globals and routes commands (`cli.md`).
 3. **Workspace core** loads `.odm/odm.config.yaml` (and pin when present), resolves config **names** to paths, enforces discovery (`--root` or walk).
 4. **Subsystems** (all name-driven from config; none invent undeclared Projects or Progens):
    - **Git lifecycle** — plain clones at Project/Progen paths; pin file; Worktree slots under `worktrees/<project>/<slot>/` (`multi-git.md`).
    - **Progen façade** — scope union → N× single-root progen engine calls; ODM-owned index/cache only under `.odm/progen/<name>/` (`progen.md`).
    - **Actions** — load Action bundle files → shell-out to command bodies.
-   - **Agent packs** (v1 local) — install/link/list into agent-native homes; registry under `.odm/`.
+   - **Generators** — load Generator bundle files → local template copy (v1).
 5. **On disk, not owned as ODM content** — Primary checkouts, Progen stores, worktree slot trees (paths may be managed clones; content is the user’s).
 
 **Edge rule:** Workspace config is the only layout source of truth.
 
 ```text
-human / agent
+human
     │
     ▼
 odm (CLI)
@@ -99,7 +98,7 @@ workspace core  ── reads .odm/odm.config.yaml (+ pin)
     ├── git lifecycle ──► primary checkouts, worktrees/
     ├── progen façade ──► progen stores (+ .odm/progen/<name>/ indexes)
     ├── actions ────────► shell-out (user/Nx/scripts)
-    └── agent packs ────► agent config homes (v1 local)
+    └── generators ─────► local template copy (v1)
 ```
 
 ## Ownership boundaries
@@ -111,7 +110,6 @@ workspace core  ── reads .odm/odm.config.yaml (+ pin)
   - Federation and query scope (`--progen`, `--progen-group`, default-all)
   - CLI surface, exit codes, `--json` shapes
   - Action and Generator dispatch (load bundles and invoke; not necessarily template-engine guts)
-  - Agent-pack install/link into agent homes
   - Gitignore maintenance when `manage_gitignore` is enabled
 - **Progen (crates) owns**
   - Single-store content model, index, query/context internals
@@ -120,7 +118,6 @@ workspace core  ── reads .odm/odm.config.yaml (+ pin)
 - **Shell-out / external owns**
   - `git` for VCS operations (ODM orchestrates; does not reimplement git)
   - Action command bodies (user scripts, Nx targets, etc.)
-  - Agent runtimes and their config homes
   - Optional remote template fetch for generators (sketch)
 - **User owns**
   - Auth, commit policy, content of Projects and Progens
@@ -137,8 +134,6 @@ odm-core               # Workspace, config, pin, discovery, paths
 odm-git                # multi-git lifecycle (shells git)
 odm-progen             # federation/scope + façade over progen crates
 odm-actions            # load/run Action bundles
-# no odm-agent crate yet — agent_pack v1 local lives in odm-core;
-# agent prompt is thin CLI over progen context; agent start lives in odm-actions
 # progen upstream crates (path or vendored) — store / index / query
 # no odm-serve in v1
 ```
@@ -149,7 +144,7 @@ Rules:
 
 - **Depend inward** — `odm` → feature crates → `odm-core`. Progen crates never depend on ODM.
 - **One product binary** — crates are boundaries, not multiple distributeables.
-- **Thin modules until crate earned** — `generate` (v1 local template) and `agent_pack` (v1 local install/link/list) live in `odm-core`; `agent prompt` is a thin CLI alias of context (no separate crate); `agent start` is one-shot exec in `odm-actions` (no dedicated agent crate).
+- **Thin modules until crate earned** — `generate` (v1 local template) lives in `odm-core`.
 - **Non-goal** — deep Serve/MCP (`odm serve`) is out of the v1 design package.
 
 ## Related
@@ -160,5 +155,5 @@ Rules:
 - Progen federation: `progen.md`
 - Worktree slots (v1 + deferred): `worktrees.md`
 - Code↔doc index (sketch): `graph.md`
-- Env / generators / packs: `env-gen-packs.md`
+- Env / generators (mixed depth): `env-generators.md`
 - CLI (`--root`, init): `cli.md`

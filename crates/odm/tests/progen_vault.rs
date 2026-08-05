@@ -135,7 +135,7 @@ fn progen_add_find_context_flow() {
 }
 
 #[test]
-fn generate_lists_empty_and_agent_start_requires_project() {
+fn generate_lists_empty_and_requires_dest() {
     let dir = tempdir().unwrap();
     let root = dir.path().join("ws");
     fs::create_dir_all(&root).unwrap();
@@ -160,97 +160,6 @@ fn generate_lists_empty_and_agent_start_requires_project() {
         .failure()
         .code(1)
         .stderr(predicate::str::contains("--dest"));
-
-    // pack list is implemented (empty registry)
-    odm()
-        .current_dir(&root)
-        .args(["agent", "pack", "list"])
-        .assert()
-        .success()
-        .stdout(predicate::str::contains("(no agent packs)"));
-
-    // agent start requires --project (not a stub)
-    odm()
-        .current_dir(&root)
-        .args(["agent", "start", "true"])
-        .assert()
-        .failure()
-        .code(1)
-        .stderr(predicate::str::contains("project is required"));
-}
-
-#[test]
-fn agent_prompt_is_thin_context_alias() {
-    let dir = tempdir().unwrap();
-    let root = dir.path().join("ws");
-    fs::create_dir_all(&root).unwrap();
-
-    odm()
-        .current_dir(&root)
-        .args(["init", "--no-git", "."])
-        .assert()
-        .success();
-
-    odm()
-        .current_dir(&root)
-        .args(["progen", "add", "desk", "--path", "vaults/desk"])
-        .assert()
-        .success();
-
-    let vault = root.join("vaults/desk");
-    fs::write(
-        vault.join("alpha.md"),
-        "---\nid: a1\ntitle: Alpha\n---\n# Alpha\n\nUniqueZebra and [[Beta]].\n",
-    )
-    .unwrap();
-    fs::write(
-        vault.join("beta.md"),
-        "---\nid: b1\ntitle: Beta\n---\n# Beta\n\nLinked from alpha.\n",
-    )
-    .unwrap();
-
-    odm()
-        .current_dir(&root)
-        .args(["progen", "reindex"])
-        .assert()
-        .success();
-
-    // human: exit 0, stdout includes note id
-    odm()
-        .current_dir(&root)
-        .args(["agent", "prompt", "a1"])
-        .assert()
-        .success()
-        .stdout(predicate::str::contains("a1"));
-
-    // --json: ContextHit shape (anchor.id, outgoing, incoming)
-    let ctx = json_stdout(
-        odm()
-            .current_dir(&root)
-            .args(["--json", "agent", "prompt", "a1"]),
-    );
-    assert_eq!(ctx["anchor"]["id"], "a1");
-    assert!(ctx.get("outgoing").and_then(|v| v.as_array()).is_some());
-    assert!(ctx.get("incoming").and_then(|v| v.as_array()).is_some());
-    let out = ctx["outgoing"].as_array().unwrap();
-    assert!(out.iter().any(|h| h["id"] == "b1" || h["title"] == "Beta"));
-
-    // unknown id → exit 4
-    odm()
-        .current_dir(&root)
-        .args(["agent", "prompt", "nope-missing"])
-        .assert()
-        .failure()
-        .code(4);
-
-    // agent start requires --project (not a stub)
-    odm()
-        .current_dir(&root)
-        .args(["agent", "start", "true"])
-        .assert()
-        .failure()
-        .code(1)
-        .stderr(predicate::str::contains("project is required"));
 }
 
 #[test]

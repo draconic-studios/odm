@@ -150,28 +150,6 @@ fn setup_unknown_action() -> (TempDir, Vec<String>) {
     (dir, with_root(&root, &["run", "nope"]))
 }
 
-fn setup_missing_pack_source() -> (TempDir, Vec<String>) {
-    let dir = tempdir().unwrap();
-    let root = dir.path().join("ws");
-    init_ws(&root);
-    let home = root.join("home");
-    fs::create_dir_all(&home).unwrap();
-    (
-        dir,
-        with_root(
-            &root,
-            &[
-                "agent",
-                "pack",
-                "install",
-                "packs/missing",
-                "--home",
-                home.to_str().unwrap(),
-            ],
-        ),
-    )
-}
-
 fn setup_generate_nonempty() -> (TempDir, Vec<String>) {
     let dir = tempdir().unwrap();
     let root = dir.path().join("ws");
@@ -258,13 +236,6 @@ fn setup_unknown_note() -> (TempDir, Vec<String>) {
     (dir, with_root(&root, &["context", "nope-missing-id"]))
 }
 
-fn setup_agent_start_missing_project() -> (TempDir, Vec<String>) {
-    let dir = tempdir().unwrap();
-    let root = dir.path().join("ws");
-    init_ws(&root);
-    (dir, with_root(&root, &["agent", "start", "true"]))
-}
-
 fn setup_missing_wt() -> (TempDir, Vec<String>) {
     let dir = tempdir().unwrap();
     let root = dir.path().join("ws");
@@ -322,12 +293,6 @@ const CASES: &[Case] = &[
         build: setup_unknown_action,
     },
     Case {
-        name: "missing_pack_source",
-        exit: 4,
-        json: JsonExpect::ErrorEnvelope("not_found"),
-        build: setup_missing_pack_source,
-    },
-    Case {
         name: "generate_nonempty_without_force",
         exit: 3,
         json: JsonExpect::ErrorEnvelope("operation"),
@@ -350,12 +315,6 @@ const CASES: &[Case] = &[
         exit: 4,
         json: JsonExpect::ErrorEnvelope("not_found"),
         build: setup_unknown_note,
-    },
-    Case {
-        name: "agent_start_missing_project",
-        exit: 1,
-        json: JsonExpect::ErrorEnvelope("usage"),
-        build: setup_agent_start_missing_project,
     },
     Case {
         name: "missing_wt_slot_on_run",

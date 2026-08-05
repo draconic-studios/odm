@@ -107,7 +107,7 @@ odm generate <name> --dest <rel-path> [--force] [--dry-run] [--json]
 { "generator": "hello", "dest": "out/hello", "copied": 3, "dry_run": false }
 ```
 
-### Agent pattern
+### JSON pattern
 
 ```bash
 odm generate --json

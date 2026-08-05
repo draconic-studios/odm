@@ -21,7 +21,7 @@ A named, config-only grouping of Progen names used as a query/context scope. Not
 _Avoid_: combo, bundle, profile (for this concept), federation (as the entity name)
 
 **ODM state directory**:
-The Workspace-local `.odm/` tree holding ODM config and runtime state only (config, pin, caches, logs, ODM-side progen indexes). Does not own Project checkouts, Progen stores, Worktree slots (`worktrees/`), or agent pack payloads. Layout: `docs/reference/architecture.md`.
+The Workspace-local `.odm/` tree holding ODM config and runtime state only (config, pin, caches, logs, ODM-side progen indexes). Does not own Project checkouts, Progen stores, or Worktree slots (`worktrees/`). Layout: `docs/reference/architecture.md`.
 _Avoid_: workspace root (for this path), progen root, plugin home (legacy Go sense)
 
 **Primary checkout**:
@@ -29,12 +29,8 @@ A Project’s main working tree at its config path. Implicit — not a separate 
 _Avoid_: main worktree (as a competing formal name), default clone
 
 **Worktree slot**:
-A named, ODM-managed git worktree placement for parallel or agent work on a Project — separate from that Project’s Primary checkout. On disk at `worktrees/<project>/<slot>/` (not under `.odm/`). Bound to a git branch; branch itself stays plain git vocabulary.
+A named, ODM-managed git worktree placement for parallel or agent work on a Project — separate from that Project's Primary checkout. On disk at `worktrees/<project>/<slot>/` (not under `.odm/`). Bound to a git branch; branch itself stays plain git vocabulary.
 _Avoid_: branch (as the ODM entity), sandbox, clone (for this concept), workspace branch
-
-**Agent pack**:
-A portable bundle of agent-facing assets (skills, prompts, conventions, Workspace links) that ODM installs or links for coding agents. Skills may originate from repos or marketplaces. Not a Progen and not a Project.
-_Avoid_: plugin (legacy Go sense), extension pack (unless we later alias it)
 
 **Workspace config**:
 The sole layout source of truth for a Workspace (canonically `.odm/odm.config.yaml`): Projects, Progens, Progen groups, actions, and related declarations. Lives under the ODM state directory with other ODM config/state — not at Workspace root.

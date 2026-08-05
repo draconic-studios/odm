@@ -165,16 +165,13 @@ if [[ "${TEMP:-}" == "1" ]]; then
   cp -R "$TODO_SRC" "$DESK"
   rm -rf "$DESK/projects" "$DESK/progens/sheets" "$DESK/worktrees" "$DESK/out" \
     "$DESK/.odm/odm.lock.yaml" "$DESK/.odm/progen" "$DESK/.odm/cache" \
-    "$DESK/.odm/log" "$DESK/.odm/agent-packs.json"
+    "$DESK/.odm/log"
   git -C "$DESK" init -q
   git -C "$DESK" config user.email "probe@example.com"
   git -C "$DESK" config user.name "todo-probe"
 else
   DESK="$TODO_SRC"
 fi
-
-AGENT_HOME="${AGENT_HOME:-$DESK/out/agent-home}"
-mkdir -p "$AGENT_HOME" "$DESK/out"
 
 odm() {
   "$ODM" --root "$DESK" "$@"
@@ -235,7 +232,6 @@ out="$(expect_exit 0 "status human" odm status)"
 out="$(expect_exit 0 "status --json" odm --json status)"
 expect_match "status projects" 'tip-top' "$out"
 expect_match "status progens" 'desk|sheets' "$out"
-expect_match "status agent_packs key" 'agent_packs' "$out"
 out="$(expect_exit 0 "doctor" odm doctor)"
 out="$(expect_exit 0 "doctor --json" odm --json doctor)"
 out="$(expect_exit 0 "doctor --fix" odm doctor --fix)"
@@ -350,7 +346,7 @@ log "$(echo "$out" | head -20)"
 out="$(expect_exit 0 "progen tree sheets" odm progen tree --progen sheets)"
 
 # ---------------------------------------------------------------------------
-phase "7 find / context / agent prompt"
+phase "7 find / context"
 # ---------------------------------------------------------------------------
 out="$(expect_exit 0 "find welcome token" odm find TodoWelcomeToken)"
 expect_match "find welcome" 'welcome' "$out"
@@ -375,11 +371,6 @@ expect_match "context json neighborhood" 'anchor|outgoing|incoming' "$out"
 expect_exit 4 "context missing" odm context missing-id --progen desk
 expect_exit 1 "context multi without scope" odm context welcome
 expect_exit 1 "context conflict prefix" odm context desk:welcome --progen sheets
-
-out="$(expect_exit 0 "agent prompt" odm agent prompt welcome --progen desk)"
-out="$(expect_exit 0 "agent prompt name:id" odm agent prompt desk:welcome)"
-out="$(expect_exit 0 "agent prompt --json" odm --json agent prompt welcome --progen desk)"
-expect_exit 4 "agent prompt missing" odm agent prompt missing --progen desk
 
 # ---------------------------------------------------------------------------
 phase "8 run actions"
@@ -423,51 +414,13 @@ expect_exit 1 "generate unknown" odm generate nope --dest out/x
 expect_exit 2 "generate dest escape" odm generate note --dest ../outside
 
 # ---------------------------------------------------------------------------
-phase "10 agent packs"
-# ---------------------------------------------------------------------------
-rm -rf "$AGENT_HOME/todo-desk"
-out="$(expect_exit 0 "pack install" odm agent pack install agent-packs/todo-desk --home "$AGENT_HOME")"
-[[ -d "$AGENT_HOME/todo-desk" ]] && record_pass "install dir" || record_fail "install dir missing"
-out="$(expect_exit 0 "pack list" odm agent pack list)"
-expect_match "list todo-desk" 'todo-desk' "$out"
-out="$(expect_exit 0 "pack list --json" odm --json agent pack list)"
-expect_match "json packs" 'todo-desk|install' "$out"
-out="$(expect_exit 0 "status shows packs" odm --json status)"
-expect_match "status agent_packs" 'todo-desk' "$out"
-expect_exit 3 "pack install exists no force" odm agent pack install agent-packs/todo-desk --home "$AGENT_HOME"
-out="$(expect_exit 0 "pack install --force" odm agent pack install agent-packs/todo-desk --home "$AGENT_HOME" --force)"
-out="$(expect_exit 0 "pack rm" odm agent pack rm todo-desk)"
-out="$(expect_exit 0 "pack list empty-ish" odm agent pack list)"
-expect_exit 4 "pack rm unknown" odm agent pack rm no-such-pack
-expect_exit 4 "pack install missing source" odm agent pack install agent-packs/missing --home "$AGENT_HOME"
-
-out="$(expect_exit 0 "pack link" odm agent pack link agent-packs/todo-desk --home "$AGENT_HOME")"
-[[ -L "$AGENT_HOME/todo-desk" ]] && record_pass "link is symlink" || record_fail "link not symlink"
-out="$(expect_exit 0 "pack list link" odm agent pack list)"
-# missing pack warn: remove dest out from under registry
-rm -rf "$AGENT_HOME/todo-desk"
-out="$(expect_exit 0 "pack list missing" odm agent pack list)"
-expect_match "missing suffix" 'missing' "$out"
-out="$(expect_exit 0 "doctor pack_missing" odm doctor)"
-note "doctor should warn pack_missing:todo-desk when dest gone"
-out="$(expect_exit 0 "status missing pack" odm --json status)"
-out="$(expect_exit 0 "pack rm after missing" odm agent pack rm todo-desk)"
-
-# ---------------------------------------------------------------------------
-phase "11 agent start (one-shot)"
-# ---------------------------------------------------------------------------
-expect_exit 0 "agent start true" odm --project tip-top agent start -- true
-expect_exit 1 "agent start false passthrough" odm --project tip-top agent start -- false
-expect_exit 1 "agent start missing project" odm agent start -- true
-
-# ---------------------------------------------------------------------------
-phase "12 json error envelope"
+phase "10 json error envelope"
 # ---------------------------------------------------------------------------
 out="$(expect_exit 1 "json usage error" odm --json not-a-cmd)" || true
 expect_match "json error envelope" '"ok":\s*false|"error"' "$out" || note "json error shape: $out"
 
 # ---------------------------------------------------------------------------
-phase "13 project add/rm roundtrip (local only fixture)"
+phase "11 project add/rm roundtrip (local only fixture)"
 # ---------------------------------------------------------------------------
 # add a path-only project pointing at a tiny local git repo we create under out/
 LOCAL_GIT="$DESK/out/local-fixture.git"
@@ -504,7 +457,7 @@ out="$(expect_exit 0 "progen rm extra" odm progen rm extra)"
 [[ -d "$DESK/out/extra-vault" ]] && record_pass "progen rm kept path" || record_fail "progen rm deleted path"
 
 # ---------------------------------------------------------------------------
-phase "14 cleanliness of real remotes"
+phase "12 cleanliness of real remotes"
 # ---------------------------------------------------------------------------
 for p in tip-top cheat-key portfolio rss-td-game; do
   assert_clean "$DESK/projects/$p"
@@ -518,9 +471,9 @@ for p in tip-top cheat-key portfolio rss-td-game; do
 done
 
 # ---------------------------------------------------------------------------
-phase "15 help surfaces"
+phase "13 help surfaces"
 # ---------------------------------------------------------------------------
-for cmd in "" project progen pin agent "agent pack" "project worktree" generate run find context; do
+for cmd in "" project progen pin "project worktree" generate run find context; do
   if [[ -z "$cmd" ]]; then
     out="$(expect_exit 0 "help root" odm --help)"
   else

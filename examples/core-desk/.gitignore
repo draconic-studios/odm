@@ -2,10 +2,9 @@
 /projects/
 .odm/odm.lock.yaml
 
-# Dogfood debris (worktrees, generate out, progen indexes, caches, pack registry)
+# Dogfood debris (worktrees, generate out, progen indexes, caches)
 worktrees/
 out/
 .odm/progen/
 .odm/cache/
 .odm/log/
-.odm/agent-packs.json

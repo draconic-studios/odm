@@ -3,8 +3,8 @@ name: odm-cli
 description: >
   Run and reason about the odm CLI (Orchestrated Development Management) in any
   Workspace — init, status, doctor, sync, pin, project, worktree, progen, find,
-  context, run, generate, agent pack/prompt/start. Use when the user mentions
-  odm, Workspace, Progen, pin apply, worktree slots, agent packs, or
+  context, run, generate. Use when the user mentions
+  odm, Workspace, Progen, pin apply, worktree slots, or
   `.odm/odm.config.yaml`.
 allowed-tools: Bash(odm:*)
 ---
@@ -45,7 +45,6 @@ odm pin status --json
 - **Pin file** — `.odm/odm.lock.yaml` locked SHAs for managed (`url`) entries.
 - **Action** — named task from action bundles; only via `odm run`.
 - **Generator** — local template scaffold; via `odm generate`.
-- **Agent pack** — skills/prompts bundle installed/linked into an agent home.
 
 Full glossary: [references/glossary.md](references/glossary.md)
 
@@ -91,13 +90,12 @@ JSON error envelope:
 | **1** | usage (bad flags, unknown name, clap parse) |
 | **2** | Workspace / config |
 | **3** | operation failed (git, pin, dirty without force, …) |
-| **4** | not found (note id, pack, missing `--wt` slot, …) |
+| **4** | not found (note id, missing `--wt` slot, …) |
 
 **Passthrough** (may be outside 0–4) after successful spawn:
 
 - `odm run <action>` → action exit
 - `odm project git …` → git exit
-- `odm agent start -- …` → child exit
 
 ## Commands
 
@@ -165,7 +163,6 @@ odm project worktree prune --all [--force]
 # bind commands to a slot (must already exist — never auto-created)
 odm --project api --wt feat project git api -- status
 odm --project api --wt feat run test
-odm --project api --wt feat agent start -- npm test
 ```
 
 Missing slot → exit **4**. Prefer `--branch` on `worktree add` when Primary
@@ -199,7 +196,6 @@ odm find --progen notes                 # empty query = list scoped notes
 odm find foo --progen-group core
 odm context welcome --progen notes --json
 odm context notes:welcome --json
-odm agent prompt notes:welcome --json   # thin alias of context
 ```
 
 Find is **FTS5 whole tokens** (whitespace = AND), not substring/prefix.
@@ -224,22 +220,6 @@ odm generate hello --dest out/hello --force   # non-empty dest
 Actions are **only** via `odm run` (never top-level verbs). Url-only
 generators list OK; run is deferred (exit 1).
 
-### Agent packs and start
-
-```bash
-odm agent pack list --json
-odm agent pack install path/to/pack --home ~/.agents/skills [--force]
-odm agent pack link path/to/pack --home ~/.claude/skills [--force]
-odm agent pack rm packname
-
-# one-shot exec in Project (or slot) cwd — --project required
-odm --project api agent start -- true
-odm --project api --wt feat --json agent start -- npm test
-```
-
-`agent start` does **not** auto-install packs or compose prompts. No default
-agent binary — caller always passes program + args.
-
 ## Hard rules
 
 1. **Config is sole layout truth** — never invent undeclared Projects/Progens.
@@ -260,13 +240,11 @@ Need layout / health?     → status, doctor, pin status, project|progen list|in
 Bootstrap empty dir?      → init
 Add code/docs repos?      → project add / progen add → sync → pin status
 Lock / restore SHAs?      → pin apply [--force]
-Parallel agent branch?    → worktree add → --wt <slot> on git|run|start
-Search notes?             → find (federated) / context|agent prompt (one note)
+Parallel agent branch?    → worktree add → --wt <slot> on git|run
+Search notes?             → find (federated) / context (one note)
 Read note body?           → progen get|body|ls|tree|backlinks
 Run workspace task?       → run <action>
 Scaffold files?           → generate <name> --dest …
-Install agent skills?     → agent pack install|link --home …
-Exec tool in project cwd? → --project … agent start -- <prog> …
 ```
 
 ## Example workflows
@@ -286,7 +264,6 @@ odm find "architecture" --limit 10 --json
 ```bash
 odm project worktree add api feat-x --branch feat/x
 odm --project api --wt feat-x project git api -- status
-odm --project api --wt feat-x agent start -- npm test
 odm project worktree rm api feat-x
 ```
 
@@ -303,7 +280,6 @@ odm progen body welcome --progen notes
 - `odm serve`, MCP, long-running agent sessions
 - `init --interactive`
 - Remote generators / template vars / prompts
-- Pack marketplace / pack manifests / auto-apply on start
 - Runtime matrix (no default claude/cursor binary)
 - Reserved progen verbs: `refs`, `task`, `archive`, `watch`, …
 - Path-valued `--project` / `--root-path` legacy flags
@@ -316,5 +292,4 @@ odm progen body welcome --progen notes
 - **Projects, git, worktrees** — [references/projects-git-worktrees.md](references/projects-git-worktrees.md)
 - **Progens, find, context** — [references/progens-find-context.md](references/progens-find-context.md)
 - **Actions and generate** — [references/actions-generate.md](references/actions-generate.md)
-- **Agent packs / prompt / start** — [references/agent-packs.md](references/agent-packs.md)
 - **Troubleshooting** — [references/troubleshooting.md](references/troubleshooting.md)

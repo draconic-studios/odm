@@ -12,7 +12,7 @@ Allowed:
 - `odm sync` / `odm pin status` / `odm pin apply` (local detached HEAD only)
 - `odm project git <name> -- status|log|rev-parse|branch` (read-only)
 - worktree add/list/prune (local slots only; never push slot branches)
-- progen reindex / find / context / agent prompt
+- progen reindex / find / context
 
 Forbidden:
 

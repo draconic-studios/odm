@@ -18,12 +18,12 @@ Prefer `--json` so you can read `error.code` / `error.message` / `error.detail`.
 | Code | `error.code` | Typical causes |
 |------|--------------|----------------|
 | 0 | — | Success; `find` with zero hits |
-| 1 | `usage` | Bad flags, unknown entity/action/generator, conflicting `--wt`, `init -i`, empty `agent start` program |
+| 1 | `usage` | Bad flags, unknown entity/action/generator, conflicting `--wt`, `init -i` |
 | 2 | `workspace` | Not a Workspace, invalid YAML/config, missing bundle path, bad pin file |
-| 3 | `operation` | Git/pin/store/generate failure; dirty tree without `--force`; non-empty generate dest; pack dest exists; prune left nonempty orphans |
-| 4 | `not_found` | Unknown note id; missing pack source/name; missing worktree slot; missing pin file on apply |
+| 3 | `operation` | Git/pin/store/generate failure; dirty tree without `--force`; non-empty generate dest; prune left nonempty orphans |
+| 4 | `not_found` | Unknown note id; missing worktree slot; missing pin file on apply |
 
-Passthrough after spawn: `run`, `project git`, `agent start` may exit outside 0–4.
+Passthrough after spawn: `run`, `project git` may exit outside 0–4.
 
 ## Common failures
 
@@ -60,17 +60,12 @@ Passthrough after spawn: `run`, `project git`, `agent start` may exit outside 0�
 
 ### Multiple Progens — get/body/context fails
 
-- Pass `--progen <name>` or use `name:id` for context/prompt.
+- Pass `--progen <name>` or use `name:id` for context.
 
 ### `generate` refuses non-empty dest
 
 - Preview: `--dry-run`.
 - Overwrite: `--force`.
-
-### Agent pack `missing` in status/doctor
-
-- Dest path gone or never created.
-- Re-`install`/`link`, or `odm agent pack rm <name>` to clear registry.
 
 ### `init` refuses
 
@@ -89,8 +84,8 @@ Passthrough after spawn: `run`, `project git`, `agent start` may exit outside 0�
 
 | Command | Scope |
 |---------|--------|
-| `odm doctor` | ODM-side: config, gitignore, pin basics, worktree orphan/dirty warns, pack_missing |
-| `odm doctor --fix` | Mechanical ODM repairs only — no destructive git, no orphan delete, no pack rm |
+| `odm doctor` | ODM-side: config, gitignore, pin basics, worktree orphan/dirty warns |
+| `odm doctor --fix` | Mechanical ODM repairs only — no destructive git, no orphan delete |
 | `odm progen doctor` | Store-side: vault path + index health |
 
 ## When docs disagree with the binary

@@ -89,12 +89,10 @@ Works for:
 
 - `odm project git <name> --wt <slot> -- …`
 - `odm --project <name> --wt <slot> run <action>`
-- `odm --project <name> --wt <slot> agent start -- <prog> …`
 
 ```bash
-# parallel agent work
+# parallel work on a slot
 odm project worktree add api agent-1 --branch agent/1
-odm --project api --wt agent-1 agent start -- npm test
 odm --project api --wt agent-1 project git api -- status
 ```
 

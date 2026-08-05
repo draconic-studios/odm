@@ -10,7 +10,7 @@ Humans and agents are equal primary users of the same **Workspace**.
 
 - **Shared job** — one desk for code, memory, and agent work, declared in config.
 - **Humans** — CLI, Workspace config, sync/pin/status/doctor, actions.
-- **Agents** — agent packs, worktree slots, and progen context on that same desk.
+- **Agents** — worktree slots and progen context on that same desk.
 
 Not an AI-first tool that humans can also use.
 
@@ -18,14 +18,14 @@ Not an AI-first tool that humans can also use.
 
 - **Many checkouts, one desk** — declare Projects and Progens in config; plain clones and pins; no submodule lifecycle.
 - **Memory is multi-store** — orchestrate several Progens (scope and federation) without pretending one vault is the world.
-- **Agents share the desk** — packs and worktree slots so agent work lands in known places, not ad-hoc clones.
+- **Agents share the desk** — worktree slots so agent work lands in known places, not ad-hoc clones.
 - **One binary UX** — humans and agents do not learn a separate progen CLI or a plugin zoo.
 
 ## Instead of…
 
 - **Git submodules** — plain clones and an optional pin file; layout lives in Workspace config.
 - **One mega-vault** — many Progens, ODM-scoped query; no cross-store wikilinks inside a store.
-- **Ad-hoc agent clones** — declared Projects, worktree slots, and agent packs on one desk.
+- **Ad-hoc agent clones** — declared Projects and worktree slots on one desk.
 
 ## Non-goals
 
@@ -38,9 +38,9 @@ Not an AI-first tool that humans can also use.
 
 ## Ownership (summary)
 
-- **ODM** — Workspace, config, pin, multi-git lifecycle, progen federation/scope, CLI UX, action/generator dispatch, agent-pack install/link, `.odm/` and `worktrees/` placement.
+- **ODM** — Workspace, config, pin, multi-git lifecycle, progen federation/scope, CLI UX, action/generator dispatch, `.odm/` and `worktrees/` placement.
 - **Progen (crates)** — single-store content, index, query/context internals; store verbs under `odm progen …`.
-- **Shell-out** — `git`; action command bodies; agent runtimes and their config homes.
+- **Shell-out** — `git`; action command bodies.
 - **User** — auth, commit policy, content of Projects and Progens.
 
 Full boundary table and crate intent: `architecture.md`.

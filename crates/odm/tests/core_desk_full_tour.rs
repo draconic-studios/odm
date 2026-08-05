@@ -87,10 +87,8 @@ fn core_desk_full_tour() {
     if skip_without_git() {
         return;
     }
-    let (dir, root) = setup_temp_core_desk();
+    let (_dir, root) = setup_temp_core_desk();
     let root_s = root.to_str().unwrap();
-    let home = dir.path().join("agent-home");
-    let home_s = home.to_str().unwrap();
 
     // 1. sync + reindex
     odm()
@@ -147,7 +145,7 @@ fn core_desk_full_tour() {
     assert_eq!(ops_hits[0]["id"], "ops-note");
     assert_eq!(ops_hits[0]["progen"], "ops");
 
-    // 3. context welcome + agent prompt welcome JSON anchor id
+    // 3. context welcome JSON anchor id
     let ctx = json_stdout(odm().args([
         "--root",
         root_s,
@@ -160,18 +158,6 @@ fn core_desk_full_tour() {
     assert_eq!(ctx["anchor"]["id"], "welcome");
     assert!(ctx.get("outgoing").and_then(|v| v.as_array()).is_some());
     assert!(ctx.get("incoming").and_then(|v| v.as_array()).is_some());
-
-    let prompt = json_stdout(odm().args([
-        "--root",
-        root_s,
-        "--json",
-        "agent",
-        "prompt",
-        "welcome",
-        "--progen",
-        "notes",
-    ]));
-    assert_eq!(prompt["anchor"]["id"], "welcome");
 
     // 4. progen get / body / tree / ls / backlinks on seeded ids
     let get = json_stdout(odm().args([
@@ -309,37 +295,7 @@ fn core_desk_full_tour() {
         .assert()
         .success();
 
-    // 7. agent pack link + list
-    odm()
-        .args([
-            "--root",
-            root_s,
-            "agent",
-            "pack",
-            "link",
-            "agent-packs/demo",
-            "--home",
-            home_s,
-        ])
-        .assert()
-        .success()
-        .stdout(predicate::str::contains("linked demo"));
-
-    let packs = json_stdout(odm().args([
-        "--root",
-        root_s,
-        "--json",
-        "agent",
-        "pack",
-        "list",
-    ]));
-    let pack_list = packs["packs"].as_array().expect("packs");
-    assert_eq!(pack_list.len(), 1);
-    assert_eq!(pack_list[0]["name"], "demo");
-    assert_eq!(pack_list[0]["mode"], "link");
-    assert_eq!(pack_list[0]["missing"].as_bool(), Some(false));
-
-    // 8. generate --force after first materialize
+    // 7. generate --force after first materialize
     let dest = root.join("out/hello");
     odm()
         .args([

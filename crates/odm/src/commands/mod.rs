@@ -1,7 +1,5 @@
 //! Library command handlers returning presentable DTOs.
 
-mod agent_pack;
-mod agent_start;
 mod find;
 mod generate;
 mod materialize;
@@ -11,14 +9,6 @@ mod run;
 mod worktree;
 mod workspace;
 
-pub use agent_pack::{
-    format_pack_install_human, format_pack_link_human, format_pack_list_human, format_pack_rm_human,
-    install_cmd as pack_install_cmd, link_cmd as pack_link_cmd, list_cmd as pack_list_cmd,
-    pack_list_dto, rm_cmd as pack_rm_cmd, PackEntryDto, PackListDto,
-};
-pub use agent_start::{
-    agent_start_dto, finish_start, start_cmd, AgentStartDto, StartOutcome,
-};
 pub use find::{find_cmd, find_notes_dto, FindDto};
 pub use generate::{
     format_generate_run_human, format_generator_list_human, generate_cmd, list_generators_dto,

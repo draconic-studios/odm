@@ -1,10 +1,9 @@
-//! Workspace inventory sample — worktree slots/orphans and agent packs once.
+//! Workspace inventory sample — worktree slots/orphans.
 
 use std::collections::BTreeSet;
 
 use odm_git::Git;
 
-use crate::agent_pack::{pack_list, PackEntry};
 use crate::config::Workspace;
 use crate::error::OdmError;
 use crate::worktree::{
@@ -62,27 +61,6 @@ pub fn observe_worktree_registered_names<R: odm_git::CommandRunner>(
     worktree_registered_names(git, ws, project)
 }
 
-/// One pack row with the shared missing fact.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct PackInventoryEntry {
-    pub entry: PackEntry,
-    pub missing: bool,
-}
-
-/// Sample agent packs with missing fact. Soft-fail registry errors → empty.
-pub fn observe_agent_packs(ws: &Workspace) -> Vec<PackInventoryEntry> {
-    match pack_list(ws) {
-        Ok(entries) => entries
-            .into_iter()
-            .map(|e| {
-                let missing = e.is_missing();
-                PackInventoryEntry { entry: e, missing }
-            })
-            .collect(),
-        Err(_) => vec![],
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -98,7 +76,7 @@ mod tests {
     use tempfile::tempdir;
 
     use crate::config::{ProjectEntry, WorkspaceConfig};
-    use crate::paths::{agent_packs_path, worktree_slot_path};
+    use crate::paths::worktree_slot_path;
 
     #[cfg(unix)]
     use std::os::unix::process::ExitStatusExt;
@@ -208,28 +186,10 @@ mod tests {
         }
     }
 
-    fn empty_ws(root: PathBuf) -> Workspace {
-        Workspace {
-            root,
-            config: WorkspaceConfig {
-                manage_gitignore: Some(false),
-                ..Default::default()
-            },
-            actions: BTreeMap::new(),
-            generators: BTreeMap::new(),
-        }
-    }
-
     fn ensure_primary(root: &Path, rel: &str) -> PathBuf {
         let p = root.join(rel);
         fs::create_dir_all(&p).unwrap();
         p
-    }
-
-    fn write_registry(root: &Path, json: &str) {
-        let odm = root.join(".odm");
-        fs::create_dir_all(&odm).unwrap();
-        fs::write(agent_packs_path(root), json).unwrap();
     }
 
     #[test]
@@ -307,67 +267,5 @@ mod tests {
             "must not dirty-probe: {:?}",
             *args
         );
-    }
-
-    #[test]
-    fn pack_missing_present_and_absent() {
-        let dir = tempdir().unwrap();
-        let root = dir.path();
-        let live = root.join("home/live");
-        fs::create_dir_all(&live).unwrap();
-        let gone = root.join("home/gone");
-        let json = format!(
-            r#"[
-              {{"name":"gone","source":"s/g","path":"{}","mode":"install"}},
-              {{"name":"live","source":"s/l","path":"{}","mode":"install"}}
-            ]"#,
-            gone.display(),
-            live.display()
-        );
-        write_registry(root, &json);
-        let ws = empty_ws(root.to_path_buf());
-        let packs = observe_agent_packs(&ws);
-        assert_eq!(packs.len(), 2);
-        assert_eq!(packs[0].entry.name, "gone");
-        assert!(packs[0].missing);
-        assert_eq!(packs[1].entry.name, "live");
-        assert!(!packs[1].missing);
-    }
-
-    #[test]
-    fn pack_dangling_symlink_not_missing() {
-        let dir = tempdir().unwrap();
-        let root = dir.path();
-        let home = root.join("home");
-        fs::create_dir_all(&home).unwrap();
-        let dest = home.join("link-pack");
-        #[cfg(unix)]
-        {
-            std::os::unix::fs::symlink(root.join("no-such-target"), &dest).unwrap();
-        }
-        #[cfg(not(unix))]
-        {
-            if std::os::windows::fs::symlink_dir(root.join("no-such-target"), &dest).is_err() {
-                return;
-            }
-        }
-        let json = format!(
-            r#"[{{"name":"link-pack","source":"s","path":"{}","mode":"link"}}]"#,
-            dest.display()
-        );
-        write_registry(root, &json);
-        let ws = empty_ws(root.to_path_buf());
-        let packs = observe_agent_packs(&ws);
-        assert_eq!(packs.len(), 1);
-        assert!(!packs[0].missing);
-        assert!(!packs[0].entry.is_missing());
-    }
-
-    #[test]
-    fn pack_corrupt_registry_soft_empty() {
-        let dir = tempdir().unwrap();
-        write_registry(dir.path(), "not-json{{{");
-        let ws = empty_ws(dir.path().to_path_buf());
-        assert!(observe_agent_packs(&ws).is_empty());
     }
 }

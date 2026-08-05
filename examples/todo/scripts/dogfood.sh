@@ -109,13 +109,11 @@ cleanup() {
 trap cleanup EXIT
 
 DESK="$TMP/todo"
-AGENT_HOME="$TMP/agent-home"
-mkdir -p "$AGENT_HOME"
 cp -R "$TODO_SRC" "$DESK"
 # Drop prior local debris if source was already dogfooded in-tree
 rm -rf "$DESK/projects" "$DESK/progens/sheets" "$DESK/worktrees" "$DESK/out" \
   "$DESK/.odm/odm.lock.yaml" "$DESK/.odm/progen" "$DESK/.odm/cache" \
-  "$DESK/.odm/log" "$DESK/.odm/agent-packs.json"
+  "$DESK/.odm/log"
 
 git -C "$DESK" init -q
 git -C "$DESK" config user.email "todo-dogfood@example.com"
@@ -206,11 +204,9 @@ assert_match "$out" 'rules' "find --progen desk"
 out="$(odm find token --progen-group all-docs)"
 assert_match "$out" 'welcome|desk-readme|rules|projects-map' "find --progen-group all-docs"
 
-phase "context / agent prompt"
+phase "context"
 out="$(odm context welcome --progen desk)"
 assert_match "$out" 'welcome' "context"
-out="$(odm agent prompt welcome --progen desk)"
-assert_match "$out" 'welcome' "agent prompt"
 out="$(odm context desk:welcome)"
 assert_match "$out" 'welcome' "context name:id"
 
@@ -238,22 +234,6 @@ odm generate note --dest out/note
 [[ -f "$DESK/out/note/note.md" ]] || die "generate did not write note.md"
 odm generate note --dest out/note --force
 expect_exit 1 odm generate remote-deferred --dest out/remote
-
-phase "agent pack install / list / link / rm"
-odm agent pack install agent-packs/todo-desk --home "$AGENT_HOME"
-out="$(odm agent pack list)"
-assert_match "$out" 'todo-desk' "pack list after install"
-odm agent pack rm todo-desk
-out="$(odm agent pack list)"
-assert_no_match "$out" '^todo-desk([[:space:]]|$)' "pack list still has todo-desk after rm"
-odm agent pack link agent-packs/todo-desk --home "$AGENT_HOME"
-out="$(odm agent pack list)"
-assert_match "$out" 'todo-desk' "pack list after link"
-odm agent pack rm todo-desk
-
-phase "agent start (one-shot)"
-expect_exit 0 odm --project tip-top agent start -- true
-expect_exit 1 odm --project tip-top agent start -- false
 
 phase "final cleanliness (no dirty remotes)"
 for p in tip-top cheat-key portfolio rss-td-game; do

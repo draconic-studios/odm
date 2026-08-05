@@ -10,9 +10,8 @@ use std::sync::{Arc, Mutex};
 use odm_git::{CommandOutput, CommandRunner, Git};
 use tempfile::tempdir;
 
-use crate::agent_pack::PackMode;
 use crate::config::{ProjectEntry, ProgenEntry, WorkspaceConfig};
-use crate::paths::{agent_packs_path, worktree_slot_path};
+use crate::paths::worktree_slot_path;
 
 #[cfg(unix)]
 use std::os::unix::process::ExitStatusExt;
@@ -134,21 +133,6 @@ fn ensure_primary_plain(root: &Path, rel: &str) -> PathBuf {
     let p = root.join(rel);
     fs::create_dir_all(&p).unwrap();
     p
-}
-
-fn empty_ws(root: PathBuf) -> Workspace {
-    Workspace {
-        root,
-        config: WorkspaceConfig::default(),
-        actions: BTreeMap::new(),
-        generators: BTreeMap::new(),
-    }
-}
-
-fn write_registry(root: &Path, json: &str) {
-    let odm = root.join(".odm");
-    fs::create_dir_all(&odm).unwrap();
-    fs::write(agent_packs_path(root), json).unwrap();
 }
 
 fn ws_project_and_progen(root: PathBuf) -> Workspace {
@@ -279,7 +263,6 @@ fn build_status_includes_registered_worktree_slots() {
     assert_eq!(v["projects"][0]["worktree_slots"][0]["dirty"], false);
     assert!(v["progens"][0].get("worktree_slots").is_none());
     assert!(v["progens"][0].get("worktree_orphans").is_none());
-    assert!(v["agent_packs"].is_array());
     // no orphan dirs on disk → empty array present
     assert_eq!(
         p.worktree_orphans.as_ref().expect("project orphans").as_slice(),
@@ -498,7 +481,6 @@ fn format_status_human_shows_slots_when_non_empty() {
             worktree_orphans: Some(vec![]),
         }],
         progens: vec![],
-        agent_packs: vec![],
     };
     let human = format_status_human(&snap);
     assert!(human.contains("worktrees: a, b dirty"), "{human}");
@@ -536,7 +518,6 @@ fn format_status_human_silent_when_slots_empty() {
             worktree_slots: None,
             worktree_orphans: None,
         }],
-        agent_packs: vec![],
     };
     let human = format_status_human(&snap);
     assert!(!human.contains("worktrees"), "{human}");
@@ -575,7 +556,6 @@ fn format_status_human_shows_orphans_when_non_empty() {
             ]),
         }],
         progens: vec![],
-        agent_packs: vec![],
     };
     let human = format_status_human(&snap);
     assert!(human.contains("worktrees: keep"), "{human}");
@@ -587,211 +567,11 @@ fn format_status_human_shows_orphans_when_non_empty() {
 }
 
 #[test]
-fn build_status_present_pack_missing_false() {
-    let dir = tempdir().unwrap();
-    let root = dir.path();
-    let dest = root.join("agent-home/live-pack");
-    fs::create_dir_all(&dest).unwrap();
-    let json = format!(
-        r#"[{{"name":"live-pack","source":"src/live","path":"{}","mode":"install"}}]"#,
-        dest.display()
-    );
-    write_registry(root, &json);
-    let ws = empty_ws(root.to_path_buf());
-    let (runner, _) = ScriptedRunner::new(vec![]);
-    let g = Git::with_runner(runner);
-    let snap = build_status(&g, &ws).unwrap();
-    assert_eq!(snap.agent_packs.len(), 1);
-    let p = &snap.agent_packs[0];
-    assert_eq!(p.name, "live-pack");
-    assert_eq!(p.source, "src/live");
-    assert_eq!(p.path, dest.display().to_string());
-    assert_eq!(p.mode, PackMode::Install);
-    assert!(!p.missing);
-}
-
-#[test]
-fn build_status_absent_pack_missing_true() {
-    let dir = tempdir().unwrap();
-    let root = dir.path();
-    let missing = root.join("agent-home/gone-pack");
-    let json = format!(
-        r#"[{{"name":"gone-pack","source":"src/gone","path":"{}","mode":"install"}}]"#,
-        missing.display()
-    );
-    write_registry(root, &json);
-    let ws = empty_ws(root.to_path_buf());
-    let (runner, _) = ScriptedRunner::new(vec![]);
-    let g = Git::with_runner(runner);
-    let snap = build_status(&g, &ws).unwrap();
-    assert_eq!(snap.agent_packs.len(), 1);
-    assert_eq!(snap.agent_packs[0].name, "gone-pack");
-    assert!(snap.agent_packs[0].missing);
-}
-
-#[test]
-fn build_status_dangling_symlink_not_missing() {
-    let dir = tempdir().unwrap();
-    let root = dir.path();
-    let home = root.join("agent-home");
-    fs::create_dir_all(&home).unwrap();
-    let dest = home.join("link-pack");
-    #[cfg(unix)]
-    {
-        std::os::unix::fs::symlink(root.join("no-such-target"), &dest).unwrap();
-    }
-    #[cfg(not(unix))]
-    {
-        if std::os::windows::fs::symlink_dir(root.join("no-such-target"), &dest).is_err() {
-            return;
-        }
-    }
-    assert!(dest.symlink_metadata().is_ok());
-    assert!(!dest.exists());
-    let json = format!(
-        r#"[{{"name":"link-pack","source":"src/link","path":"{}","mode":"link"}}]"#,
-        dest.display()
-    );
-    write_registry(root, &json);
-    let ws = empty_ws(root.to_path_buf());
-    let (runner, _) = ScriptedRunner::new(vec![]);
-    let g = Git::with_runner(runner);
-    let snap = build_status(&g, &ws).unwrap();
-    assert_eq!(snap.agent_packs.len(), 1);
-    assert_eq!(snap.agent_packs[0].mode, PackMode::Link);
-    assert!(
-        !snap.agent_packs[0].missing,
-        "dangling symlink must not be missing"
-    );
-}
-
-#[test]
-fn build_status_empty_or_missing_registry_agent_packs_empty() {
-    let dir = tempdir().unwrap();
-    let ws = empty_ws(dir.path().to_path_buf());
-    let (runner, _) = ScriptedRunner::new(vec![]);
-    let g = Git::with_runner(runner);
-    let snap = build_status(&g, &ws).unwrap();
-    assert!(snap.agent_packs.is_empty());
-
-    write_registry(dir.path(), "[]\n");
-    let (runner, _) = ScriptedRunner::new(vec![]);
-    let g = Git::with_runner(runner);
-    let snap = build_status(&g, &ws).unwrap();
-    assert!(snap.agent_packs.is_empty());
-}
-
-#[test]
-fn build_status_corrupt_registry_soft_fails_to_empty() {
-    let dir = tempdir().unwrap();
-    let root = dir.path();
-    write_registry(root, "not-json{{{");
-    let ws = empty_ws(root.to_path_buf());
-    let (runner, _) = ScriptedRunner::new(vec![]);
-    let g = Git::with_runner(runner);
-    let snap = build_status(&g, &ws).unwrap();
-    assert!(
-        snap.agent_packs.is_empty(),
-        "corrupt registry must soft-fail to []"
-    );
-}
-
-#[test]
-fn build_status_agent_packs_sorted_by_name() {
-    let dir = tempdir().unwrap();
-    let root = dir.path();
-    let zeta = root.join("agent-home/zeta");
-    let alpha = root.join("agent-home/alpha");
-    fs::create_dir_all(&zeta).unwrap();
-    fs::create_dir_all(&alpha).unwrap();
-    let json = format!(
-        r#"[
-            {{"name":"zeta","source":"s/z","path":"{}","mode":"install"}},
-            {{"name":"alpha","source":"s/a","path":"{}","mode":"link"}}
-        ]"#,
-        zeta.display(),
-        alpha.display()
-    );
-    write_registry(root, &json);
-    let ws = empty_ws(root.to_path_buf());
-    let (runner, _) = ScriptedRunner::new(vec![]);
-    let g = Git::with_runner(runner);
-    let snap = build_status(&g, &ws).unwrap();
-    assert_eq!(snap.agent_packs.len(), 2);
-    assert_eq!(snap.agent_packs[0].name, "alpha");
-    assert_eq!(snap.agent_packs[1].name, "zeta");
-}
-
-#[test]
-fn build_status_json_agent_packs_shape() {
-    let dir = tempdir().unwrap();
-    let root = dir.path();
-    let dest = root.join("agent-home/shape-pack");
-    fs::create_dir_all(&dest).unwrap();
-    let json = format!(
-        r#"[{{"name":"shape-pack","source":"src/shape","path":"{}","mode":"install"}}]"#,
-        dest.display()
-    );
-    write_registry(root, &json);
-    let ws = empty_ws(root.to_path_buf());
-    let (runner, _) = ScriptedRunner::new(vec![]);
-    let g = Git::with_runner(runner);
-    let snap = build_status(&g, &ws).unwrap();
-    let v = serde_json::to_value(&snap).unwrap();
-    assert!(v["agent_packs"].is_array());
-    let p = &v["agent_packs"][0];
-    assert_eq!(p["name"], "shape-pack");
-    assert_eq!(p["source"], "src/shape");
-    assert_eq!(p["path"], dest.display().to_string());
-    assert_eq!(p["mode"], "install");
-    assert_eq!(p["missing"], false);
-    // project/progen keys still present
-    assert!(v["projects"].is_array());
-    assert!(v["progens"].is_array());
-    assert!(v["root"].is_string());
-}
-
-#[test]
-fn format_status_human_shows_agent_packs_and_missing_suffix() {
-    let snap = StatusSnapshot {
-        root: "/ws".into(),
-        projects: vec![],
-        progens: vec![],
-        agent_packs: vec![
-            StatusPackInfo {
-                name: "live".into(),
-                source: "s/live".into(),
-                path: "/ws/home/live".into(),
-                mode: PackMode::Install,
-                missing: false,
-            },
-            StatusPackInfo {
-                name: "gone".into(),
-                source: "s/gone".into(),
-                path: "/ws/home/gone".into(),
-                mode: PackMode::Link,
-                missing: true,
-            },
-        ],
-    };
-    let human = format_status_human(&snap);
-    assert!(human.contains("Agent packs:"), "{human}");
-    assert!(human.contains("  live\tinstall\n"), "{human}");
-    assert!(human.contains("  gone\tlink missing\n"), "{human}");
-    assert!(
-        !human.contains("(no projects or progens)"),
-        "packs-only must not be swallowed: {human}"
-    );
-    assert!(human.starts_with("Workspace: /ws\n"), "{human}");
-}
-
-#[test]
 fn format_status_human_fully_empty_still_one_empty_message() {
     let snap = StatusSnapshot {
         root: "/ws".into(),
         projects: vec![],
         progens: vec![],
-        agent_packs: vec![],
     };
     let human = format_status_human(&snap);
     assert_eq!(human, "Workspace: /ws\n(no projects or progens)\n");

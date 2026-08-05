@@ -1,6 +1,6 @@
 # core-desk
 
-Offline dogfood Workspace for ODM **core**, multi-**Progen** vaults + groups, shell **Actions** (including project-scoped cwd), a tiny local **Generator**, and a demo **Agent pack**.
+Offline dogfood Workspace for ODM **core**, multi-**Progen** vaults + groups, shell **Actions** (including project-scoped cwd), and a tiny local **Generator**.
 
 ## Layout
 
@@ -21,13 +21,11 @@ examples/core-desk/
     core.yaml     # hello → templates/hello
   templates/
     hello/        # local generate template
-  agent-packs/
-    demo/         # local pack source for install/link dogfood
   .odm/
     odm.config.yaml
 ```
 
-Managed checkouts (`projects/alpha`, `projects/beta`) and `odm.lock.yaml` are **not** committed — they appear after `odm sync`. Progen indexes live under `.odm/progen/<name>/` after `odm progen reindex` (gitignored). Worktree slots, `out/`, caches, and `.odm/agent-packs.json` are also gitignored.
+Managed checkouts (`projects/alpha`, `projects/beta`) and `odm.lock.yaml` are **not** committed — they appear after `odm sync`. Progen indexes live under `.odm/progen/<name>/` after `odm progen reindex` (gitignored). Worktree slots and `out/` are also gitignored.
 
 **Assets note:** two progens (`notes`, `ops`), groups `default` → notes and `all-docs` → notes+ops, vault note ids for wikilink/backlink demos, and `in-alpha` for `run --project` / `--wt`.
 
@@ -46,7 +44,7 @@ The script copies core-desk to a temp dir (does not modify this tree), runs the 
 
 ## Full tour
 
-**Full tour:** `scripts/dogfood.sh` — sync → pin → status → doctor → project git → worktree → progen façade → find groups → context/prompt → run → generate → packs → `agent start -- true`. No network; relative fixtures only.
+**Full tour:** `scripts/dogfood.sh` — sync → pin → status → doctor → project git → worktree → progen façade → find groups → context → run → generate. No network; relative fixtures only.
 
 ## Fixtures
 

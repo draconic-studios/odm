@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Quickstart — ODM</title>
-  <meta name="description" content="Bootstrap an ODM Workspace: init, projects, sync, progen, actions, worktrees, packs." />
+  <meta name="description" content="Bootstrap an ODM Workspace: init, projects, sync, progen, actions, worktrees, generate." />
   <link rel="stylesheet" href="assets/style.css" />
 </head>
 <body>
@@ -27,7 +27,6 @@
         <a href="guide-progen.html">Progen memory</a>
         <a href="guide-worktrees.html">Worktree slots</a>
         <a href="guide-actions.html">Actions &amp; generate</a>
-        <a href="guide-agents.html">Agent packs</a>
         <div class="group">Reference</div>
         <a href="cli.html">CLI</a>
         <a href="config.html">Config shape</a>
@@ -51,13 +50,13 @@
             <li><a href="#health">3. Status, pin, doctor</a></li>
             <li><a href="#progen">4. Progen memory</a></li>
             <li><a href="#actions">5. Actions</a></li>
-            <li><a href="#more">6. Generate, worktrees, packs</a></li>
+            <li><a href="#more">6. Generate and worktrees</a></li>
             <li><a href="#dogfood">Offline dogfood (core-desk)</a></li>
           </ul>
         </nav>
         <div class="callout">
           <p><strong>First success path:</strong> complete steps 1–3 (<code>init</code> → Project + <code>sync</code> →
-          <code>status</code>/<code>doctor</code>). Progen, actions, worktrees, and packs are optional next layers.</p>
+          <code>status</code>/<code>doctor</code>). Progen, actions, worktrees, and generate are optional next layers.</p>
         </div>
 
         <h2 id="init">1. Init a Workspace</h2>
@@ -86,9 +85,9 @@ odm project list</code></pre>
 odm status
 odm doctor</code></pre>
         <ul>
-          <li><strong>status</strong> — Workspace snapshot: presence, git/pin drift, worktree slots/orphans, agent packs.</li>
+          <li><strong>status</strong> — Workspace snapshot: presence, git/pin drift, worktree slots/orphans.</li>
           <li><strong>pin status / apply</strong> — optional lock of resolved SHAs (<code>.odm/odm.lock.yaml</code>). Apply checks out detached HEAD at the pin.</li>
-          <li><strong>doctor</strong> — ODM-side health (config, paths, gitignore, orphans, dirty slots, missing packs). Not store-content doctor.</li>
+          <li><strong>doctor</strong> — ODM-side health (config, paths, gitignore, orphans, dirty slots). Not store-content doctor.</li>
         </ul>
         <p>Prefer <code>--json</code> for agents and scripts.</p>
 
@@ -108,7 +107,7 @@ odm context &lt;note-id&gt;</code></pre>
 odm run &lt;name&gt;</code></pre>
         <p>Guide: <a href="guide-actions.html">Actions &amp; generate</a>.</p>
 
-        <h2 id="more">6. Generate, worktrees, packs</h2>
+        <h2 id="more">6. Generate and worktrees</h2>
         <pre><code># Local template scaffold
 odm generate
 odm generate hello --dest out/hello
@@ -118,20 +117,14 @@ odm generate hello --dest out/hello --dry-run
 odm project worktree add alpha feat --branch odm-feat
 odm project worktree list alpha
 odm project git alpha --wt feat -- status
-
-# Agent pack into an agent home
-odm agent pack install ./my-pack --home ~/.codex/skills
-odm agent pack list
-odm agent prompt &lt;note-id&gt;   # thin context package for agents
 </code></pre>
         <div class="grid">
           <div class="card"><h3><a href="guide-worktrees.html">Worktree slots</a></h3><p>Parallel trees under <code>worktrees/&lt;project&gt;/&lt;slot&gt;/</code>.</p></div>
-          <div class="card"><h3><a href="guide-agents.html">Agent packs</a></h3><p>Install/link/list/rm local packs; status inventory.</p></div>
           <div class="card"><h3><a href="guide-actions.html">Generate</a></h3><p>Local templates + <code>--dry-run</code>.</p></div>
         </div>
 
         <h2 id="dogfood">Offline dogfood (core-desk)</h2>
-        <p>The repo ships an offline Workspace fixture. Prefer the full-tour script (fail-fast through sync, find, packs, generate, …):</p>
+        <p>The repo ships an offline Workspace fixture. Prefer the full-tour script (fail-fast through sync, find, generate, …):</p>
         <pre><code>cargo build -p odm
 ./examples/core-desk/scripts/dogfood.sh
 # or step manually:
@@ -141,7 +134,7 @@ odm progen reindex
 odm find DeskUniqueToken
 odm run hello
 odm generate hello --dest out/hello</code></pre>
-        <p>See <a href="https://github.com/hembrow-innovations/odm/blob/main/examples/core-desk/README.md">examples/core-desk/README.md</a> for worktree, pack, and prune dogfood depth.</p>
+        <p>See <a href="https://github.com/hembrow-innovations/odm/blob/main/examples/core-desk/README.md">examples/core-desk/README.md</a> for worktree and prune dogfood depth.</p>
 
         <div class="callout ok">
           <p><strong>Next:</strong> learn the vocabulary in <a href="concepts.html">Concepts</a>,

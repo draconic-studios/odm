@@ -19,7 +19,7 @@ Review of ODM against `examples/todo`: a real-network poly-repo desk using publi
   - `desk` — path-only local vault (`progens/desk`, Todo*Token notes + wikilinks)
   - `sheets` — git-managed clone of cheat-key-sheets
 - **Groups:** `default` → desk; `all-docs` → desk+sheets; `personal` → desk
-- **Actions / generators / agent-pack** fixtures under `actions/`, `generators/`, `templates/`, `agent-packs/`
+- **Actions / generators** fixtures under `actions/`, `generators/`, `templates/`
 
 ---
 
@@ -50,7 +50,7 @@ Review of ODM against `examples/todo`: a real-network poly-repo desk using publi
 ### `status`
 
 - Human + `--json` list projects and progens with managed/path, git, pin, dirty.
-- JSON includes `worktree_slots`, `worktree_orphans`, top-level `agent_packs`.
+- JSON includes `worktree_slots`, `worktree_orphans`.
 - **Finding — path-only progen nested in a git monorepo:** `desk` reports `is_git: true`, `managed: false`, `dirty: true` because git discovery walks to the ancestor odm repo. Misleading for “path-only vault” UX when the example lives inside another git tree. Standalone Workspace (`git init` at todo root in dogfood) has the same shape: desk is inside the Workspace git root.
 - Managed clones report clean when porcelain is empty.
 
@@ -61,7 +61,6 @@ Review of ODM against `examples/todo`: a real-network poly-repo desk using publi
 - Warns `gitignore_drift` until managed marker block matches desired; **`--fix`** rewrites `# >>> ODM managed` … `# <<< ODM managed`.
 - Hand-written ignores outside the markers are preserved; extras like `out/` and lock file should stay outside the block.
 - Orphan worktree dirs → warn (not fixable via `--fix`); dirty registered slots → warn.
-- Missing agent-pack dest → `pack_missing:<name>` warn.
 - Does **not** run store-content doctor (that is `odm progen doctor`).
 
 ### `project`
@@ -94,13 +93,12 @@ Review of ODM against `examples/todo`: a real-network poly-repo desk using publi
 - `--limit` is per-store; `0` rejected (exit 1); unknown progen exit 1; zero hits exit 0.
 - Group `all-docs` unions desk + sheets; `default` / `personal` scope to desk.
 
-### `context` / `agent prompt`
+### `context`
 
 - Same neighborhood shape: anchor + outgoing + incoming (one hop, no cross-store walk).
 - `name:id` form works (`desk:welcome`); conflict with `--progen` → exit 1.
 - Multi-progen bare id → exit 1 (must disambiguate).
 - `--json` keys: `anchor`, `incoming`, `outgoing`, `progen`.
-- `agent prompt` is a thin alias of context (same exits/shapes).
 
 ### `run`
 
@@ -120,20 +118,6 @@ Review of ODM against `examples/todo`: a real-network poly-repo desk using publi
 - Url-only generator → exit 1 (“remote generators deferred”).
 - Dest escaping Workspace → exit **2** (workspace/path error), not usage 1.
 - No variable substitution (v1 local copy only).
-
-### `agent pack`
-
-- install (copy) / link (symlink) / list / rm against `--home` outside or under Workspace.
-- Registry at `.odm/agent-packs.json`; status inventories packs.
-- Exists without `--force` → exit 3; missing source → 4; unknown rm → 4.
-- Removing dest out from under registry → list `missing` + doctor `pack_missing`.
-- rm still succeeds for stale registry cleanup.
-
-### `agent start`
-
-- v1 one-shot: `odm --project <name> [--wt <slot>] agent start -- <program> [args…]`.
-- Cwd = Project Primary or worktree slot; human inherit; exit = child exit (`true` → 0, `false` → non-zero).
-- Independent of packs/prompt; no runtime matrix.
 
 ---
 
@@ -174,7 +158,7 @@ Review of ODM against `examples/todo`: a real-network poly-repo desk using publi
 
 ## Verdict
 
-ODM’s shipped spine holds up against real multi-repo GitHub materialize + pin + worktree + dual Progen (local vault + remote docs) + actions/generate/packs. Dogfood and probe are green. Main footguns for real use: correct `branch` in config, read-only hygiene on shared remotes, worktree `.git` file semantics, and status “dirty” on path-only progens living inside another git tree.
+ODM’s shipped spine holds up against real multi-repo GitHub materialize + pin + worktree + dual Progen (local vault + remote docs) + actions/generate. Dogfood and probe are green. Main footguns for real use: correct `branch` in config, read-only hygiene on shared remotes, worktree `.git` file semantics, and status “dirty” on path-only progens living inside another git tree.
 
 **Recommended loop for this desk:**
 

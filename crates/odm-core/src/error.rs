@@ -188,10 +188,10 @@ mod tests {
 
     #[test]
     fn not_implemented_is_usage() {
-        let err = OdmError::not_implemented("agent start");
+        let err = OdmError::not_implemented("frobnicate");
         assert_eq!(err.code(), "usage");
         assert_eq!(exit_code(&err), 1);
-        assert!(err.message().contains("agent start"));
+        assert!(err.message().contains("frobnicate"));
     }
 
     #[test]

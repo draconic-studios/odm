@@ -169,12 +169,6 @@ pub enum Commands {
         #[arg(long, requires = "name")]
         dry_run: bool,
     },
-
-    /// Agent pack / session helpers.
-    Agent {
-        #[command(subcommand)]
-        cmd: AgentCmd,
-    },
 }
 
 #[derive(Debug, Subcommand)]
@@ -311,59 +305,6 @@ pub enum ProgenCmd {
     Reindex,
     /// Store-side health (path + index).
     Doctor,
-}
-
-#[derive(Debug, Subcommand)]
-pub enum AgentCmd {
-    /// Install, link, list, or remove agent packs.
-    Pack {
-        #[command(subcommand)]
-        cmd: PackCmd,
-    },
-    /// One-shot exec a program in a Project (or --wt slot) cwd.
-    Start {
-        /// Program and args (`odm agent start -- <program> [args…]`).
-        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
-        program_args: Vec<String>,
-    },
-    /// Package note context as an agent work-package (thin alias of `context`).
-    Prompt {
-        /// Note id, or `progen:id`.
-        id: String,
-    },
-}
-
-#[derive(Debug, Subcommand)]
-pub enum PackCmd {
-    /// List registered agent packs.
-    List,
-    /// Copy a local pack directory into an agent home.
-    Install {
-        /// Local directory path (relative to Workspace root, or absolute).
-        source: PathBuf,
-        /// Agent-native home directory (pack lands at `<home>/<name>/`).
-        #[arg(long)]
-        home: PathBuf,
-        /// Replace existing destination.
-        #[arg(long)]
-        force: bool,
-    },
-    /// Symlink a local pack directory into an agent home.
-    Link {
-        /// Local directory path (relative to Workspace root, or absolute).
-        source: PathBuf,
-        /// Agent-native home directory (pack lands at `<home>/<name>`).
-        #[arg(long)]
-        home: PathBuf,
-        /// Replace existing destination.
-        #[arg(long)]
-        force: bool,
-    },
-    /// Remove a registered agent pack (registry entry and destination).
-    Rm {
-        /// Pack name as registered (directory basename).
-        name: String,
-    },
 }
 
 #[cfg(test)]
