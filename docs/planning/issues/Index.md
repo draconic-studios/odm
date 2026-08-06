@@ -10,7 +10,8 @@ _(none)_
 
 ## Frontier (open, unblocked)
 
-_(none)_
+- [[issues-171-doc-tests-absent]] — Zero doc-tests across all crates (docs can drift from public API)
+- [[issues-172-agent-pack-historical-references]] — Confirm agent-pack references remain only in historical docs
 
 ## Closed maps (delivery spine)
 
