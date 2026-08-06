@@ -7,8 +7,8 @@ use rusqlite::Connection;
 use serde::Serialize;
 
 use crate::index::{
-    self, get_indexed, load_all_notes, outgoing_links, resolve_link_target, search_fts, IndexedNote,
-    IndexStats,
+    self, get_indexed, load_all_notes, outgoing_links, resolve_link_target, search_fts, IndexStats,
+    IndexedNote,
 };
 use crate::scope::{resolve_read_scope, resolve_single_progen, resolve_write_progen, ScopedProgen};
 
@@ -122,14 +122,8 @@ impl ProgenStore {
         }
 
         let mut incoming_ids = std::collections::BTreeSet::new();
-        let stem = path_stem(&n.rel_path);
-        for key in [&n.id, &n.title, &stem] {
-            if key.is_empty() {
-                continue;
-            }
-            for src in index::backlinks_for(&self.conn, key)? {
-                incoming_ids.insert(src);
-            }
+        for src in index::backlinks_for(&self.conn, &n.id)? {
+            incoming_ids.insert(src);
         }
         incoming_ids.remove(&n.id);
         let mut incoming = Vec::new();
@@ -220,11 +214,7 @@ pub fn list_notes(ws: &Workspace, progen: Option<&str>) -> Result<Vec<LsHit>, Od
 }
 
 /// Get one note. Id may be `name:id` or bare id with optional --progen.
-pub fn get_note(
-    ws: &Workspace,
-    id_arg: &str,
-    progen: Option<&str>,
-) -> Result<GetResult, OdmError> {
+pub fn get_note(ws: &Workspace, id_arg: &str, progen: Option<&str>) -> Result<GetResult, OdmError> {
     let (sp, id) = resolve_id(ws, id_arg, progen)?;
     ProgenStore::open(ws, &sp)?.get(&id)
 }
@@ -313,10 +303,6 @@ fn resolve_id(
     }
     let sp = resolve_single_progen(ws, progen)?;
     Ok((sp, id_arg.to_string()))
-}
-
-fn path_stem(rel: &str) -> String {
-    rel.strip_suffix(".md").unwrap_or(rel).to_string()
 }
 
 fn snippet(body: &str, query: &str) -> Option<String> {
@@ -410,6 +396,39 @@ mod tests {
 
         let paths = store.tree().unwrap();
         assert!(paths.iter().any(|p| p == "alpha.md"));
+    }
+
+    #[test]
+    fn context_resolves_nested_basename_links() {
+        let d = tempdir().unwrap();
+        let root = d.path();
+        let (ws, sp) = ws_one(root, "mem", "main");
+        fs::create_dir_all(sp.path.join("sub")).unwrap();
+        fs::write(
+            sp.path.join("sub/alpha.md"),
+            "---\nid: a1\ntitle: Alpha\n---\nSee [[note-beta|Beta alias]].\n",
+        )
+        .unwrap();
+        fs::write(
+            sp.path.join("sub/note-beta.md"),
+            "---\nid: b1\ntitle: Note Beta\n---\nOther.\n",
+        )
+        .unwrap();
+
+        let store = ProgenStore::open(&ws, &sp).unwrap();
+        let ctx = store.context("a1").unwrap();
+        assert_eq!(ctx.outgoing.len(), 1);
+        assert_eq!(ctx.outgoing[0].id, "b1");
+        assert_eq!(ctx.outgoing[0].path, "sub/note-beta.md");
+
+        let ctx = store.context("b1").unwrap();
+        assert!(ctx.incoming.iter().any(|h| h.id == "a1"));
+        assert!(store.backlinks("b1").unwrap().iter().any(|h| h.id == "a1"));
+        assert!(store
+            .backlinks("note-beta")
+            .unwrap()
+            .iter()
+            .any(|h| h.id == "a1"));
     }
 
     #[test]

@@ -12,6 +12,9 @@ use crate::vault::walk_notes;
 /// Fingerprint of vault note paths+mtimes (catches add/edit/delete).
 const META_VAULT_FP: &str = "vault_fp";
 
+/// Bump when the on-disk schema changes; `ensure_index` rebuilds stale indexes.
+const SCHEMA_VERSION: &str = "2";
+
 const SCHEMA: &str = r#"
 CREATE TABLE IF NOT EXISTS meta (
   key TEXT PRIMARY KEY,
@@ -30,7 +33,8 @@ CREATE VIRTUAL TABLE IF NOT EXISTS notes_fts USING fts5(
 );
 CREATE TABLE IF NOT EXISTS links (
   src_id TEXT NOT NULL,
-  target TEXT NOT NULL
+  target TEXT NOT NULL,
+  target_id TEXT
 );
 "#;
 
@@ -62,9 +66,8 @@ fn vault_fingerprint(vault: &Path) -> Result<String, OdmError> {
 }
 
 fn collect_fp(root: &Path, dir: &Path, out: &mut Vec<String>) -> Result<(), OdmError> {
-    let entries = fs::read_dir(dir).map_err(|e| {
-        OdmError::operation(format!("read {}: {e}", dir.display()))
-    })?;
+    let entries = fs::read_dir(dir)
+        .map_err(|e| OdmError::operation(format!("read {}: {e}", dir.display())))?;
     for ent in entries {
         let ent = ent.map_err(|e| OdmError::operation(e.to_string()))?;
         let path = ent.path();
@@ -81,9 +84,8 @@ fn collect_fp(root: &Path, dir: &Path, out: &mut Vec<String>) -> Result<(), OdmE
                 .unwrap_or(&path)
                 .to_string_lossy()
                 .replace('\\', "/");
-            let meta = fs::metadata(&path).map_err(|e| {
-                OdmError::operation(format!("stat {}: {e}", path.display()))
-            })?;
+            let meta = fs::metadata(&path)
+                .map_err(|e| OdmError::operation(format!("stat {}: {e}", path.display())))?;
             let nanos = meta
                 .modified()
                 .unwrap_or(SystemTime::UNIX_EPOCH)
@@ -117,6 +119,63 @@ fn index_stale(conn: &Connection, vault: &Path) -> Result<bool, OdmError> {
     Ok(vault_fingerprint(vault)? != stored)
 }
 
+fn schema_current(conn: &Connection) -> Result<bool, OdmError> {
+    Ok(read_meta(conn, "schema")?.as_deref() == Some(SCHEMA_VERSION))
+}
+
+/// Lightweight view of a note for link-target resolution.
+struct NoteRef<'a> {
+    id: &'a str,
+    rel_path: &'a str,
+    title: Option<&'a str>,
+}
+
+/// Resolve Obsidian-style wikilink targets to canonical note ids.
+///
+/// Candidate keys per note, best-first: exact id, case-insensitive id, basename
+/// stem, rel_path without `.md`, rel_path with `.md`, case-insensitive title.
+/// Keys claimed by more than one note at the same priority are ambiguous and
+/// dropped (resolution stays conservative instead of guessing).
+fn build_resolver<'a>(notes: impl Iterator<Item = NoteRef<'a>>) -> HashMap<String, String> {
+    let mut map: HashMap<String, (u8, Option<String>)> = HashMap::new();
+    for n in notes {
+        let stem = Path::new(n.rel_path)
+            .file_stem()
+            .map(|s| s.to_string_lossy().into_owned())
+            .unwrap_or_default();
+        let no_ext = n.rel_path.strip_suffix(".md").unwrap_or(n.rel_path);
+        let title = n.title.unwrap_or("").to_lowercase();
+        let candidates = [
+            (0, n.id.to_string()),
+            (1, n.id.to_lowercase()),
+            (2, stem.to_lowercase()),
+            (3, no_ext.to_lowercase()),
+            (4, n.rel_path.to_lowercase()),
+            (5, title),
+        ];
+        for (prio, key) in candidates {
+            if key.is_empty() {
+                continue;
+            }
+            match map.get(&key) {
+                None => {
+                    map.insert(key, (prio, Some(n.id.to_string())));
+                }
+                Some(&(best, _)) if prio < best => {
+                    map.insert(key, (prio, Some(n.id.to_string())));
+                }
+                Some(&(best, _)) if prio == best => {
+                    map.insert(key, (best, None));
+                }
+                Some(_) => {}
+            }
+        }
+    }
+    map.into_iter()
+        .filter_map(|(key, (_, id))| id.map(|id| (key, id)))
+        .collect()
+}
+
 /// Rebuild disposable index for one Progen from vault files.
 pub(crate) fn reindex_progen(ws: &Workspace, sp: &ScopedProgen) -> Result<IndexStats, OdmError> {
     let notes = walk_notes(&sp.path)?;
@@ -131,19 +190,23 @@ pub(crate) fn reindex_progen(ws: &Workspace, sp: &ScopedProgen) -> Result<IndexS
         }
         first_path.insert(id, n.rel_path.as_str());
     }
+    let resolver = build_resolver(notes.iter().map(|n| NoteRef {
+        id: n.id.as_str(),
+        rel_path: n.rel_path.as_str(),
+        title: n.title.as_deref(),
+    }));
 
     let watermark = vault_fingerprint(&sp.path)?;
     let dir = index_dir(&ws.root, &sp.name);
-    fs::create_dir_all(&dir).map_err(|e| {
-        OdmError::operation(format!("create index dir {}: {e}", dir.display()))
-    })?;
+    fs::create_dir_all(&dir)
+        .map_err(|e| OdmError::operation(format!("create index dir {}: {e}", dir.display())))?;
     let db = index_db_path(&ws.root, &sp.name);
     if db.exists() {
         let _ = fs::remove_file(&db);
     }
 
-    let conn = Connection::open(&db)
-        .map_err(|e| OdmError::operation(format!("open index: {e}")))?;
+    let conn =
+        Connection::open(&db).map_err(|e| OdmError::operation(format!("open index: {e}")))?;
     conn.execute_batch(SCHEMA)
         .map_err(|e| OdmError::operation(format!("index schema: {e}")))?;
 
@@ -153,15 +216,13 @@ pub(crate) fn reindex_progen(ws: &Workspace, sp: &ScopedProgen) -> Result<IndexS
         .map_err(|e| OdmError::operation(e.to_string()))?;
     {
         let mut ins = tx
-            .prepare(
-                "INSERT INTO notes (id, rel_path, title, body) VALUES (?1, ?2, ?3, ?4)",
-            )
+            .prepare("INSERT INTO notes (id, rel_path, title, body) VALUES (?1, ?2, ?3, ?4)")
             .map_err(|e| OdmError::operation(e.to_string()))?;
         let mut ins_fts = tx
             .prepare("INSERT INTO notes_fts (id, title, body) VALUES (?1, ?2, ?3)")
             .map_err(|e| OdmError::operation(e.to_string()))?;
         let mut ins_link = tx
-            .prepare("INSERT INTO links (src_id, target) VALUES (?1, ?2)")
+            .prepare("INSERT INTO links (src_id, target, target_id) VALUES (?1, ?2, ?3)")
             .map_err(|e| OdmError::operation(e.to_string()))?;
 
         for n in &notes {
@@ -172,16 +233,17 @@ pub(crate) fn reindex_progen(ws: &Workspace, sp: &ScopedProgen) -> Result<IndexS
                 .execute(params![n.id.as_str(), title, n.body])
                 .map_err(|e| OdmError::operation(format!("fts insert: {e}")))?;
             for t in &n.wikilinks {
+                let target_id = resolver.get(&t.to_lowercase()).cloned();
                 ins_link
-                    .execute(params![n.id.as_str(), t])
+                    .execute(params![n.id.as_str(), t, target_id])
                     .map_err(|e| OdmError::operation(e.to_string()))?;
                 link_count += 1;
             }
         }
     }
     tx.execute(
-        "INSERT OR REPLACE INTO meta (key, value) VALUES ('schema', '1')",
-        [],
+        "INSERT OR REPLACE INTO meta (key, value) VALUES ('schema', ?1)",
+        [SCHEMA_VERSION],
     )
     .map_err(|e| OdmError::operation(e.to_string()))?;
     tx.execute(
@@ -216,11 +278,12 @@ pub(crate) fn ensure_index(ws: &Workspace, sp: &ScopedProgen) -> Result<(), OdmE
         reindex_progen(ws, sp)?;
         return Ok(());
     }
-    let conn = Connection::open(&db)
-        .map_err(|e| OdmError::operation(format!("open index: {e}")))?;
+    let conn =
+        Connection::open(&db).map_err(|e| OdmError::operation(format!("open index: {e}")))?;
     let stale = index_stale(&conn, &sp.path)?;
+    let schema_stale = !schema_current(&conn)?;
     drop(conn);
-    if stale {
+    if stale || schema_stale {
         reindex_progen(ws, sp)?;
     }
     Ok(())
@@ -292,9 +355,7 @@ pub(crate) fn search_fts(
         return Ok(Vec::new());
     };
     let mut stmt = conn
-        .prepare(
-            "SELECT id, title, body FROM notes_fts WHERE notes_fts MATCH ?1 LIMIT ?2",
-        )
+        .prepare("SELECT id, title, body FROM notes_fts WHERE notes_fts MATCH ?1 LIMIT ?2")
         .map_err(|e| OdmError::operation(e.to_string()))?;
     let mapped = stmt.query_map(params![q, limit as i64], |row| {
         Ok((
@@ -349,15 +410,16 @@ pub(crate) fn get_indexed(conn: &Connection, id: &str) -> Result<Option<IndexedN
     } else {
         format!("{id}.md")
     };
+    let basename_pattern = format!("%/{md}");
     let mut stmt = conn
         .prepare(
             "SELECT id, rel_path, title, body FROM notes
-             WHERE rel_path = ?1 OR rel_path = ?2 OR title = ?3
+             WHERE rel_path = ?1 OR rel_path = ?2 OR rel_path LIKE ?3 OR title = ?4
              LIMIT 1",
         )
         .map_err(|e| OdmError::operation(e.to_string()))?;
     let mut rows = stmt
-        .query_map(params![md.as_str(), id, id], |row| {
+        .query_map(params![md.as_str(), id, basename_pattern, id], |row| {
             Ok(IndexedNote {
                 id: row.get(0)?,
                 rel_path: row.get(1)?,
@@ -390,13 +452,27 @@ pub(crate) fn resolve_link_target(
     conn: &Connection,
     target: &str,
 ) -> Result<Option<IndexedNote>, OdmError> {
-    get_indexed(conn, target)
+    if let Some(n) = get_indexed(conn, target)? {
+        return Ok(Some(n));
+    }
+    let notes = load_all_notes(conn)?;
+    let resolver = build_resolver(notes.iter().map(|n| NoteRef {
+        id: n.id.as_str(),
+        rel_path: n.rel_path.as_str(),
+        title: Some(n.title.as_str()),
+    }));
+    match resolver.get(&target.to_lowercase()) {
+        Some(id) => get_indexed(conn, id),
+        None => Ok(None),
+    }
 }
 
 pub(crate) fn backlinks_for(conn: &Connection, target: &str) -> Result<Vec<String>, OdmError> {
     let mut stmt = conn
         .prepare(
-            "SELECT DISTINCT src_id FROM links WHERE target = ?1 ORDER BY src_id",
+            "SELECT DISTINCT src_id FROM links
+             WHERE target_id = ?1 OR target = ?1
+             ORDER BY src_id",
         )
         .map_err(|e| OdmError::operation(e.to_string()))?;
     let rows = stmt
@@ -672,20 +748,125 @@ mod tests {
     }
 
     #[test]
-    fn ensure_rebuilds_after_note_deleted() {
+    fn reindex_resolves_wikilink_targets_to_ids() {
+        let d = tempdir().unwrap();
+        let root = d.path();
+        let (ws, sp) = ws_sp(root, "mem", "main");
+        fs::create_dir_all(sp.path.join("sub")).unwrap();
+        fs::write(
+            sp.path.join("alpha.md"),
+            "---\nid: a1\ntitle: Alpha\n---\nSee [[note-beta]], [[sub/note-beta|alias]], [[Note Beta]] and [[missing]].\n",
+        )
+        .unwrap();
+        fs::write(
+            sp.path.join("sub/note-beta.md"),
+            "---\nid: b9\ntitle: Note Beta\n---\nOther.\n",
+        )
+        .unwrap();
+        reindex_progen(&ws, &sp).unwrap();
+        let conn = open_index(root, "main").unwrap();
+
+        let back = backlinks_for(&conn, "b9").unwrap();
+        assert_eq!(back, vec!["a1".to_string()]);
+
+        let resolved = resolve_link_target(&conn, "sub/note-beta")
+            .unwrap()
+            .unwrap();
+        assert_eq!(resolved.id, "b9");
+        let resolved = resolve_link_target(&conn, "Note Beta").unwrap().unwrap();
+        assert_eq!(resolved.id, "b9");
+        assert!(resolve_link_target(&conn, "missing").unwrap().is_none());
+    }
+
+    #[test]
+    fn backlinks_match_resolved_id_or_raw_target() {
         let d = tempdir().unwrap();
         let root = d.path();
         let (ws, sp) = ws_sp(root, "mem", "main");
         fs::write(
-            sp.path.join("keep.md"),
-            "---\nid: k1\n---\nKeepToken\n",
+            sp.path.join("one.md"),
+            "---\nid: o1\n---\nLink by id: [[b1]].\n",
         )
         .unwrap();
         fs::write(
-            sp.path.join("gone.md"),
-            "---\nid: g1\n---\nGoneToken\n",
+            sp.path.join("two.md"),
+            "---\nid: o2\n---\nLink by title: [[Beta]].\n",
         )
         .unwrap();
+        fs::write(
+            sp.path.join("beta.md"),
+            "---\nid: b1\ntitle: Beta\n---\nBody.\n",
+        )
+        .unwrap();
+        reindex_progen(&ws, &sp).unwrap();
+        let conn = open_index(root, "main").unwrap();
+        let back = backlinks_for(&conn, "b1").unwrap();
+        assert_eq!(back, vec!["o1".to_string(), "o2".to_string()]);
+    }
+
+    #[test]
+    fn ambiguous_targets_stay_unresolved() {
+        let d = tempdir().unwrap();
+        let root = d.path();
+        let (ws, sp) = ws_sp(root, "mem", "main");
+        fs::write(sp.path.join("one.md"), "---\nid: o1\n---\nLink: [[dup]]\n").unwrap();
+        fs::create_dir_all(sp.path.join("sub")).unwrap();
+        fs::write(sp.path.join("sub/dup.md"), "---\nid: d1\n---\nA.\n").unwrap();
+        fs::create_dir_all(sp.path.join("other")).unwrap();
+        fs::write(sp.path.join("other/dup.md"), "---\nid: d2\n---\nB.\n").unwrap();
+        reindex_progen(&ws, &sp).unwrap();
+        let conn = open_index(root, "main").unwrap();
+        let links: Vec<(String, Option<String>)> = {
+            let mut stmt = conn.prepare("SELECT target, target_id FROM links").unwrap();
+            let rows = stmt
+                .query_map([], |row| Ok((row.get(0)?, row.get(1)?)))
+                .unwrap();
+            rows.collect::<Result<_, _>>().unwrap()
+        };
+        assert_eq!(links.len(), 1);
+        assert_eq!(links[0].0, "dup");
+        assert_eq!(links[0].1, None);
+    }
+
+    #[test]
+    fn ensure_rebuilds_when_schema_stale() {
+        let d = tempdir().unwrap();
+        let root = d.path();
+        let (ws, sp) = ws_sp(root, "mem", "main");
+        fs::write(sp.path.join("n.md"), "---\nid: n1\n---\n[[Other]]\n").unwrap();
+        reindex_progen(&ws, &sp).unwrap();
+        let conn = open_index(root, "main").unwrap();
+        assert_eq!(
+            read_meta(&conn, "schema").unwrap().as_deref(),
+            Some(SCHEMA_VERSION)
+        );
+        conn.execute("UPDATE meta SET value = '1' WHERE key = 'schema'", [])
+            .unwrap();
+        drop(conn);
+
+        ensure_index(&ws, &sp).unwrap();
+        let conn = open_index(root, "main").unwrap();
+        assert_eq!(
+            read_meta(&conn, "schema").unwrap().as_deref(),
+            Some(SCHEMA_VERSION)
+        );
+        let has_col: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM pragma_table_info('links') WHERE name = 'target_id'",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap();
+        assert_eq!(has_col, 1);
+    }
+
+    #[test]
+    fn ensure_rebuilds_after_note_deleted() {
+        let d = tempdir().unwrap();
+        let root = d.path();
+        let (ws, sp) = ws_sp(root, "mem", "main");
+        fs::write(sp.path.join("keep.md"), "---\nid: k1\n---\nKeepToken\n").unwrap();
+        fs::write(sp.path.join("gone.md"), "---\nid: g1\n---\nGoneToken\n").unwrap();
         reindex_progen(&ws, &sp).unwrap();
         let conn = open_index(root, "main").unwrap();
         assert_eq!(search_fts(&conn, "GoneToken", 10).unwrap().len(), 1);

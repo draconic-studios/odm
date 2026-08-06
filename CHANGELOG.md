@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **Install docs/site honesty** — drop pre-publish hedging; state `v0.1.1` Releases + curl install as live (README status, `install.md`, website install/index).
+- **Wikilink resolution** — link-graph edges now resolve Obsidian-style targets (id, basename, rel path, title; case-insensitive, ambiguous targets left unresolved) to canonical note ids at index time, so `odm context` incoming and `odm progen backlinks` work for nested paths and non-id filenames (previously broken for any note whose filename differed from its frontmatter `id`). Index schema bumped to v2; stale-schema indexes rebuild automatically on next open (`crates/odm-progen/src/index.rs`).
 
 ## [0.1.1] - 2026-08-02
 
